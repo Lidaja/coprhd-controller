@@ -12,17 +12,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.mutable.MutableInt;
+import org.apache.curator.framework.recipes.locks.InterProcessLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.emc.storageos.coordinator.client.service.CoordinatorClient;
+import com.emc.storageos.coordinator.service.Coordinator;
 import com.emc.storageos.db.client.DbClient;
 import com.emc.storageos.db.client.URIUtil;
 import com.emc.storageos.db.client.constraint.AlternateIdConstraint;
 import com.emc.storageos.db.client.constraint.URIQueryResultList;
 import com.emc.storageos.db.client.model.BlockSnapshot;
+import com.emc.storageos.db.client.model.ExportMask;
 import com.emc.storageos.db.client.model.HostInterface;
 import com.emc.storageos.db.client.model.StringMap;
 import com.emc.storageos.db.client.model.StringSet;
@@ -37,6 +41,7 @@ import com.emc.storageos.networkcontroller.impl.NetworkDeviceController;
 import com.emc.storageos.plugins.common.Constants;
 import com.emc.storageos.plugins.common.PartitionManager;
 import com.emc.storageos.storagedriver.BlockStorageDriver;
+import com.emc.storageos.storagedriver.HostExportInfo;
 import com.emc.storageos.storagedriver.model.Initiator;
 import com.emc.storageos.storagedriver.model.StorageObject;
 import com.emc.storageos.storagedriver.model.StoragePort;
@@ -45,11 +50,11 @@ import com.emc.storageos.storagedriver.model.StorageVolume;
 import com.emc.storageos.storagedriver.model.VolumeClone;
 import com.emc.storageos.storagedriver.model.VolumeConsistencyGroup;
 import com.emc.storageos.storagedriver.model.VolumeSnapshot;
-import com.emc.storageos.storagedriver.model.VolumeToHostExportInfo;
 import com.emc.storageos.util.NetworkUtil;
 import com.emc.storageos.volumecontroller.impl.NativeGUIDGenerator;
 import com.emc.storageos.volumecontroller.impl.plugins.ExternalDeviceCommunicationInterface;
 import com.emc.storageos.volumecontroller.impl.utils.DiscoveryUtils;
+import com.emc.storageos.volumecontroller.impl.utils.ExportMaskUtils;
 import com.google.common.base.Joiner;
 
 public class ExternalDeviceUnManagedVolumeDiscoverer {
@@ -59,19 +64,24 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
     private static final String UNMANAGED_VOLUME = "UnManagedVolume";
     private static final String UNMANAGED_CONSISTENCY_GROUP = "UnManagedConsistencyGroup";
     private static final String UNMANAGED_EXPORT_MASK = "UnManagedExportMask";
+    private static final String UNMANAGED_DISCOVERY_LOCK = "UnManagedObjectsDiscoveryLock-";
+    public static final long UNMANAGED_DISCOVERY_LOCK_TIMEOUT= 3 * 60; // set to 3 minutes
 
     private NetworkDeviceController networkDeviceController;
-
+    private CoordinatorClient coordinator;
 
     public void setNetworkDeviceController(
             NetworkDeviceController networkDeviceController) {
         this.networkDeviceController = networkDeviceController;
     }
 
-    public void discoverUnManagedBlockObjects(BlockStorageDriver driver, com.emc.storageos.db.client.model.StorageSystem storageSystem, DbClient dbClient,
-                                         PartitionManager partitionManager) {
+    public void setCoordinator(CoordinatorClient coordinator) {
+        this.coordinator = coordinator;
+    }
 
-        // todo: Get lock!!! We do not support concurrent discovery of the same array from two+ clients.
+    public void discoverUnManagedBlockObjects(BlockStorageDriver driver, com.emc.storageos.db.client.model.StorageSystem storageSystem,
+                                              DbClient dbClient, PartitionManager partitionManager) {
+
         Set<URI> allCurrentUnManagedVolumeUris = new HashSet<>();
         Set<URI> allCurrentUnManagedCgURIs = new HashSet<>();
         MutableInt lastPage = new MutableInt(0);
@@ -81,135 +91,174 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
         List<UnManagedConsistencyGroup> unManagedCGToUpdate;
         Map<String, UnManagedConsistencyGroup> unManagedCGToUpdateMap = new HashMap<>();
 
-        // We need to enforce a single unManaged export mask for each host-array combination.
+        // We support only single export mask for host-array combination.
         // If we find that storage system has volumes which are exported to the same host through
-        // different initiators or different array ports (we cannot create a single unManaged export
+        // different initiators or different array ports (we cannot create single UnManaged export
         // mask for the host and the array in this case), we won't discover exports to this
         // host on the array; we discover only volumes.
         // The result of this limitation is that it could happen that for some volumes we are able to
         // discover all their host exports;
         // for some volumes we will be able to discover their exports to subset of hosts;
         // for some volumes we may not be able to discover their exports to hosts.
-        Set<String> invalidExportHosts = new HashSet<>(); // set of hosts for which we can not build single export mask
+        Set<String> invalidExportHosts = new HashSet<>(); // set of hosts for which we cannot build single export mask
                                                           // for exported array volumes
-        // Map of host FQDN to list of export info objects for unManaged volumes exported to this host
-        Map<String, List<VolumeToHostExportInfo>> hostToUnManagedVolumeExportInfoMap = new HashMap<>();
-        // Map of host FQDN to list of export info objects for managed volumes exported to this host
-        Map<String, List<VolumeToHostExportInfo>> hostToManagedVolumeExportInfoMap = new HashMap<>();
 
+        // get inter-process lock for exclusive discovery of unmanaged objects for a given system
+        // lock is backed by curator's InterProcessMutex.
+        InterProcessLock lock;
+        String lockName = UNMANAGED_DISCOVERY_LOCK + storageSystem.getSystemType() + "-" + storageSystem.getNativeId();
+        try {
+            lock = coordinator.getLock(lockName);
+            boolean lockAcquired = lock.acquire(UNMANAGED_DISCOVERY_LOCK_TIMEOUT, TimeUnit.SECONDS);
+            if (lockAcquired) {
+                log.info("Acquired lock {} for storage system {} .", lockName, storageSystem.getNativeId());
+            } else {
+                log.info("Failed to acquire lock {} for storage system {} .", lockName, storageSystem.getNativeId());
+                return;
+            }
+        } catch (Exception ex) {
+            log.error("Error processing unmanaged discovery for storage system: {}. Failed to get lock {} for this operation.",
+                       storageSystem.getNativeId(), lockName, ex);
+            return;
+        }
         log.info("Started discovery of UnManagedVolumes for system {}", storageSystem.getId());
 
-        // We need to deactivate all old unManaged export masks for this array. Each export discovery starts a new.
-        // Otherwise we cannot separate stale host mask and host mask discovered for volumes on the previous pages.
-        DiscoveryUtils.markInActiveUnManagedExportMask(storageSystem.getId(), new HashSet<URI>(),
-                dbClient, partitionManager);
-        // prepare storage system
-        StorageSystem driverStorageSystem = ExternalDeviceCommunicationInterface.initStorageSystem(storageSystem);
-        do {
-            List<StorageVolume> driverVolumes = new ArrayList<>();
-            log.info("Processing page {} ", nextPage);
-            driver.getStorageVolumes(driverStorageSystem, driverVolumes, nextPage);
-            log.info("Volume count on this page {} ", driverVolumes.size());
+        try {
+            // We need to deactivate all old unManaged export masks for this array. Each export discovery starts a new.
+            // Otherwise, we cannot distinguish between stale host masks and host mask discovered for volumes on the previous pages.
+            DiscoveryUtils.markInActiveUnManagedExportMask(storageSystem.getId(), new HashSet<URI>(),
+                    dbClient, partitionManager);
+            // prepare storage system
+            StorageSystem driverStorageSystem = ExternalDeviceCommunicationInterface.initStorageSystem(storageSystem);
+            do {
+                // Map of host FQDN to list of export info objects for unManaged volumes exported to this host
+                Map<String, List<HostExportInfo>> hostToUnManagedVolumeExportInfoMap = new HashMap<>();
+                // Map of host FQDN to list of export info objects for managed volumes exported to this host
+                Map<String, List<HostExportInfo>> hostToManagedVolumeExportInfoMap = new HashMap<>();
+                Map<String, List<HostExportInfo>> hostToVolumeExportInfoMap = new HashMap<>();
 
-            Map<String, URI> unManagedVolumeNativeIdToUriMap = new HashMap<>();
-            Map<String, URI> managedVolumeNativeIdToUriMap = new HashMap<>();
+                List<StorageVolume> driverVolumes = new ArrayList<>();
+                Map<String, URI> unManagedVolumeNativeIdToUriMap = new HashMap<>();
+                Map<String, URI> managedVolumeNativeIdToUriMap = new HashMap<>();
 
-            for (StorageVolume driverVolume : driverVolumes) {
-                UnManagedVolume unManagedVolume = null;
-                try {
-                    com.emc.storageos.db.client.model.StoragePool storagePool = getStoragePoolOfUnManagedVolume(storageSystem, driverVolume, dbClient);
-                    if (null == storagePool) {
-                        log.error("Skipping unManaged volume discovery as the volume {} storage pool doesn't exist in ViPR", driverVolume.getNativeId());
-                        continue;
+                log.info("Processing page {} ", nextPage);
+                driver.getStorageVolumes(driverStorageSystem, driverVolumes, nextPage);
+                log.info("Volume count on this page {} ", driverVolumes.size());
+
+                for (StorageVolume driverVolume : driverVolumes) {
+                    UnManagedVolume unManagedVolume = null;
+                    try {
+                        com.emc.storageos.db.client.model.StoragePool storagePool = getStoragePoolOfUnManagedVolume(storageSystem, driverVolume, dbClient);
+                        if (null == storagePool) {
+                            log.error("Skipping unManaged volume discovery as the volume {} storage pool doesn't exist in ViPR", driverVolume.getNativeId());
+                            continue;
+                        }
+                        String managedVolumeNativeGuid = NativeGUIDGenerator.generateNativeGuidForVolumeOrBlockSnapShot(
+                                storageSystem.getNativeGuid(), driverVolume.getNativeId());
+                        Volume viprVolume = DiscoveryUtils.checkStorageVolumeExistsInDB(dbClient, managedVolumeNativeGuid);
+                        if (null != viprVolume) {
+                            log.info("Skipping volume {} as it is already managed by ViPR", managedVolumeNativeGuid);
+
+                            // get export data for managed volume to process later --- we need to collect export data for
+                            // managed volume
+                            managedVolumeNativeIdToUriMap.put(driverVolume.getNativeId(), viprVolume.getId());
+                            getVolumeExportInfo(driver, driverVolume, hostToVolumeExportInfoMap);
+                            getExportInfoForManagedVolumeReplicas(managedVolumeNativeIdToUriMap, hostToVolumeExportInfoMap,
+                                    dbClient, storageSystem, viprVolume, driverVolume, driver);
+                            continue;
+                        }
+
+                        unManagedVolume = createUnManagedVolume(driverVolume, storageSystem, storagePool, unManagedVolumesToCreate,
+                                unManagedVolumesToUpdate, dbClient);
+                        unManagedVolumeNativeIdToUriMap.put(driverVolume.getNativeId(), unManagedVolume.getId());
+
+                        // if the volume is associated with a CG, set up the unManaged CG
+                        if (driverVolume.getConsistencyGroup() != null && !driverVolume.getConsistencyGroup().isEmpty()) {
+                            addObjectToUnManagedConsistencyGroup(storageSystem, driverVolume.getConsistencyGroup(), unManagedVolume,
+                                    allCurrentUnManagedCgURIs, unManagedCGToUpdateMap, driver, dbClient);
+                        } else {
+                            // Make sure the unManagedVolume object does not contain CG information from previous discovery
+                            unManagedVolume.getVolumeCharacterstics().put(
+                                    UnManagedVolume.SupportedVolumeCharacterstics.IS_VOLUME_ADDED_TO_CONSISTENCYGROUP.toString(), Boolean.FALSE.toString());
+                            // remove uri of the unManaged CG in the unManaged volume object
+                            unManagedVolume.getVolumeInformation().remove(UnManagedVolume.SupportedVolumeInformation.UNMANAGED_CONSISTENCY_GROUP_URI.toString());
+                        }
+
+                        allCurrentUnManagedVolumeUris.add(unManagedVolume.getId());
+                        getVolumeExportInfo(driver, driverVolume, hostToVolumeExportInfoMap);
+
+                        Set<URI> unManagedSnaphotUris = processUnManagedSnapshots(driverVolume, unManagedVolume, storageSystem, storagePool,
+                                unManagedVolumesToCreate,
+                                unManagedVolumesToUpdate,
+                                allCurrentUnManagedCgURIs, unManagedCGToUpdateMap,
+                                unManagedVolumeNativeIdToUriMap, hostToVolumeExportInfoMap,
+                                driver, dbClient);
+
+                        allCurrentUnManagedVolumeUris.addAll(unManagedSnaphotUris);
+
+                        Set<URI> unManagedCloneUris = processUnManagedClones(driverVolume, unManagedVolume, storageSystem, storagePool,
+                                unManagedVolumesToCreate,
+                                unManagedVolumesToUpdate,
+                                allCurrentUnManagedCgURIs, unManagedCGToUpdateMap,
+                                unManagedVolumeNativeIdToUriMap, hostToVolumeExportInfoMap,
+                                driver, dbClient);
+
+                        allCurrentUnManagedVolumeUris.addAll(unManagedCloneUris);
+
+                    } catch (Exception ex) {
+                        log.error("Error processing {} volume {}", storageSystem.getNativeId(), driverVolume.getNativeId(), ex);
                     }
-                    String managedVolumeNativeGuid = NativeGUIDGenerator.generateNativeGuidForVolumeOrBlockSnapShot(
-                            storageSystem.getNativeGuid(), driverVolume.getNativeId());
-                    Volume viprVolume = DiscoveryUtils.checkStorageVolumeExistsInDB(dbClient, managedVolumeNativeGuid);
-                    if (null != viprVolume) {
-                        log.info("Skipping volume {} as it is already managed by ViPR", managedVolumeNativeGuid);
-
-                        managedVolumeNativeIdToUriMap.put(driverVolume.getNativeId(), viprVolume.getId());
-                        getVolumeExportInfo(driver, driverVolume, hostToManagedVolumeExportInfoMap);
-                        continue;
-                    }
-
-                    unManagedVolume = createUnManagedVolume(driverVolume, storageSystem, storagePool, unManagedVolumesToCreate,
-                            unManagedVolumesToUpdate, dbClient);
-                    unManagedVolumeNativeIdToUriMap.put(driverVolume.getNativeId(), unManagedVolume.getId());
-
-                    // if the volume is associated with a CG, set up the unManaged CG
-                    if (driverVolume.getConsistencyGroup() != null && !driverVolume.getConsistencyGroup().isEmpty()) {
-                        addObjectToUnManagedConsistencyGroup(storageSystem, driverVolume.getConsistencyGroup(), unManagedVolume,
-                                allCurrentUnManagedCgURIs, unManagedCGToUpdateMap, driver, dbClient);
-                    } else {
-                        // Make sure the unManagedVolume object does not contain CG information from previous discovery
-                        unManagedVolume.getVolumeCharacterstics().put(
-                                UnManagedVolume.SupportedVolumeCharacterstics.IS_VOLUME_ADDED_TO_CONSISTENCYGROUP.toString(), Boolean.FALSE.toString());
-                        // remove uri of the unManaged CG in the unManaged volume object
-                        unManagedVolume.getVolumeInformation().remove(UnManagedVolume.SupportedVolumeInformation.UNMANAGED_CONSISTENCY_GROUP_URI.toString());
-                    }
-
-                    allCurrentUnManagedVolumeUris.add(unManagedVolume.getId());
-                    getVolumeExportInfo(driver, driverVolume, hostToUnManagedVolumeExportInfoMap);
-
-                    Set<URI> unManagedSnaphotUris = processUnManagedSnapshots(driverVolume, unManagedVolume, storageSystem, storagePool,
-                            unManagedVolumesToCreate,
-                            unManagedVolumesToUpdate,
-                            allCurrentUnManagedCgURIs, unManagedCGToUpdateMap,
-                            driver, dbClient);
-
-                    allCurrentUnManagedVolumeUris.addAll(unManagedSnaphotUris);
-
-                    Set<URI> unManagedCloneUris = processUnManagedClones(driverVolume, unManagedVolume, storageSystem, storagePool,
-                            unManagedVolumesToCreate,
-                            unManagedVolumesToUpdate,
-                            allCurrentUnManagedCgURIs, unManagedCGToUpdateMap,
-                            driver, dbClient);
-
-                    allCurrentUnManagedVolumeUris.addAll(unManagedCloneUris);
-
-                } catch (Exception ex) {
-                    log.error("Error processing {} volume {}", storageSystem.getNativeId(), driverVolume.getNativeId(), ex);
                 }
+
+                if (!unManagedVolumesToCreate.isEmpty()) {
+                    partitionManager.insertInBatches(unManagedVolumesToCreate,
+                            Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_VOLUME);
+                    unManagedVolumesToCreate.clear();
+                }
+                if (!unManagedVolumesToUpdate.isEmpty()) {
+                    partitionManager.updateAndReIndexInBatches(unManagedVolumesToUpdate,
+                            Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_VOLUME);
+                    unManagedVolumesToUpdate.clear();
+                }
+
+                // Process export data for volumes
+                processExportData(driver, storageSystem, unManagedVolumeNativeIdToUriMap,
+                        managedVolumeNativeIdToUriMap,
+                        hostToVolumeExportInfoMap, hostToManagedVolumeExportInfoMap,
+                        invalidExportHosts, dbClient, partitionManager);
+            } while (!nextPage.equals(lastPage));
+
+            if (!unManagedCGToUpdateMap.isEmpty()) {
+                unManagedCGToUpdate = new ArrayList<>(unManagedCGToUpdateMap.values());
+                partitionManager.updateAndReIndexInBatches(unManagedCGToUpdate,
+                        unManagedCGToUpdate.size(), dbClient, UNMANAGED_CONSISTENCY_GROUP);
+                unManagedCGToUpdate.clear();
             }
 
-            if (!unManagedVolumesToCreate.isEmpty()) {
-                partitionManager.insertInBatches(unManagedVolumesToCreate,
-                        Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_VOLUME);
-                unManagedVolumesToCreate.clear();
-            }
-            if (!unManagedVolumesToUpdate.isEmpty()) {
-                partitionManager.updateAndReIndexInBatches(unManagedVolumesToUpdate,
-                        Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_VOLUME);
-                unManagedVolumesToUpdate.clear();
-            }
+            log.info("Processed {} unmanged objects.", allCurrentUnManagedVolumeUris.size());
+            // Process those active unManaged volume objects available in database but not in newly discovered items, to mark them inactive.
+            DiscoveryUtils.markInActiveUnManagedVolumes(storageSystem, allCurrentUnManagedVolumeUris, dbClient, partitionManager);
 
-            // Process export data for volumes
-            processExportData(driver, storageSystem, unManagedVolumeNativeIdToUriMap,
-                    managedVolumeNativeIdToUriMap,
-                    hostToUnManagedVolumeExportInfoMap, hostToManagedVolumeExportInfoMap,
-                    invalidExportHosts, dbClient, partitionManager);
-        } while (!nextPage.equals(lastPage));
-
-        if (!unManagedCGToUpdateMap.isEmpty()) {
-            unManagedCGToUpdate = new ArrayList<>(unManagedCGToUpdateMap.values());
-            partitionManager.updateAndReIndexInBatches(unManagedCGToUpdate,
-                    unManagedCGToUpdate.size(), dbClient, UNMANAGED_CONSISTENCY_GROUP);
-            unManagedCGToUpdate.clear();
+            // Process those active unManaged consistency group objects available in database but not in newly discovered items, to mark them
+            // inactive.
+            DiscoveryUtils.performUnManagedConsistencyGroupsBookKeeping(storageSystem, allCurrentUnManagedCgURIs, dbClient, partitionManager);
+        } catch (Exception ex) {
+            log.error("Error processing unmanaged discovery for storage system: {}. Error on page: {}.",
+                    storageSystem.getNativeId(), nextPage.toString(), ex);
+        } finally {
+            // release lock
+            try {
+                lock.release();
+                log.info("Released lock for storage system {}", storageSystem.getNativeId());
+            } catch (Exception e) {
+                log.error("Failed to release  Lock {} : {}", lockName, e.getMessage());
+            }
         }
-
-        log.info("Processed {} unmanged objects.", allCurrentUnManagedVolumeUris.size());
-        // Process those active unManaged volume objects available in database but not in newly discovered items, to mark them inactive.
-        DiscoveryUtils.markInActiveUnManagedVolumes(storageSystem, allCurrentUnManagedVolumeUris, dbClient, partitionManager);
-
-        // Process those active unManaged consistency group objects available in database but not in newly discovered items, to mark them
-        // inactive.
-        DiscoveryUtils.performUnManagedConsistencyGroupsBookKeeping(storageSystem, allCurrentUnManagedCgURIs, dbClient, partitionManager);
 
     }
 
     /**
-     * Create unManaged volume for a given driver volume.
+     * Create or update unManaged volume for a given driver volume.
      *
      * @param driverVolume storage system volume
      * @param storageSystem storage system for unManaged volume
@@ -257,6 +306,8 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
             unManagedVolumeCharacteristics.put(UnManagedVolume.SupportedVolumeCharacterstics.HAS_REPLICAS.toString(), FALSE);
             unManagedVolumeInformation.remove(UnManagedVolume.SupportedVolumeInformation.SNAPSHOTS.toString());
             unManagedVolumeInformation.remove(UnManagedVolume.SupportedVolumeInformation.FULL_COPIES.toString());
+            // Clear old export mask information
+            unManagedVolume.getUnmanagedExportMasks().clear();
         }
 
         unManagedVolume.setLabel(driverVolume.getDeviceLabel());
@@ -489,6 +540,8 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                                                List<UnManagedVolume> unManagedVolumesToCreate, List<UnManagedVolume> unManagedVolumesToUpdate,
                                                Set<URI> allCurrentUnManagedCgURIs,
                                                Map<String, UnManagedConsistencyGroup> unManagedCGToUpdateMap,
+                                               Map<String, URI> unManagedVolumeNativeIdToUriMap,
+                                               Map<String, List<HostExportInfo>> hostToUnManagedVolumeExportInfoMap,
                                                BlockStorageDriver driver, DbClient dbClient) throws Exception {
 
         log.info("Processing snapshots for volume {} ", unManagedParentVolume.getNativeGuid());
@@ -524,6 +577,10 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                     addObjectToUnManagedConsistencyGroup(storageSystem, driverVolume.getConsistencyGroup(), unManagedSnap,
                             allCurrentUnManagedCgURIs, unManagedCGToUpdateMap, driver, dbClient);
                 }
+
+                // get export data for the snapshot
+                unManagedVolumeNativeIdToUriMap.put(driverSnapshot.getNativeId(), unManagedSnap.getId());
+                getSnapshotExportInfo(driver, driverSnapshot, hostToUnManagedVolumeExportInfoMap);
             }
             if (!unManagedSnaps.isEmpty()) {
                 // set the HAS_REPLICAS property
@@ -556,6 +613,8 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                                                List<UnManagedVolume> unManagedVolumesToCreate, List<UnManagedVolume> unManagedVolumesToUpdate,
                                                Set<URI> allCurrentUnManagedCgURIs,
                                                Map<String, UnManagedConsistencyGroup> unManagedCGToUpdateMap,
+                                               Map<String, URI> unManagedVolumeNativeIdToUriMap,
+                                               Map<String, List<HostExportInfo>> hostToUnManagedVolumeExportInfoMap,
                                                BlockStorageDriver driver, DbClient dbClient) throws Exception {
 
         log.info("Processing clones for volume {} ", unManagedParentVolume.getNativeGuid());
@@ -590,6 +649,10 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                     // We do not add clones to parent volumes CG (the same as in the green field: verified with VMAX/VNX clones)
                     log.info("Clone {} is for volume in CG. ", managedCloneNativeGuid);
                 }
+
+                // get export data for the clone
+                unManagedVolumeNativeIdToUriMap.put(driverClone.getNativeId(), unManagedClone.getId());
+                getCloneExportInfo(driver, driverClone, hostToUnManagedVolumeExportInfoMap);
             }
             if (!unManagedClones.isEmpty()) {
                 // set the HAS_REPLICAS property
@@ -673,6 +736,8 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
             unManagedVolumeInformation.remove(UnManagedVolume.SupportedVolumeInformation.UNMANAGED_CONSISTENCY_GROUP_URI.toString());
             // Clean old data for replication group name
             unManagedVolumeInformation.remove(UnManagedVolume.SupportedVolumeInformation.SNAPSHOT_CONSISTENCY_GROUP_NAME.toString());
+            // Clear old export mask information
+            unManagedVolume.getUnmanagedExportMasks().clear();
         }
 
         unManagedVolume.setLabel(driverSnapshot.getDeviceLabel());
@@ -846,11 +911,12 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
             unManagedVolumeInformation.remove(UnManagedVolume.SupportedVolumeInformation.UNMANAGED_CONSISTENCY_GROUP_URI.toString());
             // Clean old data for replication group name
             unManagedVolumeInformation.remove(UnManagedVolume.SupportedVolumeInformation.FULL_COPY_CONSISTENCY_GROUP_NAME.toString());
+            // Clear old export mask information
+            unManagedVolume.getUnmanagedExportMasks().clear();
         }
 
         unManagedVolume.setLabel(driverClone.getDeviceLabel());
-        Boolean isVolumeExported = false;
-        unManagedVolumeCharacteristics.put(UnManagedVolume.SupportedVolumeCharacterstics.IS_VOLUME_EXPORTED.toString(), isVolumeExported.toString());
+        unManagedVolumeCharacteristics.put(UnManagedVolume.SupportedVolumeCharacterstics.IS_VOLUME_EXPORTED.toString(), FALSE);
 
         // Set these default to false. The individual storage discovery will change them if needed.
         unManagedVolumeCharacteristics.put(UnManagedVolume.SupportedVolumeCharacterstics.IS_NONRP_EXPORTED.toString(), FALSE);
@@ -975,17 +1041,26 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
         return unManagedVolume;
     }
 
-    private void getVolumeExportInfo(BlockStorageDriver driver, StorageVolume driverVolume, Map<String, List<VolumeToHostExportInfo>> hostToVolumeExportInfoMap) {
+    /**
+     * Gets export information for a given volume from the driver.
+     * Add this information to the provided hostToVolumeExportInfoMap parameter.
+     *
+     * @param driver driver to call (input)
+     * @param driverVolume volume for which we need to get export info (input)
+     * @param hostToVolumeExportInfoMap map, key --- host FQDN, value: list with export info for volumes exported to this host (input/output)
+     */
+    private void getVolumeExportInfo(BlockStorageDriver driver, StorageVolume driverVolume, Map<String, List<HostExportInfo>> hostToVolumeExportInfoMap) {
         // get VolumeToHostExportInfo data for this volume from driver
-        Map<String, VolumeToHostExportInfo> volumeToHostExportInfo = driver.getVolumeToHostExportInfoForHosts(driverVolume);
+        Map<String, HostExportInfo> volumeToHostExportInfo = driver.getVolumeExportInfoForHosts(driverVolume);
+        log.info("Export info for volume {} is {}:", driverVolume, volumeToHostExportInfo);
         if (volumeToHostExportInfo == null || volumeToHostExportInfo.isEmpty()) {
             return;
         }
 
-        //add volumeToHostExportInfo data to hostToVolumeExportInfoMap
-        for(Map.Entry<String, VolumeToHostExportInfo> entry : volumeToHostExportInfo.entrySet()) {
+        //add HostExportInfo data to hostToVolumeExportInfoMap
+        for(Map.Entry<String, HostExportInfo> entry : volumeToHostExportInfo.entrySet()) {
             String hostFqdn = entry.getKey();
-            List<VolumeToHostExportInfo> volumeToHostExportInfoList = hostToVolumeExportInfoMap.get(hostFqdn);
+            List<HostExportInfo> volumeToHostExportInfoList = hostToVolumeExportInfoMap.get(hostFqdn);
             if (volumeToHostExportInfoList == null) {
                 volumeToHostExportInfoList = new ArrayList<>();
                 hostToVolumeExportInfoMap.put(hostFqdn, volumeToHostExportInfoList);
@@ -994,85 +1069,254 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
         }
     }
 
-    private void processExportData(BlockStorageDriver driver, com.emc.storageos.db.client.model.StorageSystem storageSystem,
-                                   Map<String, URI> unManagedVolumeNativeIdToUriMap,
-                                   Map<String, URI> managedVolumeNativeIdToUriMap,
-                                   Map<String, List<VolumeToHostExportInfo>> hostToUnManagedVolumeExportInfoMap,
-                                   Map<String, List<VolumeToHostExportInfo>> hostToManagedVolumeExportInfoMap,
-                                   Set<String> invalidExportHosts,
-                                   DbClient dbClient, PartitionManager partitionManager) {
-        /*
-        Processing of hostToUnManagedVolumeExportInfoMap:
-          - for each host, which is not in invalid hosts set:
-            Verify that all volumes in the map have valid export data (same initiators and same ports).
-            If valid, return set of initiators and set of ports.
-            If invalid, we do not discover exports for this host; add this host to invalid hosts.
-            Next, verify initiators and ports against existing unManaged export mask for the host and array.
-            a. If unManaged export mask exist and valid, return this mask --- we will update it with a new volume.
-            b. If unManaged export mask exist and invalid, we invalidate this mask, add the host to invalid hosts
-               and do not discover exports for this host.
-            //If unManaged export mask does not exist, we will create a new one for host/array.
-            Next, verify initiators and ports against existing managed export mask for the host and array.
-            If managed export mask for host/array exists and does not comply with discovered initiator/port data for the
-            host/array unManaged mask, we do not discover exports for this host.
-
-
-         */
-
-        List<UnManagedExportMask> unManagedExportMasksToCreate = new ArrayList<>();
-        List<UnManagedExportMask> unManagedExportMasksToUpdate = new ArrayList<>();
-
-        Map<URI, VolumeToHostExportInfo> masksToUpdateForUnManagedVolumes = new HashMap<>();
-        List<VolumeToHostExportInfo>  masksToCreateForUnManagedVolumes = new ArrayList<>();
-        Map<URI, VolumeToHostExportInfo> masksToUpdateForManagedVolumes = new HashMap<>();
-        List<VolumeToHostExportInfo>  masksToCreateForManagedVolumes = new ArrayList<>();
-
-        // process export info for unManaged volumes
-        determineUnManagedExportMasksForExportInfo(storageSystem,
-                hostToUnManagedVolumeExportInfoMap,
-                invalidExportHosts,
-                dbClient, masksToUpdateForUnManagedVolumes, masksToCreateForUnManagedVolumes);
-
-        // process export info for managed volumes
-        determineUnManagedExportMasksForExportInfo(storageSystem,
-                hostToManagedVolumeExportInfoMap,
-                invalidExportHosts,
-                dbClient, masksToUpdateForManagedVolumes, masksToCreateForManagedVolumes);
-
-        processUnManagedMasksForUnManagedVolumes(storageSystem, masksToUpdateForUnManagedVolumes,
-                masksToCreateForUnManagedVolumes, unManagedVolumeNativeIdToUriMap,
-                unManagedExportMasksToUpdate, unManagedExportMasksToCreate, dbClient);
-        // update db with results, so we do not create duplicate masks when we process masks for managed volumes
-        if (!unManagedExportMasksToCreate.isEmpty()) {
-            partitionManager.insertInBatches(unManagedExportMasksToCreate,
-                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
-            unManagedExportMasksToCreate.clear();
+    /**
+     * Gets export information for a given snapshot from the driver.
+     * Add this information to the provided hostToVolumeExportInfoMap parameter.
+     *
+     * @param driver driver to call (input)
+     * @param driverSnapshot snapshot for which we need to get export info (input)
+     * @param hostToVolumeExportInfoMap map, key --- host FQDN, value: list with export info for block objects exported
+     *                            to this host (input/output)
+     */
+    private void getSnapshotExportInfo(BlockStorageDriver driver, VolumeSnapshot driverSnapshot, Map<String, List<HostExportInfo>> hostToVolumeExportInfoMap) {
+        // get HostExportInfo data for this snap from driver
+        Map<String, HostExportInfo> volumeToHostExportInfo = driver.getSnapshotExportInfoForHosts(driverSnapshot);
+        log.info("Export info for snapshot {} is {}:", driverSnapshot, volumeToHostExportInfo);
+        if (volumeToHostExportInfo == null || volumeToHostExportInfo.isEmpty()) {
+            return;
         }
-        if (!unManagedExportMasksToUpdate.isEmpty()) {
-            partitionManager.updateInBatches(unManagedExportMasksToUpdate,
-                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
-            unManagedExportMasksToUpdate.clear();
+
+        //add volumeToHostExportInfo data to hostToVolumeExportInfoMap
+        for(Map.Entry<String, HostExportInfo> entry : volumeToHostExportInfo.entrySet()) {
+            String hostFqdn = entry.getKey();
+            List<HostExportInfo> volumeToHostExportInfoList = hostToVolumeExportInfoMap.get(hostFqdn);
+            if (volumeToHostExportInfoList == null) {
+                volumeToHostExportInfoList = new ArrayList<>();
+                hostToVolumeExportInfoMap.put(hostFqdn, volumeToHostExportInfoList);
+            }
+            volumeToHostExportInfoList.add(entry.getValue());
         }
-        
-        processUnManagedMasksForManagedVolumes(storageSystem, masksToUpdateForManagedVolumes,
-                masksToCreateForManagedVolumes, managedVolumeNativeIdToUriMap,
-                unManagedExportMasksToUpdate, unManagedExportMasksToCreate, dbClient);
-        if (!unManagedExportMasksToCreate.isEmpty()) {
-            partitionManager.insertInBatches(unManagedExportMasksToCreate,
-                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
-            unManagedExportMasksToCreate.clear();
+    }
+
+    /**
+     * Gets export information for a given clone from the driver.
+     * Add this information to the provided hostToVolumeExportInfoMap parameter.
+     *
+     * @param driver driver to call (input)
+     * @param driverClone clone for which we need to get export info (input)
+     * @param hostToVolumeExportInfoMap map, key --- host FQDN, value: list with export info for block objects exported
+     *                            to this host (input/output)
+     */
+    private void getCloneExportInfo(BlockStorageDriver driver, VolumeClone driverClone, Map<String, List<HostExportInfo>> hostToVolumeExportInfoMap) {
+        // get HostExportInfo data for this clone from driver
+        Map<String, HostExportInfo> volumeToHostExportInfo = driver.getCloneExportInfoForHosts(driverClone);
+        log.info("Export info for clone {} is {}:", driverClone, volumeToHostExportInfo);
+        if (volumeToHostExportInfo == null || volumeToHostExportInfo.isEmpty()) {
+            return;
         }
-        if (!unManagedExportMasksToUpdate.isEmpty()) {
-            partitionManager.updateInBatches(unManagedExportMasksToUpdate,
-                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
-            unManagedExportMasksToUpdate.clear();
+
+        //add volumeToHostExportInfo data to hostToVolumeExportInfoMap
+        for(Map.Entry<String, HostExportInfo> entry : volumeToHostExportInfo.entrySet()) {
+            String hostFqdn = entry.getKey();
+            List<HostExportInfo> volumeToHostExportInfoList = hostToVolumeExportInfoMap.get(hostFqdn);
+            if (volumeToHostExportInfoList == null) {
+                volumeToHostExportInfoList = new ArrayList<>();
+                hostToVolumeExportInfoMap.put(hostFqdn, volumeToHostExportInfoList);
+            }
+            volumeToHostExportInfoList.add(entry.getValue());
         }
     }
 
 
     /**
+     * Get export info for replicas (snaps and clones) of managed volume.
+     * We expect that all replicas of managed volume should be managed (known to vipr) ---
+     * enforced by  ingest framework, plus we do not support coexistence .
+     * Warning log message is generated for each replica which is unmanaged.
+     *
+     * @param managedVolumeNativeIdToUriMap [OUT]
+     * @param hostToManagedVolumeExportInfoMap [OUT], map: key --- host name, value: list of export infos for volumes exported
+     *                                         to this host.
+     * @param dbClient [IN]
+     * @param storageSystem [IN]
+     * @param viprVolume [IN]
+     * @param driverVolume [IN]
+     * @param driver [IN]
+     * @throws Exception
+     */
+    private void getExportInfoForManagedVolumeReplicas(Map<String, URI> managedVolumeNativeIdToUriMap,
+                                                       Map<String, List<HostExportInfo>> hostToManagedVolumeExportInfoMap,
+                                                       DbClient dbClient, com.emc.storageos.db.client.model.StorageSystem storageSystem,
+                                                       Volume viprVolume, StorageVolume driverVolume,
+                                                       BlockStorageDriver driver) throws Exception {
+
+        // get export info for managed volume  snapshots
+        log.info("Processing snapshots for managed volume {} ", viprVolume.getNativeGuid());
+        List<VolumeSnapshot> driverSnapshots = driver.getVolumeSnapshots(driverVolume);
+        if (driverSnapshots == null || driverSnapshots.isEmpty()) {
+            log.info("There are no snapshots for volume {} ", viprVolume.getNativeGuid());
+        } else {
+            log.info("Snapshots for managed volume {}:" + Joiner.on("\t").join(driverSnapshots), viprVolume.getNativeGuid());
+            for (VolumeSnapshot driverSnapshot : driverSnapshots) {
+                String managedSnapNativeGuid = NativeGUIDGenerator.generateNativeGuidForVolumeOrBlockSnapShot(
+                        storageSystem.getNativeGuid(), driverSnapshot.getNativeId());
+                BlockSnapshot viprSnap = DiscoveryUtils.checkBlockSnapshotExistsInDB(dbClient, managedSnapNativeGuid);
+                if (viprSnap == null) {
+                    log.warn("Found unmanaged snapshot of managed volume --- this is unexpected! Skipping this snapshot {}.",
+                            driverSnapshot.getNativeId());
+                    continue;
+                } else {
+                    log.info("Processing managed {} snapshot of managed volume ().",
+                            viprSnap.getNativeId(), viprVolume.getNativeGuid());
+                }
+
+                // get export data for the snapshot
+                managedVolumeNativeIdToUriMap.put(driverSnapshot.getNativeId(), viprSnap.getId());
+                getSnapshotExportInfo(driver, driverSnapshot, hostToManagedVolumeExportInfoMap);
+            }
+        }
+        // get export info for managed volume  clones
+        log.info("Processing clones for managed volume {} ", viprVolume.getNativeGuid());
+        List<VolumeClone> driverClones = driver.getVolumeClones(driverVolume);
+        if (driverClones == null || driverClones.isEmpty()) {
+            log.info("There are no clones for volume {} ", viprVolume.getNativeGuid());
+        } else {
+            log.info("Clones for managed volume {}:" + Joiner.on("\t").join(driverClones), viprVolume.getNativeGuid());
+            for (VolumeClone driverClone : driverClones) {
+                String managedCloneNativeGuid = NativeGUIDGenerator.generateNativeGuidForVolumeOrBlockSnapShot(
+                        storageSystem.getNativeGuid(), driverClone.getNativeId());
+                Volume viprClone = DiscoveryUtils.checkStorageVolumeExistsInDB(dbClient, managedCloneNativeGuid);
+                if (viprClone == null) {
+                    log.warn("Found unmanaged clone of managed volume --- this is unexpected! Skipping this clone {}.",
+                            driverClone.getNativeId());
+                    continue;
+                } else {
+                    log.info("Processing managed {} clone of managed volume ().",
+                            viprClone.getNativeId(), viprVolume.getNativeGuid());
+                }
+
+                // get export data for the clone
+                managedVolumeNativeIdToUriMap.put(driverClone.getNativeId(), viprClone.getId());
+                getCloneExportInfo(driver, driverClone, hostToManagedVolumeExportInfoMap);
+            }
+        }
+    }
+
+    /**
+     * Processes export info for unmanaged and managed volumes found on storage array during volume discovery.
+     * Analyses export info and builds/updates UnManagedExport masks for the exports.
+     *
+     * @param driver driver reference [IN]
+     * @param storageSystem storage system [IN]
+     * @param unManagedVolumeNativeIdToUriMap helper map of unmanaged volumes native ids to persistent Uris [IN]
+     * @param managedVolumeNativeIdToUriMap  helper map of managed volumes native ids to persistent Uris [IN]
+     * @param hostToVolumeExportInfoMap map with export info for unmanaged volumes found on storage array.
+     *                                           key: host FQDN, value: list of volume export info for this host.[IN]
+     * @param hostToManagedVolumeExportInfoMap  map with export info for managed volumes found on storage array.
+     *                                           key: host FQDN, value: list of volume export info for this host.[IN]
+     * @param invalidExportHosts Set of host FQDN for which we found invalid exports to the storage system. [IN/OUT]
+     *                           We will exclude exports for these hosts from processing.
+     * @param dbClient
+     * @param partitionManager
+     */
+    private void processExportData(BlockStorageDriver driver, com.emc.storageos.db.client.model.StorageSystem storageSystem,
+                                   Map<String, URI> unManagedVolumeNativeIdToUriMap,
+                                   Map<String, URI> managedVolumeNativeIdToUriMap,
+                                   Map<String, List<HostExportInfo>> hostToVolumeExportInfoMap,
+                                   Map<String, List<HostExportInfo>> hostToManagedVolumeExportInfoMap,
+                                   Set<String> invalidExportHosts,
+                                   DbClient dbClient, PartitionManager partitionManager) {
+        /*
+        Processing of hostToUnManagedVolumeExportInfoMap:
+          - for each host, which is not in invalid hosts set:
+            Verify that all export info for this host in the map have valid export data (same initiators and same ports).
+            If valid, return export info with all volumes.
+            If invalid, we do not discover exports for this host; add this host to invalid hosts.
+            Next, verify initiators and ports against existing unManaged export mask for the host and array.
+            a. If unManaged export mask exist and valid, return this mask --- we will update it with new volumes.
+            b. If unManaged export mask exist and invalid, we invalidate this mask, add the host to invalid hosts
+               and do not discover exports for this host.
+
+            If unManaged export mask does not exist, we will create a new one for host/array.
+            Next, check if there is existing managed export mask for the host and array.
+            If managed export mask for host/array exists, we do not process new export info for the host/array ---
+            no support for co-existence.
+         */
+
+        List<UnManagedExportMask> unManagedExportMasksToCreate = new ArrayList<>();
+        List<UnManagedExportMask> unManagedExportMasksToUpdate = new ArrayList<>();
+
+        // Map, key: uri of existing unmanaged volume mask, value: new export info to add to the mask
+        Map<URI, HostExportInfo> masksToUpdateForUnManagedVolumes = new HashMap<>();
+        List<HostExportInfo>  masksToCreateForUnManagedVolumes = new ArrayList<>();
+
+        // Map, key: uri of existing unmanaged volume mask, value: new export info to add to the mask
+        Map<URI, HostExportInfo> masksToUpdateForManagedVolumes = new HashMap<>();
+        List<HostExportInfo>  masksToCreateForManagedVolumes = new ArrayList<>();
+
+        // process export info for unManaged volumes to get masksToUpdateForUnManagedVolumes and masksToCreateForUnManagedVolumes
+        determineUnManagedExportMasksForExportInfo(storageSystem,
+                hostToVolumeExportInfoMap,
+                invalidExportHosts,
+                dbClient, masksToUpdateForUnManagedVolumes, masksToCreateForUnManagedVolumes);
+
+        log.info("Export info for masks to create for unmanaged volumes: {}", masksToCreateForUnManagedVolumes);
+        log.info("Export info for masks to update for unmanaged volumes: {}", masksToUpdateForUnManagedVolumes);
+//        // process export info for managed volumes to get masksToUpdateForManagedVolumes and masksToCreateForManagedVolumes
+//        determineUnManagedExportMasksForExportInfo(storageSystem,
+//                hostToManagedVolumeExportInfoMap,
+//                invalidExportHosts,
+//                dbClient, masksToUpdateForManagedVolumes, masksToCreateForManagedVolumes);
+//        log.info("Export info for masks to create for managed volumes: {}", masksToCreateForManagedVolumes);
+//        log.info("Export info for masks to update for managed volumes: {}", masksToUpdateForManagedVolumes);
+
+        // process unmanaged export masks for unmanaged volumes
+        if (!(masksToCreateForUnManagedVolumes.isEmpty() && masksToUpdateForUnManagedVolumes.isEmpty()) ) {
+            processUnManagedMasksForUnManagedVolumes(storageSystem, masksToUpdateForUnManagedVolumes,
+                    masksToCreateForUnManagedVolumes, unManagedVolumeNativeIdToUriMap, managedVolumeNativeIdToUriMap,
+                    unManagedExportMasksToUpdate, unManagedExportMasksToCreate, dbClient);
+        }
+        log.info("Masks to create for unmanaged volumes: {}", unManagedExportMasksToCreate);
+        log.info("Masks to update for unmanaged volumes: {}", unManagedExportMasksToUpdate);
+        // update db with results, so we do not create duplicate masks when we process masks for managed volumes
+        if (!unManagedExportMasksToCreate.isEmpty()) {
+            partitionManager.insertInBatches(unManagedExportMasksToCreate,
+                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
+        }
+        if (!unManagedExportMasksToUpdate.isEmpty()) {
+            partitionManager.updateInBatches(unManagedExportMasksToUpdate,
+                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
+        }
+
+        updateUnManagedVolumesWithExportData(unManagedVolumeNativeIdToUriMap, unManagedExportMasksToCreate, unManagedExportMasksToUpdate, dbClient, partitionManager);
+        unManagedExportMasksToCreate.clear();
+        unManagedExportMasksToUpdate.clear();
+
+//        // process unmanaged export masks for managed volumes
+//        if (!(masksToCreateForManagedVolumes.isEmpty() && masksToUpdateForManagedVolumes.isEmpty()) ) {
+//            processUnManagedMasksForManagedVolumes(storageSystem, masksToUpdateForManagedVolumes,
+//                    masksToCreateForManagedVolumes, managedVolumeNativeIdToUriMap,
+//                    unManagedExportMasksToUpdate, unManagedExportMasksToCreate, dbClient);
+//        }
+//
+//        log.info("Masks to create for managed volumes: {}", unManagedExportMasksToCreate);
+//        log.info("Masks to update for managed volumes: {}", unManagedExportMasksToUpdate);
+//        if (!unManagedExportMasksToCreate.isEmpty()) {
+//            partitionManager.insertInBatches(unManagedExportMasksToCreate,
+//                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
+//            unManagedExportMasksToCreate.clear();
+//        }
+//        if (!unManagedExportMasksToUpdate.isEmpty()) {
+//            partitionManager.updateInBatches(unManagedExportMasksToUpdate,
+//                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_EXPORT_MASK);
+//            unManagedExportMasksToUpdate.clear();
+//        }
+    }
+
+
+    /**
      * This method processes hostToVolumeExportInfoMap to find out which existing unmanaged masks has to be updated,
-     * and which unmanaged masks has to be created new for this export info. It also identifies hosts which unsupported
+     * and which unmanaged masks has to be created new for this export info. It also identifies hosts with unsupported
      * export info data (exported host volumes are not seen through the same set of initiators and the same set of storage
      * ports) and adds these hosts to invalidExportHosts set.
      *
@@ -1085,63 +1329,86 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
      * @param masksToCreateForVolumes [OUT] list of export info instances for which we need to create new unmanaged masks.
      */
     private void determineUnManagedExportMasksForExportInfo(com.emc.storageos.db.client.model.StorageSystem storageSystem,
-                                               Map<String, List<VolumeToHostExportInfo>> hostToVolumeExportInfoMap,
+                                               Map<String, List<HostExportInfo>> hostToVolumeExportInfoMap,
                                                Set<String> invalidExportHosts,
-                                               DbClient dbClient, Map<URI, VolumeToHostExportInfo> masksToUpdateForVolumes,
-                                               List<VolumeToHostExportInfo>  masksToCreateForVolumes) {
+                                               DbClient dbClient, Map<URI, HostExportInfo> masksToUpdateForVolumes,
+                                               List<HostExportInfo>  masksToCreateForVolumes) {
 
-        for (Map.Entry<String, List<VolumeToHostExportInfo>> entry : hostToVolumeExportInfoMap.entrySet()) {
+        for (Map.Entry<String, List<HostExportInfo>> entry : hostToVolumeExportInfoMap.entrySet()) {
             String hostName = entry.getKey();
+            log.info("Processing export info for host {} .", hostName);
+
             if (invalidExportHosts.contains(hostName)) {
                 // skip and continue to the next host.
+                log.info("Found host {} in invalid hosts list. We will not process this host export data.", hostName);
                 continue;
             }
-            List<VolumeToHostExportInfo> volumeToHostExportInfoList = entry.getValue();
-            VolumeToHostExportInfo hostExportInfo = verifyHostExports(volumeToHostExportInfoList);
+            List<HostExportInfo> volumeToHostExportInfoList = entry.getValue();
+            log.info("Processing export info list {} .", volumeToHostExportInfoList);
+            HostExportInfo hostExportInfo = verifyHostExports(volumeToHostExportInfoList);
             if (hostExportInfo == null) {
                 // invalid, continue to the next host
                 invalidExportHosts.add(hostName);
+                log.info("Found export info for host {} invalid. We will not process this host export data.", hostName);
                 continue;
             }
+            log.info("The result export info for host {} : {} .", hostName, hostExportInfo);
+
             // check existing UnManaged export mask for host/array: the mask could be discovered for volumes on previous
             // pages (all unmanaged masks from previous discovery have been deactivated at the begging).
             UnManagedExportMask unManagedMask = getUnManagedExportMask(hostName, dbClient, storageSystem.getId());
             boolean isValid = true;
             if (unManagedMask != null) {
+                log.info("Found existing unmanaged export mask for host {} and array {} --- {} .", hostName, storageSystem.getNativeId(), unManagedMask);
                 // check that existing host/array unManaged export mask has the same set of initiators and the same
                 // set of ports as new discovered hostExportInfo
                 StringSet storagePortsUris = unManagedMask.getKnownStoragePortUris();
                 Set<String> storagePortsNativeIds = new HashSet<>();
+                Set<String> initiatorsNativeIds = new HashSet<>();
                 for (String portUriString : storagePortsUris) {
                     URI portUri = URI.create(portUriString);
                     com.emc.storageos.db.client.model.StoragePort port = dbClient.queryObject(com.emc.storageos.db.client.model.StoragePort.class, portUri);
                     storagePortsNativeIds.add(port.getNativeId());
                 }
-                isValid = verifyHostExports(unManagedMask.getKnownInitiatorNetworkIds(), storagePortsNativeIds, hostExportInfo);
+                storagePortsNativeIds.addAll(unManagedMask.getUnmanagedStoragePortNetworkIds());
+
+                initiatorsNativeIds.addAll(unManagedMask.getKnownInitiatorNetworkIds());
+                initiatorsNativeIds.addAll(unManagedMask.getUnmanagedInitiatorNetworkIds());
+                isValid = verifyHostExports(initiatorsNativeIds, storagePortsNativeIds, hostExportInfo);
                 if (!isValid) {
                     // invalid, we deactivate existing unmanaged mask --- make sure we do not discover invalid export
                     // masks.
+                    log.info("The result export info for host {} and storage array {} does not comply with existing mask.",
+                            hostName, storageSystem.getNativeId());
                     unManagedMask.setInactive(true);
                     dbClient.updateObject(unManagedMask);
                 }
             } else {
-                // todo: why we should do this? If mask is already managed, should we simply skip it?
-                // todo: what will happen with unmanaged volumes in managed masks if we do not rediscover their masks?
-                // todo: need to test this.
-                // todo: we should not do anything for this case: discover unmanged mask as if there is no managed mask
-                // and let ingest to deal with this. Test this.
-
-                // check if managed export mask exist for host/array and verify that it has
-                // the same set of initiators and the same
-                // set of ports as new discovered hostExportInfo
-                // todo: get managed mask and if exist call verifyHostExports for its initiators/ports.
-
-                // isValid = verifyHostExports(managedMask.getKnownInitiatorUris(), managedMask.getKnownStoragePortUris(), hostExportInfo);
+                // Check if export mask for host/array is already managed. In such a case, skip export info for this
+                // host/array. We do not discover export info for hosts which already have managed export mask volume's
+                // storage array.
+                List<String> initiatorPorts = new ArrayList<>();
+                for (Initiator initiator : hostExportInfo.getInitiators()) {
+                    initiatorPorts.add(initiator.getPort());
+                }
+                Map<URI, ExportMask> uriToExportMask = ExportMaskUtils.getExportMasksWithInitiatorPorts(dbClient, initiatorPorts);
+                // Look for export mask for the storage system under processing.
+                for (ExportMask mask : uriToExportMask.values()) {
+                    if (mask.getStorageDevice().equals(storageSystem.getId())) {
+                        // found managed export mask for storage system and host initiator
+                        // the mask is already managed.
+                        isValid = false;
+                        log.info("Found managed export mask for host {}. We will not process this host export data.", hostName);
+                        break;
+                    }
+                }
             }
             if (!isValid) {
                 // invalid, continue to the next host
                 // add host to invalid hosts list, so we do not process any export volume
                 // info for this host in the future (for volumes found on next pages).
+                log.info("Found export info for host {} invalid. Export info: {}." +
+                        " We will not process this host export data.", hostName, hostExportInfo);
                 invalidExportHosts.add(hostName);
                 continue;
             }
@@ -1158,54 +1425,85 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
     }
 
     /**
+     * This method processes export info for unmanaged volumes and returns unmanaged masks to create and existing unmanaged masks to update.
      *
-     * @param storageSystem
-     * @param masksToUpdateForUnManagedVolumes
-     * @param masksToCreateForUnManagedVolumes
-     * @param unManagedVolumeNativeIdToUriMap
-     * @param unManagedExportMasksToUpdate
-     * @param unManagedExportMasksToCreate
+     * @param storageSystem [IN]
+     * @param masksToUpdateForUnManagedVolumes [IN] map: key --- mask uri, value --- volume export info to add to the mask.
+     * @param masksToCreateForUnManagedVolumes [IN] list of volume export info for which we need to create new masks.
+     * @param unManagedVolumeNativeIdToUriMap [IN] map of unmanaged volume native id to unmanaged volume URI
+     * @param unManagedExportMasksToUpdate [OUT] list of unmanaged export masks to update
+     * @param unManagedExportMasksToCreate [OUT] list of unmanaged export masks to create
      * @param dbClient
      */
     private void processUnManagedMasksForUnManagedVolumes(com.emc.storageos.db.client.model.StorageSystem storageSystem,
-                                                          Map<URI, VolumeToHostExportInfo> masksToUpdateForUnManagedVolumes,
-                                                          List<VolumeToHostExportInfo> masksToCreateForUnManagedVolumes,
+                                                          Map<URI, HostExportInfo> masksToUpdateForUnManagedVolumes,
+                                                          List<HostExportInfo> masksToCreateForUnManagedVolumes,
                                                           Map<String, URI> unManagedVolumeNativeIdToUriMap,
-                                                          List<UnManagedExportMask> unManagedExportMasksToUpdate, 
-                                                          List<UnManagedExportMask> unManagedExportMasksToCreate, 
+                                                          Map<String, URI> managedVolumeNativeIdToUriMap,
+                                                          List<UnManagedExportMask> unManagedExportMasksToUpdate,
+                                                          List<UnManagedExportMask> unManagedExportMasksToCreate,
                                                           DbClient dbClient) {
 
+        log.info("Processing unmanaged volumes: {} .", unManagedVolumeNativeIdToUriMap);
         // update/create unManaged masks for unManaged volumes
-        for (Map.Entry<URI, VolumeToHostExportInfo> entry : masksToUpdateForUnManagedVolumes.entrySet()) {
+        log.info("Processing masks to update: {} .", masksToUpdateForUnManagedVolumes);
+        for (Map.Entry<URI, HostExportInfo> entry : masksToUpdateForUnManagedVolumes.entrySet()) {
             URI maskUri = entry.getKey();
-            VolumeToHostExportInfo exportInfo = entry.getValue();
+            HostExportInfo exportInfo = entry.getValue();
 
             Set<String> unManagedVolumesUris = new HashSet<>();
-            List<String> volumesNativeIds = exportInfo.getVolumeNativeIds();
+            Set<String> managedVolumesUris = new HashSet<>();
+            List<String> volumesNativeIds = exportInfo.getStorageObjectNativeIds();
             for (String volumeNativeId : volumesNativeIds) {
                 URI volumeUri = unManagedVolumeNativeIdToUriMap.get(volumeNativeId);
-                unManagedVolumesUris.add(volumeUri.toString());
+                if (volumeUri != null) {
+                    unManagedVolumesUris.add(volumeUri.toString());
+                } else {
+                    volumeUri = managedVolumeNativeIdToUriMap.get(volumeNativeId);
+                    if (volumeUri != null) {
+                        managedVolumesUris.add(volumeUri.toString());
+                    }
+                }
             }
+            // process unmanaged volumes
             UnManagedExportMask unManagedMask = dbClient.queryObject(UnManagedExportMask.class, maskUri);
-            StringSet volumesInMask = unManagedMask.getUnmanagedVolumeUris();
+            StringSet unmangedVolumesInMask = unManagedMask.getUnmanagedVolumeUris();
             // check for null, since existing mask may only have "known" volumes.
-            if (volumesInMask == null) {
-                volumesInMask = new StringSet();
-                unManagedMask.setUnmanagedVolumeUris(volumesInMask);
+            if (unmangedVolumesInMask == null) {
+                unmangedVolumesInMask = new StringSet();
+                unManagedMask.setUnmanagedVolumeUris(unmangedVolumesInMask);
             }
-            volumesInMask.addAll(unManagedVolumesUris);
+            unmangedVolumesInMask.addAll(unManagedVolumesUris);
+            // process managed volumes
+            StringSet managedVolumesInMask = unManagedMask.getKnownVolumeUris();
+            // check for null, since existing mask may only have unManaged volumes.
+            if (managedVolumesInMask == null) {
+                managedVolumesInMask = new StringSet();
+                unManagedMask.setKnownVolumeUris(managedVolumesInMask);
+            }
+            managedVolumesInMask.addAll(managedVolumesUris);
+
             unManagedExportMasksToUpdate.add(unManagedMask);
         }
 
-        for (VolumeToHostExportInfo hostExportInfo : masksToCreateForUnManagedVolumes) {
+        log.info("Processing masks to create: {} .", masksToCreateForUnManagedVolumes);
+        for (HostExportInfo hostExportInfo : masksToCreateForUnManagedVolumes) {
             Set<String> unManagedVolumesUris = new HashSet<>();
-            List<String> volumesNativeIds = hostExportInfo.getVolumeNativeIds();
+            Set<String> managedVolumesUris = new HashSet<>();
+            List<String> volumesNativeIds = hostExportInfo.getStorageObjectNativeIds();
             for (String volumeNativeId : volumesNativeIds) {
                 URI volumeUri = unManagedVolumeNativeIdToUriMap.get(volumeNativeId);
-                unManagedVolumesUris.add(volumeUri.toString());
+                if (volumeUri != null) {
+                    unManagedVolumesUris.add(volumeUri.toString());
+                } else {
+                    volumeUri = managedVolumeNativeIdToUriMap.get(volumeNativeId);
+                    if (volumeUri != null) {
+                        managedVolumesUris.add(volumeUri.toString());
+                    }
+                }
             }
             // we will create new unManaged mask for host/array.
-            UnManagedExportMask newMask = createUnManagedExportMask(storageSystem, hostExportInfo, unManagedVolumesUris, null,
+            UnManagedExportMask newMask = createUnManagedExportMask(storageSystem, hostExportInfo, unManagedVolumesUris, managedVolumesUris,
                     dbClient);
             unManagedExportMasksToCreate.add(newMask);
         }
@@ -1222,20 +1520,20 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
      * @param dbClient
      */
     private void processUnManagedMasksForManagedVolumes(com.emc.storageos.db.client.model.StorageSystem storageSystem,
-                                                          Map<URI, VolumeToHostExportInfo> masksToUpdateForManagedVolumes,
-                                                          List<VolumeToHostExportInfo> masksToCreateForManagedVolumes,
+                                                          Map<URI, HostExportInfo> masksToUpdateForManagedVolumes,
+                                                          List<HostExportInfo> masksToCreateForManagedVolumes,
                                                           Map<String, URI> managedVolumeNativeIdToUriMap,
                                                           List<UnManagedExportMask> unManagedExportMasksToUpdate,
                                                           List<UnManagedExportMask> unManagedExportMasksToCreate,
                                                           DbClient dbClient) {
 
         // update/create unManaged masks for managed volumes
-        for (Map.Entry<URI, VolumeToHostExportInfo> entry : masksToUpdateForManagedVolumes.entrySet()) {
+        for (Map.Entry<URI, HostExportInfo> entry : masksToUpdateForManagedVolumes.entrySet()) {
             URI maskUri = entry.getKey();
-            VolumeToHostExportInfo exportInfo = entry.getValue();
+            HostExportInfo exportInfo = entry.getValue();
 
             Set<String> managedvolumesUris = new HashSet<>();
-            List<String> volumesNativeIds = exportInfo.getVolumeNativeIds();
+            List<String> volumesNativeIds = exportInfo.getStorageObjectNativeIds();
             for (String volumeNativeId : volumesNativeIds) {
                 URI volumeUri = managedVolumeNativeIdToUriMap.get(volumeNativeId);
                 managedvolumesUris.add(volumeUri.toString());
@@ -1251,15 +1549,15 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
             unManagedExportMasksToUpdate.add(unManagedMask);
         }
 
-        for (VolumeToHostExportInfo hostExportInfo : masksToCreateForManagedVolumes) {
+        for (HostExportInfo hostExportInfo : masksToCreateForManagedVolumes) {
             Set<String> managedvolumesUris = new HashSet<>();
-            List<String> volumesNativeIds = hostExportInfo.getVolumeNativeIds();
+            List<String> volumesNativeIds = hostExportInfo.getStorageObjectNativeIds();
             for (String volumeNativeId : volumesNativeIds) {
                 URI volumeUri = managedVolumeNativeIdToUriMap.get(volumeNativeId);
                 managedvolumesUris.add(volumeUri.toString());
             }
             // we will create new unManaged mask for host/array.
-            UnManagedExportMask newMask = createUnManagedExportMask(storageSystem, hostExportInfo, managedvolumesUris, null,
+            UnManagedExportMask newMask = createUnManagedExportMask(storageSystem, hostExportInfo, null, managedvolumesUris,
                     dbClient);
             unManagedExportMasksToCreate.add(newMask);
         }
@@ -1274,8 +1572,8 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
      * ports, and all volumes from all elements of input list.
      * If validation failed, return null.
      */
-    private VolumeToHostExportInfo verifyHostExports(List<VolumeToHostExportInfo> hostExportInfoList) {
-        VolumeToHostExportInfo exportInfo = hostExportInfoList.get(0);
+    private HostExportInfo verifyHostExports(List<HostExportInfo> hostExportInfoList) {
+        HostExportInfo exportInfo = hostExportInfoList.get(0);
 
         String hostName = exportInfo.getHostName(); // FQDN of a host
         Set<String> volumeNativeIds = new HashSet<>(); // storage volumes native Ids
@@ -1294,18 +1592,18 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
             masterTargetNativeIds.add(port.getNativeId());
         }
 
-        for (VolumeToHostExportInfo hostExportInfo : hostExportInfoList) {
+        for (HostExportInfo hostExportInfo : hostExportInfoList) {
             boolean isValid = verifyHostExports(masterInitiatorNetworkIds, masterTargetNativeIds, hostExportInfo);
             if (!isValid) {
                 return null;
             }
 
             // Aggregate all volumes in one set.
-            volumeNativeIds.addAll(hostExportInfo.getVolumeNativeIds());
+            volumeNativeIds.addAll(hostExportInfo.getStorageObjectNativeIds());
         }
 
         // Create result export info
-        VolumeToHostExportInfo hostExportInfo = new VolumeToHostExportInfo(hostName, new ArrayList<>(volumeNativeIds),
+        HostExportInfo hostExportInfo = new HostExportInfo(hostName, new ArrayList<>(volumeNativeIds),
                 initiators, targets);
 
         return hostExportInfo;
@@ -1318,7 +1616,7 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
      * @param hostExportInfo
      * @return
      */
-    boolean verifyHostExports(Set<String> initiatorNetworkIds, Set<String> storagePortNativeIds, VolumeToHostExportInfo hostExportInfo) {
+    boolean verifyHostExports(Set<String> initiatorNetworkIds, Set<String> storagePortNativeIds, HostExportInfo hostExportInfo) {
         if (initiatorNetworkIds == null || storagePortNativeIds == null) {
             return false;
         }
@@ -1353,6 +1651,8 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
      * @return
      */
     private UnManagedExportMask getUnManagedExportMask(String hostName, DbClient dbClient, URI systemURI) {
+
+        // try to find mask with the same initiator (at least one), this will cover case when host is known
         URIQueryResultList initiators = new URIQueryResultList();
         UnManagedExportMask uem = null;
         dbClient.queryByConstraint(AlternateIdConstraint.Factory
@@ -1363,7 +1663,6 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
             com.emc.storageos.db.client.model.Initiator initiator = dbClient.queryObject(com.emc.storageos.db.client.model.Initiator.class,
                                                                                          initiatorIterator.next());
             URIQueryResultList masks = new URIQueryResultList();
-            // todo: should we query by initiator uri instead?
             dbClient.queryByConstraint(AlternateIdConstraint.Factory
                     .getUnManagedExportMaskKnownInitiatorConstraint(initiator.getInitiatorPort()), masks);
 
@@ -1377,6 +1676,24 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                 }
             }
         }
+
+        if (uem == null) {
+            // this could be unknown host. We try to find mask by hostname
+            URIQueryResultList masks = new URIQueryResultList();
+            dbClient.queryByConstraint(AlternateIdConstraint.Factory
+                    .getUnManagedExportMaskNameConstraint(hostName), masks);
+
+            Iterator<URI> maskIterator = masks.iterator();
+            while (maskIterator.hasNext()) {
+                UnManagedExportMask potentialUem = dbClient.queryObject(UnManagedExportMask.class, maskIterator.next());
+                // Check whether the unManaged export mask belongs to the specified storage system.
+                if (URIUtil.identical(potentialUem.getStorageSystemUri(), systemURI)) {
+                    uem = potentialUem;
+                    break;
+                }
+            }
+        }
+
         return uem;
     }
 
@@ -1390,15 +1707,18 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
      * @return unManaged export mask
      */
     private UnManagedExportMask createUnManagedExportMask(com.emc.storageos.db.client.model.StorageSystem storageSystem,
-                                                          VolumeToHostExportInfo hostExportInfo,
+                                                          HostExportInfo hostExportInfo,
                                                           Set<String> unManagedVolumesUris, Set<String> managedVolumesUris,
                                                           DbClient dbClient) {
 
         UnManagedExportMask exportMask = new UnManagedExportMask();
+        exportMask.setId(URIUtil.createId(UnManagedExportMask.class));
 
         StringSet knownInitiatorUris = new StringSet();
         StringSet knownInitiatorNetworkIds = new StringSet();
+        StringSet unknownInitiatorNetworkIds = new StringSet();
         StringSet knownStoragePortUris = new StringSet();
+        StringSet unmanagedStoragePortNetworkIds = new StringSet();
         StringSet unknownVolumesUris = new StringSet();
         StringSet knownVolumesUris =  new StringSet();
 
@@ -1416,16 +1736,21 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
         for (Initiator driverInitiator : initiators) {
             com.emc.storageos.db.client.model.Initiator knownInitiator =
                     NetworkUtil.getInitiator(driverInitiator.getPort(), dbClient);
-            URI initiatorUri = knownInitiator.getId();
-            knownInitiatorUris.add(initiatorUri.toString());
-            knownInitiatorNetworkIds.add(driverInitiator.getPort());
-
-            if (HostInterface.Protocol.FC.toString().equals(knownInitiator.getProtocol())) {
-                knownFCInitiators.add(knownInitiator);
+            if (knownInitiator != null) {
+                URI initiatorUri = knownInitiator.getId();
+                knownInitiatorUris.add(initiatorUri.toString());
+                knownInitiatorNetworkIds.add(driverInitiator.getPort());
+                if (HostInterface.Protocol.FC.toString().equals(knownInitiator.getProtocol())) {
+                    knownFCInitiators.add(knownInitiator);
+                }
+            } else {
+                // unknown initiator
+                unknownInitiatorNetworkIds.add(driverInitiator.getPort());
             }
         }
         exportMask.setKnownInitiatorNetworkIds(knownInitiatorNetworkIds);
         exportMask.setKnownInitiatorUris(knownInitiatorUris);
+        exportMask.setUnmanagedInitiatorNetworkIds(unknownInitiatorNetworkIds);
 
         // get URIs for storage ports
         for (StoragePort driverPort : targets) {
@@ -1434,18 +1759,24 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                     NativeGUIDGenerator.PORT);
             URIQueryResultList storagePortURIs = new URIQueryResultList();
             dbClient.queryByConstraint(
-                    AlternateIdConstraint.Factory.getStoragePoolByNativeGuidConstraint(portNativeGuid),
+                    AlternateIdConstraint.Factory.getStoragePortByNativeGuidConstraint(portNativeGuid),
                     storagePortURIs);
-            URI portUri = storagePortURIs.iterator().next();
-            knownStoragePortUris.add(portUri.toString());
-            com.emc.storageos.db.client.model.StoragePort port = dbClient.
-                    queryObject(com.emc.storageos.db.client.model.StoragePort.class, portUri);
+            if (storagePortURIs.iterator().hasNext()) {
+                URI portUri = storagePortURIs.iterator().next();
+                knownStoragePortUris.add(portUri.toString());
+                com.emc.storageos.db.client.model.StoragePort port = dbClient.
+                        queryObject(com.emc.storageos.db.client.model.StoragePort.class, portUri);
 
-            if (com.emc.storageos.db.client.model.StoragePort.TransportType.FC.toString().equals(port.getTransportType())) {
-                knownFCPorts.add(port);
+                if (com.emc.storageos.db.client.model.StoragePort.TransportType.FC.toString().equals(port.getTransportType())) {
+                    knownFCPorts.add(port);
+                }
+            } else {
+                // unknown storage port
+                unmanagedStoragePortNetworkIds.add(driverPort.getPortNetworkId());
             }
         }
         exportMask.setKnownStoragePortUris(knownStoragePortUris);
+        exportMask.setUnmanagedStoragePortNetworkIds(unmanagedStoragePortNetworkIds);
 
         // set unManaged volume uris
         if (unManagedVolumesUris != null && !unManagedVolumesUris.isEmpty()) {
@@ -1468,10 +1799,85 @@ public class ExternalDeviceUnManagedVolumeDiscoverer {
                                  List< com.emc.storageos.db.client.model.StoragePort > storagePorts) {
         ZoneInfoMap zoningMap = networkDeviceController.getInitiatorsZoneInfoMap(initiators, storagePorts);
         for (ZoneInfo zoneInfo : zoningMap.values()) {
-            log.info("Found zone: {} for initiator {} and port {}", new Object[] { zoneInfo.getZoneName(),
-                    zoneInfo.getInitiatorWwn(), zoneInfo.getPortWwn() });
+            log.info("Found zone: {} for initiator {} and port {}", zoneInfo.getZoneName(),
+                    zoneInfo.getInitiatorWwn(), zoneInfo.getPortWwn());
         }
         mask.setZoningMap(zoningMap);
     }
 
+    /**
+     * Update unmanaged volume with export data.
+     *
+     * @param unManagedVolumeNativeIdToUriMap
+     * @param unManagedExportMasksToCreate
+     * @param unManagedExportMasksToUpdate
+     * @param dbClient
+     * @param partitionManager
+     */
+    private void updateUnManagedVolumesWithExportData(Map<String, URI> unManagedVolumeNativeIdToUriMap, List<UnManagedExportMask> unManagedExportMasksToCreate,
+                                                      List<UnManagedExportMask> unManagedExportMasksToUpdate,
+                                                      DbClient dbClient, PartitionManager partitionManager) {
+        // update unmanaged volumes with export data
+        Map<String, List<UnManagedExportMask>> volumeToMasksMap = new HashMap<>(); // helper map:
+                                                            // key --- volume uri, value: unmanaged masks for this volume.
+        List<UnManagedVolume> unManagedVolumesToUpdate = new ArrayList<UnManagedVolume>();
+
+        // build volume to mask map
+        for (UnManagedExportMask mask : unManagedExportMasksToUpdate) {
+            StringSet volumes = mask.getUnmanagedVolumeUris();
+            for (String volumeUri : volumes) {
+                List<UnManagedExportMask> volumeMasks = volumeToMasksMap.get(volumeUri);
+                if (volumeMasks == null) {
+                    volumeMasks = new ArrayList<>();
+                    volumeToMasksMap.put(volumeUri, volumeMasks);
+                }
+                volumeMasks.add(mask);
+            }
+        }
+        for (UnManagedExportMask mask : unManagedExportMasksToCreate) {
+            StringSet volumes = mask.getUnmanagedVolumeUris();
+            for (String volumeUri : volumes) {
+                List<UnManagedExportMask> volumeMasks = volumeToMasksMap.get(volumeUri);
+                if (volumeMasks == null) {
+                    volumeMasks = new ArrayList<>();
+                    volumeToMasksMap.put(volumeUri, volumeMasks);
+                }
+                volumeMasks.add(mask);
+            }
+        }
+
+        for (URI volumeUri : unManagedVolumeNativeIdToUriMap.values()) {
+            UnManagedVolume volume = dbClient.queryObject(UnManagedVolume.class, volumeUri);
+            // Clean old export data
+            volume.getInitiatorNetworkIds().clear();
+            volume.getInitiatorUris().clear();
+            volume.getUnmanagedExportMasks().clear();
+            volume.getVolumeCharacterstics().put(UnManagedVolume.SupportedVolumeCharacterstics.IS_VOLUME_EXPORTED.toString(), FALSE);
+            volume.getVolumeCharacterstics().put(UnManagedVolume.SupportedVolumeCharacterstics.IS_NONRP_EXPORTED.toString(), FALSE);
+            List<UnManagedExportMask> volumeMasks = volumeToMasksMap.get(volumeUri.toString());
+            if (volumeMasks != null && !volumeMasks.isEmpty()) {
+                // update unmanaged volume with export data
+                log.info("Updating volume {} with export data: {} .", volume.getNativeGuid(), volumeMasks);
+                // set to  new data
+                for (UnManagedExportMask mask : volumeMasks) {
+                    volume.getInitiatorNetworkIds().addAll(mask.getKnownInitiatorNetworkIds());
+                    volume.getInitiatorUris().addAll(mask.getKnownInitiatorUris());
+                    volume.getUnmanagedExportMasks().add(mask.getId().toString());
+                }
+                volume.getVolumeCharacterstics().put(UnManagedVolume.SupportedVolumeCharacterstics.IS_VOLUME_EXPORTED.toString(), TRUE);
+                volume.getVolumeCharacterstics().put(UnManagedVolume.SupportedVolumeCharacterstics.IS_NONRP_EXPORTED.toString(), TRUE);
+                // todo set other export related properties.
+
+                unManagedVolumesToUpdate.add(volume);
+            } else {
+                log.info("Volume {} does not have export masks.", volume.getNativeGuid());
+            }
+        }
+
+        if (!unManagedVolumesToUpdate.isEmpty()) {
+            partitionManager.updateAndReIndexInBatches(unManagedVolumesToUpdate,
+                    Constants.DEFAULT_PARTITION_SIZE, dbClient, UNMANAGED_VOLUME);
+            unManagedVolumesToUpdate.clear();
+        }
+    }
 }
