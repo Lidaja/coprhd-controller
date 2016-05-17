@@ -41,6 +41,7 @@ public class DiscoveredDataObject extends DataObject {
         private static final long serialVersionUID = 1L;
         static private Map<String, Type> types = new HashMap<>();
 
+	static public Type denali = new Type("denali", types.values().size());
         static public Type isilon = new Type("isilon", types.values().size());
         static public Type ddmc = new Type("ddmc", types.values().size());
         static public Type datadomain = new Type("datadomain", types.values().size());

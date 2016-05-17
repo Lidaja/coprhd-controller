@@ -48,6 +48,7 @@ import controllers.deadbolt.Restrict;
 import controllers.deadbolt.Restrictions;
 import controllers.util.FlashException;
 import controllers.util.ViprResourceController;
+import java.io.*;
 import models.BlockProtocols;
 import models.PoolTypes;
 import models.RegistrationStatus;
@@ -100,15 +101,21 @@ public class StorageSystems extends ViprResourceController {
     private static final String EXPECTED_GEO_VERSION_FOR_VNAS_SUPPORT = "2.4";
 
     private static void addReferenceData() {
-        renderArgs.put("storageArrayTypeList", StorageSystemTypes.getStorageTypeOptions());
         renderArgs.put("smisStorageSystemTypeList", StorageProviderTypes.getProviderOption());
         renderArgs.put("nonSmisStorageSystemTypeList", StorageSystemTypes.getStorageTypeOptions());
         renderArgs.put("sslDefaultStorageSystemList", StorageProviderTypes.getProvidersWithSSL());
         renderArgs.put("nonSSLStorageSystemList", StorageProviderTypes.getProvidersWithoutSSL());
 
         List<EnumOption> defaultStorageArrayPortMap = StorageProviderTypes.getStoragePortMap();
+        renderArgs.put("storageArrayTypeList", Arrays.asList(StorageSystemTypes.OPTIONS));
+	renderArgs.put("deviceTypeList", Arrays.asList(StorageSystemTypes.DEVICES));
+	renderArgs.put("numNodeList", Arrays.asList(StorageSystemTypes.NODES));
+        renderArgs.put("smisStorageSystemTypeList", Arrays.asList(StorageSystemTypes.SMIS_OPTIONS));
+        renderArgs.put("nonSmisStorageSystemTypeList", Arrays.asList(StorageSystemTypes.NON_SMIS_OPTIONS));
+        renderArgs.put("sslDefaultStorageSystemList", Arrays.asList(StorageSystemTypes.SSL_DEFAULT_OPTIONS));
+        renderArgs.put("nonSSLStorageSystemList", Arrays.asList(StorageSystemTypes.NON_SSL_OPTIONS));
+        List<EnumOption> defaultStorageArrayPortMap = Arrays.asList(EnumOption.options(DefaultStorageArrayPortMap.values()));
         renderArgs.put("defaultStorageArrayPortMap", defaultStorageArrayPortMap);
-
         renderArgs.put("vnxfileStorageSystemType", StorageSystemTypes.VNX_FILE);
         renderArgs.put("scaleIOStorageSystemType", StorageSystemTypes.SCALEIO);
         renderArgs.put("scaleIOApiStorageSystemType", StorageSystemTypes.SCALEIOAPI);
@@ -202,8 +209,7 @@ public class StorageSystems extends ViprResourceController {
     @FlashException(keep = true, referrer = { "create", "edit" })
     public static void save(StorageSystemForm storageArray) {
         storageArray.validate("storageArray");
-
-        if (Validation.hasErrors()) {
+       	if (Validation.hasErrors()) {
             Common.handleError();
         }
 
@@ -749,6 +755,7 @@ public class StorageSystems extends ViprResourceController {
         @HostNameOrIpAddress
         public String ipAddress;
 
+
         @Required
         public Integer portNumber;
 
@@ -769,6 +776,9 @@ public class StorageSystems extends ViprResourceController {
 
         @MaxSize(2048)
         public String secondaryPasswordConfirm = "";
+
+        @MaxSize(2048)
+	public String test = "";
 
         public String elementManagerURL;
 
@@ -839,7 +849,6 @@ public class StorageSystems extends ViprResourceController {
             } else {
                 this.portNumber = storageArray.getPortNumber();
                 this.ipAddress = storageArray.getIpAddress();
-
                 this.smisProviderIpAddress = storageArray.getSmisProviderIP();
                 this.smisProviderPortNumber = storageArray.getSmisPortNumber();
                 this.smisProviderUseSSL = storageArray.getSmisUseSSL();
@@ -897,7 +906,6 @@ public class StorageSystems extends ViprResourceController {
             StorageSystemRequestParam storageArray = new StorageSystemRequestParam();
             storageArray.setName(name);
             storageArray.setSystemType(type);
-
             storageArray.setPassword(userPassword);
             storageArray.setUserName(userName);
             storageArray.setPortNumber(portNumber);

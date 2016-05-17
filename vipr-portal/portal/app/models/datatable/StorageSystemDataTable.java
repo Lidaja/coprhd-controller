@@ -22,6 +22,8 @@ public class StorageSystemDataTable extends DataTable {
         addColumn("name").setRenderFunction("renderLink");
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
         addColumn("host");
+	addColumn("vip");
+	addColumn("numNodes");
         addColumn("type");
         addColumn("version").hidden();
         addColumn("userName").hidden();
@@ -34,6 +36,8 @@ public class StorageSystemDataTable extends DataTable {
         public String id;
         public String name;
         public String host;
+	public String vip;
+	public String numNodes;
         public String userName;
         public String type;
         public String version;
@@ -45,9 +49,7 @@ public class StorageSystemDataTable extends DataTable {
         public StorageSystemInfo(StorageSystemRestRep storageSystem) {
             super(storageSystem);
             this.id = storageSystem.getId().toString();
-            this.name = StringUtils.defaultIfEmpty(
-                    StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),
-                    MessagesUtils.get(NAME_NOT_AVAILABLE));
+            this.name = StringUtils.defaultIfEmpty(StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()), MessagesUtils.get(NAME_NOT_AVAILABLE));
             if (ResourceUtils.id(storageSystem.getActiveProvider()) != null) {
                 this.host = storageSystem.getSmisProviderIP();
                 this.userName = storageSystem.getSmisUserName();
@@ -56,6 +58,9 @@ public class StorageSystemDataTable extends DataTable {
                 this.host = storageSystem.getIpAddress();
                 this.userName = storageSystem.getUsername();
             }
+	    this.numNodes = storageSystem.getNumNodes();
+	    this.vip = "10.10.30.235";
+	    this.deviceType = "Block";
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());
             this.version = storageSystem.getFirmwareVersion();
             this.registrationStatus = storageSystem.getRegistrationStatus();

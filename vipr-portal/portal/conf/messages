@@ -192,6 +192,7 @@ CompatibilityStatus.UNKNOWN=Unknown
 #
 # Default Port map for physical assets
 #
+DefaultStorageArrayPortMap.denali=443
 DefaultStorageArrayPortMap.vnxblock=5988
 DefaultStorageArrayPortMap.vmax=5988
 DefaultStorageArrayPortMap.vnxblock_useSSL=5989
@@ -244,6 +245,7 @@ DefaultStorageProviderPortMap.ibmxiv=5989
 DefaultStorageProviderPortMap.xtremio=443
 DefaultStorageProviderPortMap.ceph_useSSL=22
 DefaultStorageProviderPortMap.ceph=22
+#DefaultStorageProviderPortMap.denali=443
 
 DefaultSanSwitchPortMap.brocade_useSSL=5989
 DefaultSanSwitchPortMap.brocade=5988
@@ -280,6 +282,7 @@ PoolAssignment.automatic=Automatic
 PoolAssignment.manual=Manual
 
 StorageSystemType.NONE=None
+StorageSystemType.denali=Denali
 StorageSystemType.vmax=EMC VMAX
 StorageSystemType.vnxblock=EMC VNX Block
 StorageSystemType.vnxfile=EMC VNX File
@@ -298,6 +301,7 @@ StorageSystemType.unity=EMC Unity
 StorageSystemType.datadomain=Data Domain
 StorageSystemType.ceph=Ceph Block Device
 StorageSystemType.ecs=EMC Elastic Cloud Storage
+#StorageSystemType.STORAGE_PROVIDER.denali=Block Storage Provider for Denali
 StorageSystemType.STORAGE_PROVIDER.vmax=Storage Provider for EMC VMAX, VNX Block
 StorageSystemType.STORAGE_PROVIDER.scaleioapi=ScaleIO Gateway
 StorageSystemType.STORAGE_PROVIDER.hds=Storage Provider for Hitachi storage systems
@@ -688,6 +692,7 @@ CustomConfigs.add=Add
 CustomConfigs.save=Save
 CustomConfigs.cancel=Cancel
 CustomConfigs.category.SanZone=SAN Zoning
+#CustomConfigs.category.DENALI=Denali
 CustomConfigs.category.VMAX=VMAX Masking
 CustomConfigs.category.VNX=VNX Storage Groups
 CustomConfigs.category.PortAllocation=Port Allocation
@@ -1971,17 +1976,22 @@ StorageSystems.not.registered=Storage Array: '%s' is not registered.  It can not
 storageArray.id=ID
 storageArray.serialNumber=Serial Number
 storageArray.name=Name
+storageArray.numNodes=Number of Nodes
 storageArray.lastDiscoveredDate=Last Discovery
 storageArray.discoveryStatus=Status
 storageArray.registrationStatus=Registered
 storageArray.errorDetails=Error Details
 storageArray.dataProtectionConnectivity=Data Protection
 storageArray.host=Host
+storageArray.vip=Virtual IP
+storageArray.deviceType=Type of Storage Device
 storageArray.type=Type
 storageArray.actions=Edit
 storageArray.version=Version
-storageArray.ipAddress=IP Address
-storageArray.ipAddress.help=Enter the IP address of the system.
+storageArray.ipAddress=Starting IP Address
+storageArray.ipAddress.help=Enter the Starting IP address of the system.
+storageArray.vip=Virtual IP Address
+storageArray.vip.help=Enter the clusters virtual IP address. I recommend making it smaller than the starting IP address.
 storageArray.smisProvider=Storage Provider
 storageArray.smisProviderIpAddress=Storage Provider Host
 storageArray.smisProviderIpAddress.help=In most situations, the Storage Provider Host will match the Host used for discovery
@@ -2010,6 +2020,7 @@ storageArray.secondaryPasswordConfirm=Confirm MDM Password
 storageArray.secondaryPassword.confirmPassword.not.match=User MDM Password and Confirm MDM Password do not match.
 storageArray.elementManagerURL=Element Manager URL
 storageArray.secretKey=Secret key
+storageArray.deviceType=Format of Denali Storage
 #
 # onboard SMI-S Provider
 #
@@ -2140,6 +2151,7 @@ SupportedDriveType.SSD=SSD
 SupportedDriveType.HARD_DISK_DRIVE=HD
 
 systemType.noselection=Any
+systemType.denali=Denali
 systemType.vmax=EMC VMAX
 systemType.vnx=EMC VNX Block
 systemType.vnxfile=EMC VNX File

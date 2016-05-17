@@ -12,7 +12,7 @@ public class StorageCapabilities {
     private CommonStorageCapabilities commonCapabilities;
     private CustomStorageCapabilities customCapabilities;
 
-    public CommonStorageCapabilities getCommonCapabilitis() {
+    public CommonStorageCapabilities getCommonCapabilities() {
         return commonCapabilities;
     }
 

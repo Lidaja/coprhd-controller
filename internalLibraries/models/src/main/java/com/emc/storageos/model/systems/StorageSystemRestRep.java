@@ -27,6 +27,7 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
     private String majorVersion;
     private String minorVersion;
     private String ipAddress;
+    private String numNodes;
     private Set<String> secondaryIPs;
     private Integer portNumber;
     private String smisProviderIP;
@@ -113,6 +114,16 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
         this.ipAddress = ipAddress;
     }
 
+    @XmlElement(name = "numNodes")
+    public String getNumNodes() {
+	return numNodes;
+    }
+
+    public void setNumNodes(String numNodes) {
+	this.numNodes = numNodes;
+	//this.numNodes = "666";
+    }
+    
     @XmlElement(name = "major_version")
     public String getMajorVersion() {
         return majorVersion;

@@ -36,6 +36,28 @@ public class StorageProviderTypes {
     public static final String XTREMIO = "xtremio";
     public static final String CEPH = "ceph";
 
+  
+    public static final StringOption[] OPTIONS = {
+            option(SMIS),
+            option(HITACHI),
+            option(VPLEX),
+            option(CINDER),
+            option(SCALEIOAPI),
+            option(DATA_DOMAIN),
+            option(IBMXIV),
+            option(XTREMIO),
+            option(CEPH),
+            option(XTREMIO)
+	    //option(DENALI)
+    };
+    
+    public static final StringOption[] optionSIO = {
+    	option(SCALEIO),
+    	option(SCALEIOAPI)
+    };
+
+    public static final StringOption[] SSL_DEFAULT_OPTIONS = StringOption.options(new String[] { SMIS, SCALEIOAPI, VPLEX, IBMXIV }, OPTION_PREFIX);
+
     private static final Map<String, String> fromStorageArrayTypeMap = new HashMap<String, String>() {
         private static final long serialVersionUID = -8628274587467033626L;
 
@@ -43,6 +65,7 @@ public class StorageProviderTypes {
             for (String storageSystemType : StorageSystemTypes.STORAGE_PROVIDER_TYPES) {
                 put(storageSystemType, SMIS);
             }
+	    //put(StorageSystemTypes.DENALI, DENALI);
             put(StorageSystemTypes.HITACHI, HITACHI);
             put(StorageSystemTypes.VPLEX, VPLEX);
             put(StorageSystemTypes.OPENSTACK, CINDER);

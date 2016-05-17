@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import util.StringOption;
 
 import com.emc.storageos.db.server.impl.StorageSystemTypesInitUtils;
 import com.emc.storageos.model.storagesystem.type.StorageSystemTypeList;
@@ -23,6 +24,7 @@ import util.StringOption;
 public class StorageSystemTypes {
     private static final String OPTION_PREFIX = "StorageSystemType";
     public static final String NONE = "NONE";
+    public static final String DENALI = "denali";
     public static final String ISILON = "isilon";
     public static final String VNX_BLOCK = "vnxblock";
     public static final String VNXe = "vnxe";
@@ -54,13 +56,162 @@ public class StorageSystemTypes {
     public static final String STORAGE_PROVIDER_XTREMIO = "STORAGE_PROVIDER.xtremio";
     public static final String STORAGE_PROVIDER_CEPH = "STORAGE_PROVIDER.ceph";
 
-    public static final String[] BLOCK_TYPES = { VMAX, VNX_BLOCK, VPLEX, HITACHI, OPENSTACK, SCALEIO, SCALEIOAPI, XTREMIO, VNXe, IBMXIV, CEPH, UNITY };
+    public static final String BLOCK = "Block";
+    public static final String FILE = "File";
+    public static final String OBJECT = "Object";
+
+    public static final String[] BLOCK_TYPES = {DENALI, VMAX, VNX_BLOCK, VPLEX, HITACHI, OPENSTACK, SCALEIO, SCALEIOAPI, XTREMIO, VNXe, IBMXIV, CEPH, UNITY };
     public static final String[] FILE_TYPES = { ISILON, VNX_FILE, NETAPP, DATA_DOMAIN, VNXe, UNITY, NETAPPC };
     public static final String[] STORAGE_PROVIDER_TYPES = { SMIS, VNX_BLOCK, HITACHI, VPLEX, OPENSTACK, SCALEIO, SCALEIOAPI, DATA_DOMAIN, IBMXIV, XTREMIO, CEPH };
     public static final String[] NON_SMIS_TYPES = { ISILON, VNX_FILE, NETAPP, XTREMIO, VNXe, UNITY, NETAPPC, ECS };
 
+
+    public static final StringOption[] OPTIONS = {
+	    option(DENALI)
+            //option(ISILON),
+            //option(VNX_FILE),
+            //option(NETAPP),
+            //option(VNXe),
+            //option(UNITY),
+            //option(NETAPPC),
+            //option(ECS),
+	    //new StringOption(DENALI, getDisplayValue(STORAGE_PROVIDER_DENALI)),
+            //new StringOption(VMAX, getDisplayValue(STORAGE_PROVIDER_VMAX)),
+            //new StringOption(VPLEX, getDisplayValue(STORAGE_PROVIDER_VPLEX)),
+            //new StringOption(HITACHI, getDisplayValue(STORAGE_PROVIDER_HITACHI)),
+            //new StringOption(OPENSTACK, getDisplayValue(STORAGE_PROVIDER_OPENSTACK)),
+            //new StringOption(SCALEIOAPI, getDisplayValue(STORAGE_PROVIDER_SCALEIOAPI)),
+            //new StringOption(DATA_DOMAIN, getDisplayValue(STORAGE_PROVIDER_DATA_DOMAIN)),
+            //new StringOption(IBMXIV, getDisplayValue(STORAGE_PROVIDER_IBMXIV)),
+            //new StringOption(XTREMIO, getDisplayValue(STORAGE_PROVIDER_XTREMIO)),
+            //new StringOption(CEPH, getDisplayValue(STORAGE_PROVIDER_CEPH))
+    };
+
+    public static final StringOption[] DEVICES = {
+	   option(BLOCK),
+	   option(FILE),
+	   option(OBJECT)
+    };
+
+    public static final StringOption[] NODES = {
+	   option("1"),
+	   option("2"),
+	   option("3"),
+	   option("4"),
+	   option("5"),
+	   option("6"),
+   	   option("7"),
+	   option("8"),
+	   option("9"), 
+	   option("10"),
+	   option("11"),
+	   option("12"),
+	   option("13"),
+	   option("14"),
+           option("15"),
+	   option("16"),
+	   option("17"),
+	   option("18"),
+	   option("19"),
+           option("20"),
+ 	   option("21"),
+	   option("22"),
+	   option("23"),
+	   option("24"),
+	   option("25"),
+	   option("26"),
+   	   option("27"),
+	   option("28"),
+	   option("29"), 
+	   option("30"),
+	   option("31"),
+	   option("32"),
+	   option("33"),
+	   option("34"),
+           option("35"),
+	   option("36"),
+	   option("37"),
+	   option("38"),
+	   option("39"),
+ 	   option("40"),
+	   option("41"),
+	   option("42"),
+	   option("43"),
+	   option("44"),
+	   option("45"),
+	   option("46"),
+   	   option("47"),
+	   option("48"),
+	   option("49"), 
+	   option("50"),
+	   option("51"),
+	   option("52"),
+	   option("53"),
+	   option("54"),
+           option("55"),
+	   option("56"),
+	   option("57"),
+	   option("58"),
+	   option("59"),
+	   option("60"),
+ 	   option("61"),
+	   option("62"),
+	   option("63"),
+	   option("64"),
+	   option("65"),
+	   option("66"),
+   	   option("67"),
+	   option("68"),
+	   option("69"), 
+	   option("70"),
+	   option("71"),
+	   option("72"),
+	   option("73"),
+	   option("74"),
+           option("75"),
+	   option("76"),
+	   option("77"),
+	   option("78"),
+	   option("79"),
+           option("80"),
+           option("81"),
+ 	   option("82"),
+ 	   option("83"),
+	   option("84"),
+	   option("85"),
+	   option("86"),
+   	   option("87"),
+	   option("88"),
+	   option("89"), 
+	   option("90"),
+	   option("91"),
+	   option("92"),
+	   option("93"),
+	   option("94"),
+           option("95"),
+	   option("96"),
+	   option("97"),
+	   option("98"),
+	   option("99"),
+           option("100")
+    };
+
+    public static final StringOption[] SMIS_OPTIONS = StringOption.options(STORAGE_PROVIDER_TYPES, OPTION_PREFIX);
+    public static final StringOption[] NON_SMIS_OPTIONS = StringOption.options(NON_SMIS_TYPES, OPTION_PREFIX);
+    public static final StringOption[] SSL_DEFAULT_OPTIONS = StringOption.options(new String[] { VNX_BLOCK, VMAX, SCALEIOAPI, VPLEX, VNX_FILE, VNXe, 
+            UNITY,  IBMXIV }, OPTION_PREFIX);
+    public static final StringOption[] NON_SSL_OPTIONS = StringOption.options(new String[] { SCALEIO, XTREMIO, CEPH });
+    public static final StringOption[] MDM_DEFAULT_OPTIONS = StringOption.options(new String[] { SCALEIO, SCALEIOAPI });
+    public static final StringOption[] MDM_ONLY_OPTIONS = StringOption.options(new String[] {SCALEIOAPI});
+    public static final StringOption[] ELEMENT_MANAGER_OPTIONS = StringOption.options(new String[] { SCALEIO });
+    public static final StringOption[] SECRET_KEY_OPTIONS = StringOption.options(new String[] { CEPH });
+
     public static boolean isNone(String type) {
         return NONE.equals(type);
+    }
+    
+    public static boolean isDenali(String type) {
+	return DENALI.equals(type);
     }
 
     public static boolean isIsilon(String type) {

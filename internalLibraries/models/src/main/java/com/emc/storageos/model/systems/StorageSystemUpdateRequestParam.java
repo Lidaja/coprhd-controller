@@ -42,7 +42,6 @@ public class StorageSystemUpdateRequestParam {
     public void setName(String name) {
         this.name = name;
     }
-
     /**
      * IP Address of the storage system
      * 
