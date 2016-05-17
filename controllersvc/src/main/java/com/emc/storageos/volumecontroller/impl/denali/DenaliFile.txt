@@ -1,0 +1,534 @@
+package com.emc.storageos.volumecontroller.impl.denali;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.emc.storageos.customconfigcontroller.CustomConfigConstants;
+import com.emc.storageos.customconfigcontroller.DataSource;
+import com.emc.storageos.customconfigcontroller.DataSourceFactory;
+import com.emc.storageos.customconfigcontroller.impl.CustomConfigHandler;
+import com.emc.storageos.db.client.DbClient;
+import com.emc.storageos.db.client.URIUtil;
+import com.emc.storageos.db.client.constraint.ContainmentConstraint;
+import com.emc.storageos.db.client.model.FSExportMap;
+import com.emc.storageos.db.client.model.FileExport;
+import com.emc.storageos.db.client.model.FileShare;
+import com.emc.storageos.db.client.model.NamedURI;
+import com.emc.storageos.db.client.model.OpStatusMap;
+import com.emc.storageos.db.client.model.Operation;
+import com.emc.storageos.db.client.model.QuotaDirectory;
+import com.emc.storageos.db.client.model.SMBFileShare;
+import com.emc.storageos.db.client.model.SMBShareMap;
+import com.emc.storageos.db.client.model.SchedulePolicy;
+import com.emc.storageos.db.client.model.SchedulePolicy.ScheduleFrequency;
+import com.emc.storageos.db.client.model.SchedulePolicy.SnapshotExpireType;
+import com.emc.storageos.db.client.model.Snapshot;
+import com.emc.storageos.db.client.model.StringMap;
+import com.emc.storageos.db.client.model.StringSet;
+import com.emc.storageos.db.client.model.Task;
+import com.emc.storageos.db.client.model.VirtualNAS;
+import com.emc.storageos.db.client.model.util.TaskUtils;
+import com.emc.storageos.exceptions.DeviceControllerErrors;
+import com.emc.storageos.exceptions.DeviceControllerException;
+import com.emc.storageos.db.client.DbClient;
+import com.emc.storageos.db.client.URIUtil;
+import com.emc.storageos.db.client.model.BlockConsistencyGroup;
+import com.emc.storageos.db.client.model.BlockConsistencyGroup.Types;
+import com.emc.storageos.db.client.model.BlockObject;
+import com.emc.storageos.db.client.model.BlockSnapshot;
+import com.emc.storageos.db.client.model.ExportMask;
+import com.emc.storageos.db.client.model.Initiator;
+import com.emc.storageos.db.client.model.Project;
+import com.emc.storageos.db.client.model.StoragePool;
+import com.emc.storageos.db.client.model.StorageSystem;
+import com.emc.storageos.db.client.model.StringSet;
+import com.emc.storageos.db.client.model.Volume;
+import com.emc.storageos.db.client.model.Volume.PersonalityTypes;
+import com.emc.storageos.db.client.model.util.BlockConsistencyGroupUtils;
+import com.emc.storageos.db.client.model.FileExport;
+import com.emc.storageos.db.client.model.QuotaDirectory;
+import com.emc.storageos.db.client.model.SMBFileShare;
+import com.emc.storageos.db.client.util.NameGenerator;
+import com.emc.storageos.db.client.util.NullColumnValueGetter;
+import com.emc.storageos.exceptions.DeviceControllerErrors;
+import com.emc.storageos.exceptions.DeviceControllerException;
+import com.emc.storageos.protectioncontroller.impl.recoverpoint.RPHelper;
+import com.emc.storageos.svcs.errorhandling.model.ServiceError;
+import com.emc.storageos.volumecontroller.DefaultBlockStorageDevice;
+import com.emc.storageos.volumecontroller.TaskCompleter;
+import com.emc.storageos.volumecontroller.impl.ControllerUtils;
+import com.emc.storageos.volumecontroller.impl.NativeGUIDGenerator;
+import com.emc.storageos.volumecontroller.impl.VolumeURIHLU;
+import com.emc.storageos.volumecontroller.impl.utils.VirtualPoolCapabilityValuesWrapper;
+import com.emc.storageos.volumecontroller.impl.BiosCommandResult;
+import com.emc.storageos.volumecontroller.impl.file.RemoteFileMirrorOperation;
+import com.emc.storageos.volumecontroller.FileStorageDevice;
+import com.emc.storageos.volumecontroller.FileDeviceInputOutput;
+import com.emc.storageos.volumecontroller.ControllerException;
+
+public class DenaliStorageDevice extends DefaultBlockStorageDevice implements FileStorageDevice, 
+		RemoteFileMirrorOperation{
+
+	private static final Logger _log = LoggerFactory.getLogger(DenaliStorageDevice.class);
+
+	/**
+     	* Create and establish a replication link between the given source and target fileshare.
+     	*
+     	* @param system
+     	* @param source
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doCreateMirrorLink(StorageSystem system, URI source, URI target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Detach a source and target from their replication link.
+     	*
+     	* @param system
+     	* @param source
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doDetachMirrorLink(StorageSystem system, URI source, URI target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Starts a replication link.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doStartMirrorLink(StorageSystem system, FileShare target, TaskCompleter completer, String policyName){
+
+	}
+
+    	/**
+     	* Starts a replication link.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doRefreshMirrorLink(StorageSystem system, FileShare source, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* stop a replication link.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doStopMirrorLink(StorageSystem system, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Cancel a replication link.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doCancelMirrorLink(StorageSystem system, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Rollback replication links.
+     	*
+     	* @param system
+     	* @param sources
+     	* @param targets
+     	* @param completer
+     	* @param opId
+     	*/
+	@Override
+    	public void doRollbackMirrorLink(StorageSystem system, List<URI> sources, List<URI> targets, TaskCompleter completer, String opId){
+
+	}
+
+    	/**
+     	* Suspend replication links.
+     	*
+     	* @param system
+     	* @param target
+     	*
+     	* @param completer
+     	*/
+	@Override
+    	public void doSuspendLink(StorageSystem system, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Resume replication links.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doResumeLink(StorageSystem system, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Failover replication links.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doFailoverLink(StorageSystem system, FileShare target, TaskCompleter completer, String policyName){
+
+	}
+
+    	/**
+     	* Failback replication links.
+     	*
+     	* @param system
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doFailbackLink(StorageSystem system, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	* Resync replication links
+     	*
+     	* @param primarySystem
+     	* @param secondarySystem
+     	* @param Target
+     	* @param completer
+     	*/
+	@Override
+    	public void doResyncLink(StorageSystem primarySystem, StorageSystem secondarySystem, FileShare Target, TaskCompleter completer, String policyName){
+
+	}
+
+    	/**
+     	* Modify replication RPO.
+     	*
+     	* @param system
+     	* @param rpoValue
+     	* @param rpoType
+     	* @param target
+     	* @param completer
+     	*/
+	@Override
+    	public void doModifyReplicationRPO(StorageSystem system, Long rpoValue, String rpoType, FileShare target, TaskCompleter completer){
+
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doCreateFS(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException {
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return true if FS exists on Array else false
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public boolean doCheckFSExists(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return false;
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doDeleteFS(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @param exportList export list
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doExport(StorageSystem storage, FileDeviceInputOutput fd, List<FileExport> exportList) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	* Create/modify SMB share
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param args FileDeviceInputOutput object with data about file system to be shared
+     	* @param smbFileShare smb share properties
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doShare(StorageSystem storage, FileDeviceInputOutput args, SMBFileShare smbFileShare) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	* Delete SMB share of file system
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param args FileDeviceInputOutput object with data about file system on which operation is performed
+     	* @param smbFileShare smb share properties
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doDeleteShare(StorageSystem storage, FileDeviceInputOutput args, SMBFileShare smbFileShare) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	* Delete all SMB shares of file system
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param args FileDeviceInputOutput object with data about file system on which operation is performed
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doDeleteShares(StorageSystem storage, FileDeviceInputOutput args) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @param exportList unexport list
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doUnexport(StorageSystem storage, FileDeviceInputOutput fd, List<FileExport> exportList) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doModifyFS(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doExpandFS(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doSnapshotFS(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doRestoreFS(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @param snapshots List of snapshot names found on the device
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult getFSSnapshotList(StorageSystem storage, FileDeviceInputOutput fd, List<String> snapshots) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage storage device operation is to be performed on
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doDeleteSnapshot(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException {
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	* Connect the device - called when a new device is added
+     	*
+     	* @param storage storage device object
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public void doConnect(StorageSystem storage) throws ControllerException {
+
+	}
+
+    	/**
+     	* Disconnect the device - called when a device is being removed
+     	*
+     	* @param storage storage device object
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public void doDisconnect(StorageSystem storage) throws ControllerException {
+
+	}
+
+    	/**
+     	* Obtain the physical pools and ports
+     	*
+     	* @param storage storage device object
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult getPhysicalInventory(StorageSystem storage){
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doCreateQuotaDirectory(StorageSystem storage, FileDeviceInputOutput fd, QuotaDirectory qt) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+    	/**
+     	*
+     	* @param storage
+     	* @param fd FileDeviceInputOutput object holding the data objects
+     	* @return command result object
+     	* @throws ControllerException
+     	*/
+	@Override
+    	public BiosCommandResult doDeleteQuotaDirectory(StorageSystem storage, FileDeviceInputOutput fd) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult doUpdateQuotaDirectory(StorageSystem storage, FileDeviceInputOutput fd, QuotaDirectory qt) throws ControllerException{
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult updateExportRules(StorageSystem storage, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult deleteExportRules(StorageSystem storage, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult updateShareACLs(StorageSystem storage, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult deleteShareACLs(StorageSystem storageObj, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult updateNfsACLs(StorageSystem storage, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult deleteNfsACLs(StorageSystem storageObj, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult assignFilePolicy(StorageSystem storageObj, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult unassignFilePolicy(StorageSystem storageObj, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+
+	@Override
+    	public BiosCommandResult listSanpshotByPolicy(StorageSystem storageObj, FileDeviceInputOutput args){
+		return new BiosCommandResult();
+	}
+}

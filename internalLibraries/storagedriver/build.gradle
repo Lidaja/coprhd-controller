@@ -1,4 +1,5 @@
 dependencies {
     compile library(slf4j),
             library(commons_lang)
+    compile fileTree(dir: 'libs', include: ['*.jar'])
 }

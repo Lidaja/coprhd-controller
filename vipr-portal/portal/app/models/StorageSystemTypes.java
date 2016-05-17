@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 public class StorageSystemTypes {
     private static final String OPTION_PREFIX = "StorageSystemType";
     public static final String NONE = "NONE";
+    public static final String DENALI = "denali";
     public static final String ISILON = "isilon";
     public static final String VNX_BLOCK = "vnxblock";
     public static final String VNXe = "vnxe";
@@ -31,6 +32,7 @@ public class StorageSystemTypes {
     public static final String DATA_DOMAIN = "datadomain";
     public static final String ECS = "ecs";
     public static final String CEPH = "ceph";
+    //public static final String STORAGE_PROVIDER_DENALI = "STORAGE_PROVIDER.denali";
     public static final String STORAGE_PROVIDER_VMAX = "STORAGE_PROVIDER.vmax";
     public static final String STORAGE_PROVIDER_HITACHI = "STORAGE_PROVIDER.hds";
     public static final String STORAGE_PROVIDER_VPLEX = "STORAGE_PROVIDER.vplex";
@@ -46,8 +48,13 @@ public class StorageSystemTypes {
     public static final String[] FILE_TYPES = { ISILON, VNX_FILE, NETAPP, DATA_DOMAIN, VNXe, UNITY, NETAPPC };
     public static final String[] STORAGE_PROVIDER_TYPES = { VMAX, VNX_BLOCK, HITACHI, VPLEX, OPENSTACK, SCALEIO, SCALEIOAPI, DATA_DOMAIN, IBMXIV, XTREMIO, CEPH };
     public static final String[] NON_SMIS_TYPES = { ISILON, VNX_FILE, NETAPP, XTREMIO, VNXe, UNITY, NETAPPC, ECS };
+    public static final String[] BLOCK_TYPES = {DENALI, VMAX, VNX_BLOCK, VPLEX, HITACHI, OPENSTACK, SCALEIO, SCALEIOAPI, XTREMIO, VNXe, IBMXIV };
+    public static final String[] FILE_TYPES = { ISILON, VNX_FILE, NETAPP, DATA_DOMAIN, VNXe, NETAPPC };
+    public static final String[] STORAGE_PROVIDER_TYPES = {VMAX, VNX_BLOCK, HITACHI, VPLEX, OPENSTACK, SCALEIO, SCALEIOAPI, DATA_DOMAIN, IBMXIV, XTREMIO };
+    public static final String[] NON_SMIS_TYPES = { ISILON, VNX_FILE, NETAPP, XTREMIO, VNXe, NETAPPC, ECS };
 
     public static final StringOption[] OPTIONS = {
+	    option(DENALI),
             option(ISILON),
             option(VNX_FILE),
             option(NETAPP),
@@ -55,6 +62,7 @@ public class StorageSystemTypes {
             option(UNITY),
             option(NETAPPC),
             option(ECS),
+	    //new StringOption(DENALI, getDisplayValue(STORAGE_PROVIDER_DENALI)),
             new StringOption(VMAX, getDisplayValue(STORAGE_PROVIDER_VMAX)),
             new StringOption(VPLEX, getDisplayValue(STORAGE_PROVIDER_VPLEX)),
             new StringOption(HITACHI, getDisplayValue(STORAGE_PROVIDER_HITACHI)),
@@ -71,6 +79,8 @@ public class StorageSystemTypes {
     public static final StringOption[] SSL_DEFAULT_OPTIONS = StringOption.options(new String[] { VNX_BLOCK, VMAX, SCALEIOAPI, VPLEX, VNX_FILE, VNXe, 
             UNITY,  IBMXIV }, OPTION_PREFIX);
     public static final StringOption[] NON_SSL_OPTIONS = StringOption.options(new String[] { SCALEIO, XTREMIO, CEPH });
+    public static final StringOption[] SSL_DEFAULT_OPTIONS = StringOption.options(new String[] { VNX_BLOCK, VMAX, SCALEIOAPI, VPLEX, VNX_FILE, VNXe, IBMXIV }, OPTION_PREFIX);
+    public static final StringOption[] NON_SSL_OPTIONS = StringOption.options(new String[] { SCALEIO, XTREMIO });
     public static final StringOption[] MDM_DEFAULT_OPTIONS = StringOption.options(new String[] { SCALEIO, SCALEIOAPI });
     public static final StringOption[] MDM_ONLY_OPTIONS = StringOption.options(new String[] {SCALEIOAPI});
     public static final StringOption[] ELEMENT_MANAGER_OPTIONS = StringOption.options(new String[] { SCALEIO });
@@ -78,6 +88,10 @@ public class StorageSystemTypes {
 
     public static boolean isNone(String type) {
         return NONE.equals(type);
+    }
+    
+    public static boolean isDenali(String type) {
+	return DENALI.equals(type);
     }
 
     public static boolean isIsilon(String type) {

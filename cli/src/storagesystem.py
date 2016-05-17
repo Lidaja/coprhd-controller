@@ -50,6 +50,7 @@ class StorageSystem(object):
     URI_UM_EXPORT_MASK = "/vdc/unmanaged/export-masks/{0}"
 
     SYSTEM_TYPE_LIST = [
+	'denali',
         'isilon',
         'vnxblock',
         'vnxfile',
@@ -70,6 +71,7 @@ class StorageSystem(object):
         'ceph']
 
     BLOCK_SYSTEM_LIST = [
+	'denali',
         'vnxblock',
         'vmax',
         'vplex',
@@ -93,6 +95,7 @@ class StorageSystem(object):
     OBJECT_SYSTEM_LIST =['ecs']
 
     CREATE_SYSTEM_TYPE_LIST = [
+	'denali',
         'isilon',
         'vnxblock',
         'vmax',

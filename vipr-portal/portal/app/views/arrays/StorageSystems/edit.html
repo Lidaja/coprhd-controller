@@ -1,3 +1,11 @@
+<button onclick="myFunction()">Get Type</button>
+
+<script>
+function myFunction() {
+    alert($('#storageArray_type').val());
+}
+</script>
+
 %{
   titleKey = 'StorageSystems.' + (storageArray?.id ? 'edit' : 'create') + '.title';
   descriptionKey = 'StorageSystems.description';
@@ -25,12 +33,12 @@
     
     var sslDefaultStorageSystemList = [];
     #{list items:sslDefaultStorageSystemList, as:'typeList'}
-    sslDefaultStorageSystemList.push('${typeList.id}');
+      sslDefaultStorageSystemList.push('${typeList.id}');
     #{/list}   
     
     var nonSSLStorageSystemList = [];
     #{list items:nonSSLStorageSystemList, as:'typeList'}
-    nonSSLStorageSystemList.push('${typeList.id}');
+      nonSSLStorageSystemList.push('${typeList.id}');
     #{/list}    
     
     // Port Map of all default ports for various storage array types
@@ -169,8 +177,7 @@
         if (resourceType == "block_file") {
             $('#storageArray_resourceLimitControlGroup label[for="storageArray_resourceLimit"]').text("${messages.get('storageArray.block_fileResourceLimit')}"+":");
             $('#storageArray_resourceLimitControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.block_fileResourceLimit.help')}");
-        }
-        else if ( resourceType == "file") {
+        } else if ( resourceType == "file") {
             $('#storageArray_resourceLimitControlGroup label[for="storageArray_resourceLimit"]').text("${messages.get('storageArray.fileResourceLimit')}"+":");
             $('#storageArray_resourceLimitControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.fileResourceLimit.help')}");
         } else if ( resourceType == "block") {
@@ -251,7 +258,11 @@
     function updateStorageArrayType() {
       var editMode = #{get 'editMode'/};
       var selectedType = $('#storageArray_type').val();
-      
+      if (selectedType == 'denali') {
+         $('#storageArray_testControlGroup').show();
+      } else {
+         $('#storageArray_testControlGroup').hide();
+      }
       if ( !editMode ) {
           $('fieldset#settings').hide(); //can only set/edit resouce limit value post create
       }
@@ -274,6 +285,7 @@
             $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
             if (!editMode) {
             	$('#storageArray_elementManagerURLControlGroup').show();
+
                 if ($('#storageArray_type').val() == '${scaleIOStorageSystemType}') {
                     $('#storageArray_secondaryUsernameControlGroup').show();
                     $('#storageArray_secondaryPasswordControlGroup').show();
@@ -491,6 +503,15 @@
       #{Form.inputPasswordControlGroup field:field /}
     #{/field}
  
+
+    #{field 'storageArray.test'}
+    %{
+        field.options = storageArrayTypeList
+	field.required = !editMode
+      }%
+      #{Form.selectOneControlGroup field:field /}
+    #{/field}
+
     #{field 'storageArray.elementManagerURL'}
       #{Form.inputTextControlGroup field:field /}
     #{/field}  

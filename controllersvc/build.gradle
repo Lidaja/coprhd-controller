@@ -36,7 +36,7 @@ dependencies {
             project(":vnxe"),
 
             project(":netapp"),
-	    	project(":netappc"),
+            project(":netappc"),
             project(":recoverpoint"),
             project(":compute"),
             project(":cinder"),
@@ -47,6 +47,7 @@ dependencies {
             project(":ecs"),
             project(":ceph"),
             project(":storagedriver"),
+	    //project(":denali"),
     // temp. here, to get simulator to controllersvc classpath
             project(":storagedriversimulator")
             

@@ -191,6 +191,7 @@ CompatibilityStatus.UNKNOWN=Unknown
 #
 # Default Port map for physical assets
 #
+DefaultStorageArrayPortMap.denali=443
 DefaultStorageArrayPortMap.vnxblock=5988
 DefaultStorageArrayPortMap.vmax=5988
 DefaultStorageArrayPortMap.vnxblock_useSSL=5989
@@ -243,6 +244,7 @@ DefaultStorageProviderPortMap.ibmxiv=5989
 DefaultStorageProviderPortMap.xtremio=443
 DefaultStorageProviderPortMap.ceph_useSSL=22
 DefaultStorageProviderPortMap.ceph=22
+#DefaultStorageProviderPortMap.denali=443
 
 DefaultSanSwitchPortMap.brocade_useSSL=5989
 DefaultSanSwitchPortMap.brocade=5988
@@ -279,6 +281,7 @@ PoolAssignment.automatic=Automatic
 PoolAssignment.manual=Manual
 
 StorageSystemType.NONE=None
+StorageSystemType.denali=Denali
 StorageSystemType.vmax=EMC VMAX
 StorageSystemType.vnxblock=EMC VNX Block
 StorageSystemType.vnxfile=EMC VNX File
@@ -297,6 +300,7 @@ StorageSystemType.unity=EMC Unity
 StorageSystemType.datadomain=Data Domain
 StorageSystemType.ceph=Ceph Block Device
 StorageSystemType.ecs=EMC Elastic Cloud Storage
+#StorageSystemType.STORAGE_PROVIDER.denali=Block Storage Provider for Denali
 StorageSystemType.STORAGE_PROVIDER.vmax=Storage Provider for EMC VMAX, VNX Block
 StorageSystemType.STORAGE_PROVIDER.scaleioapi=ScaleIO Gateway
 StorageSystemType.STORAGE_PROVIDER.hds=Storage Provider for Hitachi storage systems
@@ -687,6 +691,7 @@ CustomConfigs.add=Add
 CustomConfigs.save=Save
 CustomConfigs.cancel=Cancel
 CustomConfigs.category.SanZone=SAN Zoning
+#CustomConfigs.category.DENALI=Denali
 CustomConfigs.category.VMAX=VMAX Masking
 CustomConfigs.category.VNX=VNX Storage Groups
 CustomConfigs.category.PortAllocation=Port Allocation
@@ -2114,6 +2119,7 @@ SupportedDriveType.SSD=SSD
 SupportedDriveType.HARD_DISK_DRIVE=HD
 
 systemType.noselection=Any
+systemType.denali=Denali
 systemType.vmax=EMC VMAX
 systemType.vnx=EMC VNX Block
 systemType.vnxfile=EMC VNX File

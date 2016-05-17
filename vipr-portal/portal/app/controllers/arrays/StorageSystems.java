@@ -111,6 +111,7 @@ public class StorageSystems extends ViprResourceController {
         List<EnumOption> defaultStorageArrayPortMap = Arrays.asList(EnumOption.options(DefaultStorageArrayPortMap.values()));
         renderArgs.put("defaultStorageArrayPortMap", defaultStorageArrayPortMap);
 
+	renderArgs.put("BOF", Arrays.asList("Block", "File", "Object"));
         renderArgs.put("vnxfileStorageSystemType", StorageSystemTypes.VNX_FILE);
         renderArgs.put("scaleIOStorageSystemType", StorageSystemTypes.SCALEIO);
         renderArgs.put("scaleIOApiStorageSystemType", StorageSystemTypes.SCALEIOAPI);
@@ -706,6 +707,9 @@ public class StorageSystems extends ViprResourceController {
 
         @MaxSize(2048)
         public String secondaryPasswordConfirm = "";
+
+        @MaxSize(2048)
+	public String test = "";
 
         public String elementManagerURL;
 
