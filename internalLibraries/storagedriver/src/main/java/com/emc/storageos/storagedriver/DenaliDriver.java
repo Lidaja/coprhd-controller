@@ -22,18 +22,20 @@ import com.emc.storageos.storagedriver.AbstractStorageDriver;
 import com.emc.storageos.storagedriver.DriverTask;
 import com.emc.storageos.storagedriver.DenaliTask;
 import com.emc.storageos.storagedriver.RegistrationData;
-import com.emc.storageos.storagedriver.model.ITL;
+//import com.emc.storageos.storagedriver.model.ITL;
 import com.emc.storageos.storagedriver.model.Initiator;
 import com.emc.storageos.storagedriver.model.StorageObject;
 import com.emc.storageos.storagedriver.model.StoragePool;
 import com.emc.storageos.storagedriver.model.StoragePort;
 import com.emc.storageos.storagedriver.model.StorageSystem;
+import com.emc.storageos.storagedriver.model.StorageProvider;
 import com.emc.storageos.storagedriver.model.StorageVolume;
 import com.emc.storageos.storagedriver.model.VolumeClone;
 import com.emc.storageos.storagedriver.model.VolumeConsistencyGroup;
 import com.emc.storageos.storagedriver.model.VolumeMirror;
 import com.emc.storageos.storagedriver.model.VolumeSnapshot;
 import com.emc.storageos.storagedriver.storagecapabilities.CapabilityInstance;
+import com.emc.storageos.storagedriver.storagecapabilities.CapabilityDefinition;
 import com.emc.storageos.storagedriver.storagecapabilities.StorageCapabilities;
 
 public class DenaliDriver extends AbstractStorageDriver implements BlockStorageDriver {
@@ -229,21 +231,6 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
      	* @return task
      	*/
 	
-	@Override
-	public DriverTask restoreSnapshot(StorageVolume volume, VolumeSnapshot snapshot){
-		String taskType = "restore-snapshot";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		String msg = String.format("StorageDriver: restoreSnapshot for storage system %s, " + "snapshots nativeId %s, group %s - end", snapshot.getStorageSystemId(), snapshot.toString(), snapshot.getConsistencyGroup());
-		_log.info(msg);
-		Task.setMessage(msg);
-		String Group = volume.getConsistencyGroup();
-		return Task;
-	}
-
-
-
     	/**
      	* Delete snapshots.
      	* @param snapshots Type: Input.
@@ -460,26 +447,6 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 return Task;
 	}
 
-	/**
-     	* Restore volume from a mirror
-     	*
-     	* @param volume  Type: Input/Output.
-     	* @param mirror  Type: Input.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask restoreVolumeMirror(StorageVolume volume, VolumeMirror mirror){
-                String taskType = "restore-volume-mirror";
-                String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-                DriverTask Task = new DenaliTask(taskId);
-                String msg = String.format("StorageDriver: restoreVolumeMirror for strorage system %s, " + "mirrors nativeId %s - end", mirror.getStorageSystemId(), mirror.toString());
-                _log.info(msg);
-                Task.setMessage(msg);
-                return Task;
-	}
-
-
-
     	// Block Export operations
 
 	/**
@@ -489,12 +456,13 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
      	* @param initiators Type: Input.
      	* @return list of export masks
      	*/
+	/*
 	@Override
     	public List<ITL> getITL(StorageSystem storageSystem, List<Initiator> initiators){
 		List<ITL> ITLS = new ArrayList<ITL>();
 		return ITLS;
 	}
-
+	*/
 	/**
      	* Export volumes to initiators through a given set of ports. If ports are not provided,
      	* use port requirements from ExportPathsServiceOption storage capability
@@ -644,29 +612,10 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
 
     	/**
-     	* Delete consistency group clone
-     	* It is implementation responsibility to validate consistency of this group operation.
-     	*
-     	* @param clones  input
-     	* @return
-     	*/
-	@Override
-    	public DriverTask deleteConsistencyGroupClone(List<VolumeClone> clones){
-        	String taskType = "delete-volume-cg";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        	DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	String msg = String.format("StorageDriver: deleteConsistencyGroup information for storage system %s, clones nativeId %s - end", clones.get(0).getStorageSystemId(),clones.get(0).getNativeId());
-        	_log.info(msg);
-        	Task.setMessage(msg);
-        	return Task;
-	}
-
-    	/**
      	*  Get driver registration data.
      	*/
-   	public RegistrationData getRegistrationData(){
-		RegistrationData Data = new RegistrationData();
+   	public RegistrationData getRegistrationData(String name, String type,Set<CapabilityDefinition> capabilities){
+		RegistrationData Data = new RegistrationData(name,type,capabilities);
 		return Data;
 	}
 
@@ -833,5 +782,11 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 		DriverTask Task = new DenaliTask("get");
 		return Task;
 	}
+
+    	public DriverTask discoverStorageProvider(StorageProvider storageProvider, List<StorageSystem> storageSystems){
+		DriverTask Task = new DenaliTask("Discover");
+		return Task;
+	}
+
 
 }
