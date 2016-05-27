@@ -85,7 +85,6 @@ function myFunction() {
             }
     
         
-        
     	//
     	// too much spaning for checkbox.  Remove it
     	//
@@ -246,6 +245,7 @@ function myFunction() {
         } else {
             $('#storageArray_resourceLimitControlGroup').show();
         }
+        
     }
         
     function isHideSSLCheckboxStorageSystem(storageSystemType) {
@@ -256,14 +256,14 @@ function myFunction() {
     // appropriately show/hide field for block or file storage array type
     //
     function updateStorageArrayType() {
-      var editMode = #{get 'editMode'/};
-      var selectedType = $('#storageArray_type').val();
-      if (selectedType == 'denali') {
-         $('#storageArray_testControlGroup').show();
-      } else {
-         $('#storageArray_testControlGroup').hide();
-      }
-      if ( !editMode ) {
+      	var editMode = #{get 'editMode'/};
+     	var selectedType = $('#storageArray_type').val();
+        if (selectedType == 'denali') {
+            $('#storageArray_deviceTypeControlGroup').show();
+        } else {
+            $('#storageArray_deviceTypeControlGroup').hide();
+        }
+     if ( !editMode ) {
           $('fieldset#settings').hide(); //can only set/edit resouce limit value post create
       }
       
@@ -504,7 +504,7 @@ function myFunction() {
     #{/field}
  
 
-    #{field 'storageArray.test'}
+    #{field 'storageArray.deviceType'}
     %{
         field.options = storageArrayTypeList
 	field.required = !editMode

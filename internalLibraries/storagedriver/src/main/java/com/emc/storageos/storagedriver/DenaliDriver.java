@@ -1,6 +1,13 @@
+/*
+ * Copyright (c) 2016 EMC Corporation
+ * All Rights Reserved
+ */
+
 package com.emc.storageos.storagedriver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,785 +15,887 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.python.util.PythonInterpreter;
-import org.python.core.*;
-
-import com.emc.storageos.storagedriver.BlockStorageDriver;
-import com.emc.storageos.storagedriver.model.StorageHostComponent;
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.emc.storageos.storagedriver.AbstractStorageDriver;
+import com.emc.storageos.storagedriver.BlockStorageDriver;
 import com.emc.storageos.storagedriver.DriverTask;
-import com.emc.storageos.storagedriver.DenaliTask;
+import com.emc.storageos.storagedriver.HostExportInfo;
 import com.emc.storageos.storagedriver.RegistrationData;
-//import com.emc.storageos.storagedriver.model.ITL;
 import com.emc.storageos.storagedriver.model.Initiator;
+import com.emc.storageos.storagedriver.model.StorageBlockObject;
+import com.emc.storageos.storagedriver.model.StorageHostComponent;
 import com.emc.storageos.storagedriver.model.StorageObject;
 import com.emc.storageos.storagedriver.model.StoragePool;
 import com.emc.storageos.storagedriver.model.StoragePort;
-import com.emc.storageos.storagedriver.model.StorageSystem;
 import com.emc.storageos.storagedriver.model.StorageProvider;
+import com.emc.storageos.storagedriver.model.StorageSystem;
 import com.emc.storageos.storagedriver.model.StorageVolume;
 import com.emc.storageos.storagedriver.model.VolumeClone;
 import com.emc.storageos.storagedriver.model.VolumeConsistencyGroup;
 import com.emc.storageos.storagedriver.model.VolumeMirror;
 import com.emc.storageos.storagedriver.model.VolumeSnapshot;
 import com.emc.storageos.storagedriver.storagecapabilities.CapabilityInstance;
-import com.emc.storageos.storagedriver.storagecapabilities.CapabilityDefinition;
 import com.emc.storageos.storagedriver.storagecapabilities.StorageCapabilities;
+
 
 public class DenaliDriver extends AbstractStorageDriver implements BlockStorageDriver {
 
-	private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
-	private static final String DRIVER_NAME = "DenaliDriver";
-	private static final String STORAGE_DEVICE_ID = "DenaliStorage-420";
-	private static Integer portIndex = 0;
-	private static Integer numPools = 3;
-	private static Integer numPorts = 3;
-	private static Integer numNetPorts = 3;
-	private static Long maxThick = 1000000L;
-	private static Long minThick = 300L;
-	private static Long maxThin = 2000000L;
-	private static Long minThin = 300L;
-	private static Long subCap = 50000000L;
-	private static Long freeCap = 50000000L;
-	private static Long totCap = 48000000L;	
-	private static Map<String, Integer> systemNameToPortIndexName = new HashMap<>();
+    private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
+    private static final String DRIVER_NAME = "DenaliDriver";
+    private static final int NUMBER_OF_VOLUME_PAGES = 3;
+    private static final int NUMBER_OF_VOLUMES_ON_PAGE = 2;
+    private static final int NUMBER_OF_CLONES_FOR_VOLUME = 2;
+    private static final int NUMBER_OF_SNAPS_FOR_VOLUME = 2;
+    private static final int NUMBER_OF_PORTS_WITH_NETWORK = 3;
+    private static final int NUMBER_OF_PORTS_WITHOUT_NETWORK = 3;
+    private static final boolean VOLUMES_IN_CG = true;
+    private static final boolean SNAPS_IN_CG = true;
+    private static final boolean CLONES_IN_CG = true;
+    private static final boolean GENERATE_EXPORT_DATA = true;
 
-	private static PythonInterpreter interp = new PythonInterpreter();
+    private static Integer portIndex = 0;
+    private static Map<String, Integer> systemNameToPortIndexName = new HashMap<>();
 
-    	/**
-     	* Get list of supported storage system types. Ex. vmax, vnxblock, hitachi, etc...
-     	* @return list of supported storage system types
-     	*/
-    	public List<String> getSystemTypes(){
-		List<String> systemTypes = new ArrayList<String>();
-		systemTypes.add("denali");
-		return systemTypes;
-	}
+    // map for storage system to host export info data for a volume;
+    // key: array native id
+    // value: map where key is volume native id and value is list of volume export info object for this volume for different hosts (one entry for each host)
+    private static Map<String, Map<String, List<HostExportInfo>>> arrayToVolumeToVolumeExportInfoMap = new HashMap<>();
+    // defines which volume page is exported to which host
+    private static Map<Integer, List<String>> pageToHostMap;
+    private static Map<String, List<Integer>> hostToPageMap;
+    static
+    {
+        pageToHostMap = new HashMap<>();
+        pageToHostMap.put(0, Arrays.asList("10.20.30.40", "10.20.30.50"));
+        pageToHostMap.put(1, Arrays.asList("10.20.30.50"));
+        pageToHostMap.put(2, Arrays.asList("10.20.30.60"));
 
+        hostToPageMap = new HashMap<>();
+        hostToPageMap.put("10.20.30.40",Arrays.asList(0));
+        hostToPageMap.put("10.20.30.50", Arrays.asList(0,1));
+        hostToPageMap.put("10.20.30.60", Arrays.asList(2));
+    }
 
-    	/**
-     	* Return driver task with a given id.
-     	*
-     	* @param taskId
-     	* @return
-     	*/
-    	public DriverTask getTask(String taskId){
-		DriverTask Task = new DenaliTask(taskId);
-		return Task;
-	}
+    private static Map<String, List<String>> hostToInitiatorPortIdMap;
+    static
+    {
+        // each host with two initiators
+        hostToInitiatorPortIdMap = new HashMap<>();
+        hostToInitiatorPortIdMap.put(pageToHostMap.get(0).get(0), new ArrayList<>(Arrays.asList("50:06:01:61:36:68:08:81", "50:06:01:61:36:68:08:82")));
+        hostToInitiatorPortIdMap.put(pageToHostMap.get(1).get(0), new ArrayList<>(Arrays.asList("50:06:01:61:36:68:09:81", "50:06:01:61:36:68:09:82")));
+        hostToInitiatorPortIdMap.put(pageToHostMap.get(2).get(0), new ArrayList<>(Arrays.asList("50:06:01:61:36:68:10:81", "50:06:01:61:36:68:10:82")));
+    }
 
+    //StorageDriver implementation
 
+    @Override
+    public RegistrationData getRegistrationData() {
+        RegistrationData registrationData = new RegistrationData("denaliDriver", "driversystem", null);
+        return registrationData;
+    }
 
-    	/**
-     	* Get storage object with a given type with specified native ID which belongs to specified storage system
-     	*
-     	* @param storageSystemId storage system native id
-     	* @param objectId object native id
-     	* @param type  class instance
-     	* @param <T> storage object type
-     	* @return storage object or null if does not exist
-     	*
-     	* Example of usage:
-     	*    StorageVolume volume = StorageDriver.getStorageObject("vmax-12345", "volume-1234", StorageVolume.class);
-     	*/
-	
-    	public <T extends StorageObject> T getStorageObject(String storageSystemId, String objectId, Class<T> type){
-		try{
-			T S = type.newInstance();
-			return S;
-		} catch (InstantiationException e){
-			System.out.println("oopsies");
-			return null;
-		} catch (IllegalAccessException e){
-			System.out.println("oopsies again");
-			return null;
-		}
-	}
+    @Override
+    public DriverTask getTask(String taskId) {
+        return null;
+    }
 
+    @Override
+    public <T extends StorageObject> T getStorageObject(String storageSystemId, String objectId, Class<T> type) {
+        if (StorageVolume.class.getSimpleName().equals(type.getSimpleName())) {
+            StorageVolume obj = new StorageVolume();
+            obj.setAllocatedCapacity(200L);
+            return (T) obj;
+        } else if (VolumeConsistencyGroup.class.getSimpleName().equals(type.getSimpleName())) {
+            VolumeConsistencyGroup cg = new VolumeConsistencyGroup();
+            cg.setStorageSystemId(storageSystemId);
+            cg.setNativeId(objectId);
+            cg.setDeviceLabel(objectId);
+            _log.info("Return volume cg {} from array {}", objectId, storageSystemId);
+            return (T) cg;
+        } else {
+            StorageVolume obj = new StorageVolume();
+            obj.setAllocatedCapacity(200L);
+            return (T) obj;
+        }
+    }
+    // DiscoveryDriver implementation
 
+    @Override
+    public DriverTask discoverStorageSystem(List<StorageSystem> storageSystems) {
+        StorageSystem storageSystem = storageSystems.get(0);
+        _log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, name {} - start",
+                storageSystem.getIpAddress(), storageSystem.getSystemName());
+        String taskType = "discover-storage-system";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
 
-	// Block Volume operations
-    	/**
-     	* Create storage volumes with a given set of capabilities.
-	* Before completion of the request, set all required data for provisioned volumes in "volumes" parameter.
-	*
-	* @param volumes Input/output argument for volumes.
-	* @param capabilities Input argument for capabilities. Defines storage capabilities of volumes to create.
-	* @return task
-	*/
-	
-	@Override
-	public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities){
-		Set<String> newVolumes = new HashSet<>();
-		for (StorageVolume volume : volumes){
-			volume.setNativeId("DenaliVolume" + UUID.randomUUID().toString());
-			volume.setAccessStatus(StorageVolume.AccessStatus.READ_WRITE);
-			volume.setProvisionedCapacity(volume.getRequestedCapacity());
-			volume.setAllocatedCapacity(volume.getRequestedCapacity());
-			volume.setDeviceLabel(volume.getNativeId());
-			volume.setWwn(String.format("%s%s", volume.getStorageSystemId(),volume.getNativeId()));
-			newVolumes.add(volume.getNativeId());
-		}
-		String taskType = "create-storage-volumes";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType,UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DenaliTask.TaskStatus.READY);
-       		String msg = String.format("StorageDriver: createVolumes information for storage system %s, volume nativeIds %s - end",volumes.get(0).getStorageSystemId(), newVolumes.toString());
-        	_log.info(msg);
-		_log.info("TEST MESSAGE");
-		_log.debug("Another Test");
-        	Task.setMessage(msg);
-        	return Task;
-
-	}
-    	/**
-     	* Expand volume.
-     	* Before completion of the request, set all required data for expanded volume in "volume" parameter.
-     	* This includes update for capacity properties based on the new volume size:
-     	*                                         requestedCapacity, provisionedCapacity, allocatedCapacity.
-     	*
-     	* @param volume  Volume to expand. Type: Input/Output argument.
-     	* @param newCapacity  Requested capacity in bytes. Type: input argument.
-     	* @return task
-     	*/
-    	public DriverTask expandVolume(StorageVolume volume, long newCapacity){
-        	String taskType = "expand-storage-volumes";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType,UUID.randomUUID().toString());
-        	volume.setRequestedCapacity(newCapacity);
-        	volume.setProvisionedCapacity(newCapacity);
-        	volume.setAllocatedCapacity(newCapacity);
-        	DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	_log.info("StorageDriver: expandVolume information for storage system {},volume nativeId {}, " + "new capacity {} - end", volume.getStorageSystemId(), volume.toString(), volume.getRequestedCapacity());
-        	return Task;
-	}
-
-    	/**
-     	* Delete volumes.
-     	* @param volumes Volumes to delete.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask deleteVolumes(List<StorageVolume> volumes){
-		for (StorageVolume volume : volumes){
-			//volume = null;
-		}
-		//volumes = null;
-        	String taskType = "delete-storage-volumes";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        	DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	_log.info("StorageDriver:  deleteVolumes information for storage system {},volume nativeIds {} - end", volumes.get(0).getStorageSystemId(),volumes.toString());
-		_log.info("TEST DELETE");
-		_log.debug("TEST DELETE AGAIN");
-        	return Task;
-	}
+        try {
+            storageSystem.setSerialNumber(storageSystem.getSystemName());
+            storageSystem.setNativeId(storageSystem.getSystemName());
+            storageSystem.setFirmwareVersion("2.4-3.12");
+            storageSystem.setIsSupportedVersion(true);
+            setConnInfoToRegistry(storageSystem.getNativeId(), storageSystem.getIpAddress(), storageSystem.getPortNumber(),
+                    storageSystem.getUsername(), storageSystem.getPassword());
+            // Support both, element and group replicas.
+            Set<StorageSystem.SupportedReplication> supportedReplications = new HashSet<>();
+            supportedReplications.add(StorageSystem.SupportedReplication.elementReplica);
+            supportedReplications.add(StorageSystem.SupportedReplication.groupReplica);
+            storageSystem.setSupportedReplications(supportedReplications);
 
 
+            task.setStatus(DriverTask.TaskStatus.READY);
+            _log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, nativeId {} - end",
+                    storageSystem.getIpAddress(), storageSystem.getNativeId());
+            return task;
+        } catch (Exception e) {
+            task.setStatus(DriverTask.TaskStatus.FAILED);
+            e.printStackTrace();
+        }
+        return task;
 
+    }
 
-    	// Block Snapshot operations
+    @Override
+    public DriverTask discoverStoragePools(StorageSystem storageSystem, List<StoragePool> storagePools) {
 
-    	/**
-     	* Create volume snapshots.
-     	*
-     	* @param snapshots Type: Input/Output.
-     	* @param capabilities capabilities required from snapshots. Type: Input.
-     	* @return task
-     	*/
-	
-	@Override
-    	public DriverTask createVolumeSnapshot(List<VolumeSnapshot> snapshots, StorageCapabilities capabilities){
-		String snapTimestamp = Long.toString(System.currentTimeMillis());
-		for (VolumeSnapshot snapshot : snapshots){
-			snapshot.setCustomCapabilities(capabilities.getCustomCapabilities());
-			snapshot.setCommonCapabilities(capabilities.getCommonCapabilities());
-			snapshot.setNativeId("snap-" + snapshot.getParentId() + UUID.randomUUID().toString());
-			snapshot.setTimestamp(snapTimestamp);
-		}
-		String taskType = "create-volume-snapshot";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		_log.info("StorageDriver: createVolumeSnapshot informatiion for storage system {}, snapshots native Ids {} - end", snapshots.get(0).getStorageSystemId(), snapshots.toString());
-		return Task;
-	}
+        _log.info("Discovery of storage pools for storage system {} .", storageSystem.getNativeId());
+        String taskType = "discover-storage-pools";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
 
+        try {
+            // Get connection information.
+            Map<String, List<String>> connectionInfo =
+                    driverRegistry.getDriverAttributesForKey("DenaliDriver", storageSystem.getNativeId());
+            _log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
+            for (int i =0; i <= 2; i++ ) {
+                StoragePool pool = new StoragePool();
+                pool.setNativeId("pool-1234577-" + i + storageSystem.getNativeId());
+                pool.setStorageSystemId(storageSystem.getNativeId());
+                _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
 
+                pool.setDeviceLabel("er-pool-1234577" + i + storageSystem.getNativeId());
+                pool.setPoolName(pool.getDeviceLabel());
+                Set<StoragePool.Protocols> protocols = new HashSet<>();
+                protocols.add(StoragePool.Protocols.FC);
+                protocols.add(StoragePool.Protocols.iSCSI);
+                //protocols.add(StoragePool.Protocols.ScaleIO);
+                pool.setProtocols(protocols);
+                pool.setPoolServiceType(StoragePool.PoolServiceType.block);
+                pool.setMaximumThickVolumeSize(3000000L);
+                pool.setMinimumThickVolumeSize(1000L);
+                pool.setMaximumThinVolumeSize(5000000L);
+                pool.setMinimumThinVolumeSize(1000L);
+                pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK);
 
-    	/**
-     	* Restore volume to snapshot state.
-     	* Implementation should check if the volume is part of consistency group and restore
-     	* all volumes in the consistency group to the same consistency group snapshot (as defined
-     	* by the snapshot parameter).
-     	* If the volume is not part of consistency group, restore this volume to the snapshot.
-    	*
-     	* @param volume Type: Input/Output.
-     	* @param snapshot  Type: Input.
-     	* @return task
-     	*/
-	
-    	/**
-     	* Delete snapshots.
-     	* @param snapshots Type: Input.
+                pool.setSubscribedCapacity(5000000L);
+                pool.setFreeCapacity(45000000L);
+                pool.setTotalCapacity(48000000L);
+                pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
+                Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
+                supportedDriveTypes.add(StoragePool.SupportedDriveTypes.FC);
+                supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SATA);
+                pool.setSupportedDriveTypes(supportedDriveTypes);
 
-     	* @return task
-     	*/
-	
-	@Override
-    	public DriverTask deleteVolumeSnapshot(List<VolumeSnapshot> snapshots){
-		for (VolumeSnapshot snapshot : snapshots){
-			//snapshot = null;
-		}
-		//snapshots = null;
-		String taskType = "delete-volume-snapshot";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		String msg = String.format("StorageDriver: deleteVolumeSnapshot for storage system %s, " + " snapshots nativeId %s - end", snapshots.get(0).getStorageSystemId(), snapshots.toString());
-		_log.info(msg);
-		Task.setMessage(msg);
-		return Task;
-	}
+                //            Set<StoragePool.RaidLevels> raidLevels = new HashSet<>();
+                //            raidLevels.add(StoragePool.RaidLevels.RAID5);
+                //            raidLevels.add(StoragePool.RaidLevels.RAID6);
+                //            pool.setSupportedRaidLevels(raidLevels);
 
+                storagePools.add(pool);
 
+            }
+            task.setStatus(DriverTask.TaskStatus.READY);
+            _log.info("denaliStorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end",
+                    storageSystem.getIpAddress(), storageSystem.getNativeId());
+        } catch (Exception e) {
+            task.setStatus(DriverTask.TaskStatus.FAILED);
+            e.printStackTrace();
+        }
+        return task;
+    }
 
-	// Block clone operations
+    @Override
+    public DriverTask discoverStoragePorts(StorageSystem storageSystem, List<StoragePort> storagePorts) {
+        _log.info("Discovery of storage ports for storage system {} .", storageSystem.getNativeId());
 
-	/**
-     	* Clone volume clones.
-     	* @param clones  Type: Input/Output.
-     	* @param capabilities capabilities of clones. Type: Input.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask createVolumeClone(List<VolumeClone> clones, StorageCapabilities capabilities){
-		for (VolumeClone clone : clones) { 
-			clone.setNativeId("clone-" + clone.getParentId() + clone.getDisplayName());
-			clone.setWwn(String.format("%s%s", clone.getStorageSystemId(), clone.getNativeId()));
-			clone.setReplicationState(VolumeClone.ReplicationState.SYNCHRONIZED);
-			clone.setDeviceLabel(clone.getNativeId());
-		}
-		String taskType = "create-volume-clone";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType,UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		
-		String msg = String.format("StorageDriver: createVolumeClone information for storage system %s, clone nativeIds %s - end", clones.get(0).getStorageSystemId(), clones.toString());
-		_log.info(msg);
-		Task.setMessage(msg);
-		return Task;
-	}
+        int index = 0;
+        // Get "portIndexes" attribute map
+        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("simulatordriver", "portIndexes");
+        if (portIndexes != null) {
+            List<String>  indexes = portIndexes.get(storageSystem.getNativeId());
+            if (indexes != null) {
+                index = Integer.parseInt(indexes.get(0));
+                _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
+            }
+        }
 
+        if (index == 0) {
+            // no index for this system in the registry
+            // get the last used index and increment by 1 to generate an index
+            if (portIndexes != null) {
+                List<String> indexes = portIndexes.get("lastIndex");
+                if (indexes != null) {
+                    index = Integer.parseInt(indexes.get(0)) + 1;
+                } else {
+                    index ++;
+                }
+            } else {
+                index ++;
+            }
+            // set this index for the system in registry
+            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", storageSystem.getNativeId(),
+                    Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", "lastIndex",
+                    Collections.singletonList(String.valueOf(index)));
+            _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
+        }
 
+//        Integer index = systemNameToPortIndexName.get(storageSystem.getNativeId());
+//        if(index == null) {
+//            // Get "portIndexes" attribute map
+//            //Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("simulatordriver", "portIndexes");
+//
+//            index = ++portIndex;
+//            systemNameToPortIndexName.put(storageSystem.getNativeId(), index);
+//        }
 
-	/**
-     	* Detach volume clones.
-     	* It is implementation responsibility to validate consistency of this operation
-     	* when clones belong to consistency groups.
-     	*
-     	* @param clones Type: Input/Output.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask detachVolumeClone(List<VolumeClone> clones){
-		for (VolumeClone clone : clones){
-			//DETACH CLONE
-		}
-		String taskType = "detach-volume-clone";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		String msg = String.format("StorageDriver: detachVolumeClone for storage system %s, " +  "clones nativeId %s - end", clones.get(0).getStorageSystemId(), clones.toString());
-		_log.info(msg);
-		Task.setMessage(msg);
-		return Task;
-	}
+        // Create ports with network
+        for (int i =0; i <= NUMBER_OF_PORTS_WITH_NETWORK; i++ ) {
+            StoragePort port = new StoragePort();
+            port.setNativeId("port-1234577-" + i + storageSystem.getNativeId());
+            port.setStorageSystemId(storageSystem.getNativeId());
+            _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
 
-	/**
-     	* Delete volume clones.
-     	*
-     	* @param clones clones to delete. Type: Input.
-     	* @return
-     	*/
-    	public DriverTask deleteVolumeClone(List<VolumeClone> clones){
-		for (VolumeClone clone : clones){
-			//clone = null;
-		}
-		//clones = null;
-	        String taskType = "delete-volume-clone";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-	        DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	String msg = String.format("StorageDriver: deleteVolumeClone for storage system %s, " + "clones nativeId %s - end", clones.get(0).getStorageSystemId(), clones.toString());
-	        _log.info(msg);
-        	Task.setMessage(msg);
-        	return Task;
-	}
+            port.setDeviceLabel("er-port-1234577" + i + storageSystem.getNativeId());
+            port.setPortName(port.getDeviceLabel());
+            //port.setNetworkId("er-network77"+ storageSystem.getNativeId());
+            port.setNetworkId("11");
+            port.setTransportType(StoragePort.TransportType.FC);
+            //port.setTransportType(StoragePort.TransportType.IP);
+            port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
+            port.setOperationalStatus(StoragePort.OperationalStatus.OK);
+            port.setPortHAZone("zone-"+i);
+            storagePorts.add(port);
+        }
 
+        // Create ports without network
+        for (int i =0; i <= NUMBER_OF_PORTS_WITHOUT_NETWORK; i++ ) {
+            StoragePort port = new StoragePort();
+            port.setNativeId("port-1234577-" + i+ storageSystem.getNativeId());
+            port.setStorageSystemId(storageSystem.getNativeId());
+            _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
 
-    	/**
-     	* Restore from clone.
-     	*
-     	* It is implementation responsibility to validate consistency of this operation
-     	* when clones belong to consistency groups.
-     	*
-     	* @param clones   Clones to restore from. Type: Input/Output.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask restoreFromClone(List<VolumeClone> clones){
+            port.setDeviceLabel("er-port-1234577" + i+ storageSystem.getNativeId());
+            port.setPortName(port.getDeviceLabel());
+            //port.setNetworkId("er-network77"+ storageSystem.getNativeId());
+            port.setTransportType(StoragePort.TransportType.FC);
+            port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
+            port.setOperationalStatus(StoragePort.OperationalStatus.OK);
+            port.setPortHAZone("zone-with-many-ports");
+            storagePorts.add(port);
+        }
+
+        String taskType = "discover-storage-ports";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        _log.info("denaliStorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end",
+                storageSystem.getIpAddress(), storageSystem.getNativeId());
+        return task;
+
+    }
+
+    @Override
+    public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities) {
+
+        //String newVolumes = "";
+        Set<String> newVolumes = new HashSet<>();
+
+        for (StorageVolume volume : volumes) {
+            volume.setNativeId("denaliVolume" + UUID.randomUUID().toString());
+            volume.setAccessStatus(StorageVolume.AccessStatus.READ_WRITE);
+            volume.setProvisionedCapacity(volume.getRequestedCapacity());
+            volume.setAllocatedCapacity(volume.getRequestedCapacity());
+            volume.setDeviceLabel(volume.getNativeId());
+            volume.setWwn(String.format("%s%s", volume.getStorageSystemId(), volume.getNativeId()));
+
+            // newVolumes = newVolumes + volume.getNativeId() + " ";
+            newVolumes.add(volume.getNativeId());
+        }
+        String taskType = "create-storage-volumes";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+
+        String msg = String.format("denaliStorageDriver: createVolumes information for storage system %s, volume nativeIds %s - end",
+                volumes.get(0).getStorageSystemId(), newVolumes.toString());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask expandVolume(StorageVolume volume, long newCapacity) {
+        String taskType = "expand-storage-volumes";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        volume.setRequestedCapacity(newCapacity);
+        volume.setProvisionedCapacity(newCapacity);
+        volume.setAllocatedCapacity(newCapacity);
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+
+        _log.info("denaliStorageDriver: expandVolume information for storage system {}, volume nativeId {}," +
+                        " new capacity {} - end",
+                volume.getStorageSystemId(), volume.toString(), volume.getRequestedCapacity());
+        return task;
+    }
+
+    @Override
+    public DriverTask deleteVolumes(List<StorageVolume> volumes) {
+
+        String taskType = "delete-storage-volumes";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+
+        _log.info("denaliStorageDriver: deleteVolumes information for storage system {}, volume nativeIds {} - end",
+                volumes.get(0).getStorageSystemId(), volumes.toString());
+        return task;
+    }
+
+    @Override
+    public DriverTask createVolumeSnapshot(List<VolumeSnapshot> snapshots, StorageCapabilities capabilities) {
+        String snapTimestamp = Long.toString(System.currentTimeMillis());
+        for (VolumeSnapshot snapshot : snapshots) {
+            snapshot.setNativeId("snap-" + snapshot.getParentId() + UUID.randomUUID().toString());
+            snapshot.setConsistencyGroup(snapTimestamp);
+            snapshot.setAllocatedCapacity(1000L);
+            snapshot.setProvisionedCapacity(2000L);
+        }
+        String taskType = "create-volume-snapshot";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+
+        _log.info("denaliStorageDriver: createVolumeSnapshot information for storage system {}, snapshots nativeIds {} - end",
+                snapshots.get(0).getStorageSystemId(), snapshots.toString());
+        return task;
+    }
+
+    @Override
+    public DriverTask restoreSnapshot(List<VolumeSnapshot> snapshots) {
+        String taskType = "restore-snapshot";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: restoreSnapshot for storage system %s, " +
+                        "snapshots nativeId %s, snap group %s - end",
+                snapshots.get(0).getStorageSystemId(), snapshots.toString(), snapshots.get(0).getConsistencyGroup());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask deleteVolumeSnapshot(List<VolumeSnapshot> snapshots) {
+        String taskType = "delete-volume-snapshot";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: deleteVolumSnapshot for storage system %s, " +
+                        "snapshots nativeId %s - end",
+                snapshots.get(0).getStorageSystemId(), snapshots.toString());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask createVolumeClone(List<VolumeClone> clones, StorageCapabilities capabilities) {
+        for (VolumeClone clone : clones) {
+            clone.setNativeId("clone-" + clone.getParentId() + clone.getDisplayName());
+            clone.setWwn(String.format("%s%s", clone.getStorageSystemId(), clone.getNativeId()));
+            clone.setReplicationState(VolumeClone.ReplicationState.SYNCHRONIZED);
+            clone.setProvisionedCapacity(clone.getRequestedCapacity());
+            clone.setAllocatedCapacity(clone.getRequestedCapacity());
+            clone.setDeviceLabel(clone.getNativeId());
+        }
+        String taskType = "create-volume-clone";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+
+        String msg = String.format("denaliStorageDriver: createVolumeClone information for storage system %s, clone nativeIds %s - end",
+                clones.get(0).getStorageSystemId(), clones.toString());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask detachVolumeClone(List<VolumeClone> clones) {
+        String taskType = "detach-volume-clone";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: detachVolumeClone for storage system %s, " +
+                        "clones nativeId %s - end",
+                clones.get(0).getStorageSystemId(), clones.toString());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask restoreFromClone(List<VolumeClone> clones) {
         String taskType = "restore-volume-clones";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask Task = new DenaliTask(taskId);
-        Task.setStatus(DriverTask.TaskStatus.READY);
-        String msg = String.format("StorageDriver: restoreFromClone : clones %s ", clones);
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: restoreFromClone : clones %s ", clones);
         for (VolumeClone clone : clones) {
             clone.setReplicationState(VolumeClone.ReplicationState.RESTORED);
         }
         _log.info(msg);
-        Task.setMessage(msg);
-        return Task;
-	}
+        task.setMessage(msg);
+        return task;
+    }
 
 
+    @Deprecated
+    public DriverTask deleteVolumeClone(List<VolumeClone> clones) {
+        String taskType = "delete-volume-clone";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: deleteVolumeClone for storage system %s, " +
+                        "clones nativeId %s - end",
+                clones.get(0).getStorageSystemId(), clones.toString());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
 
-	// Block Mirror operations
+    @Override
+    public DriverTask createVolumeMirror(List<VolumeMirror> mirrors, StorageCapabilities capabilities) {
+        return null;
+    }
 
-    	/**
-     	* Create volume mirrors.
-     	*
-     	* @param mirrors  Type: Input/Output.
-     	* @param capabilities capabilities of mirrors. Type: Input.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask createVolumeMirror(List<VolumeMirror> mirrors, StorageCapabilities capabilities){
-		for (VolumeMirror mirror : mirrors){
-			mirror.setCustomCapabilities(capabilities.getCustomCapabilities());
-			mirror.setCommonCapabilities(capabilities.getCommonCapabilities());
-		}
-                String taskType = "create-volume-mirrors";
-                String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType,UUID.randomUUID().toString());
-                DriverTask Task = new DenaliTask(taskId);
-                Task.setStatus(DenaliTask.TaskStatus.READY);
-                String msg = String.format("StorageDriver: createVolumeMirrors information for storage system %s, volume nativeIds %s - end",mirrors.get(0).getStorageSystemId(), mirrors.toString());
-                _log.info(msg);
-                Task.setMessage(msg);
-                return Task;
-	}
+    @Override
+    public DriverTask deleteVolumeMirror(List<VolumeMirror> mirrors) {
+        return null;
+    }
 
+    @Override
+    public DriverTask splitVolumeMirror(List<VolumeMirror> mirrors) {
+        return null;
+    }
 
+    @Override
+    public DriverTask resumeVolumeMirror(List<VolumeMirror> mirrors) {
+        return null;
+    }
 
-    	/**
-     	* Delete mirrors.
-     	*
-     	* @param mirrors mirrors to delete. Type: Input.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask deleteVolumeMirror(List<VolumeMirror> mirrors){
-		for (VolumeMirror mirror : mirrors){
-			//mirror = null;
-		}
-		//mirrors = null;
-                String taskType = "delete-volume-mirror";
-                String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		String msg = String.format("StorageDriver: deleteVolumeMirror for strorage system %s, " + "mirrors nativeId %s - end", mirrors.get(0).getStorageSystemId(), mirrors.toString());
-		_log.info(msg);
-		Task.setMessage(msg);
-		return Task;
-	}
+    @Override
+    public Map<String, HostExportInfo> getVolumeExportInfoForHosts(StorageVolume volume) {
 
+        _log.info("Processing export info for volume: {}", volume);
+        Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(volume.getStorageSystemId(), volume.getNativeId());
+        _log.info("Export info data for volume {}: {} .", volume, exportInfoMap);
 
+        return exportInfoMap;
+    }
 
-	/**
-     	* Split mirrors
-     	* @param mirrors  Type: Input/Output.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask splitVolumeMirror(List<VolumeMirror> mirrors){
-		for (VolumeMirror mirror : mirrors){
-			//SPLIT MIRROR
-		}
-                String taskType = "split-volume-mirror";
-                String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-                DriverTask Task = new DenaliTask(taskId);
-                String msg = String.format("StorageDriver: splitVolumeMirror for strorage system %s, " + "mirrors native Id %s - end", mirrors.get(0).getStorageSystemId(), mirrors.toString());
-                _log.info(msg);
-                Task.setMessage(msg);
-                return Task;
-	}
+    @Override
+    public Map<String, HostExportInfo> getSnapshotExportInfoForHosts(VolumeSnapshot snapshot) {
+        _log.info("Processing export info for snapshot: {}", snapshot);
+        Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(snapshot.getStorageSystemId(), snapshot.getNativeId());
+        _log.info("Export info data for volume {}: {} .", snapshot, exportInfoMap);
 
+        return exportInfoMap;
+    }
 
+    @Override
+    public Map<String, HostExportInfo> getCloneExportInfoForHosts(VolumeClone clone) {
+        _log.info("Processing export info for volume: {}", clone);
+        Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(clone.getStorageSystemId(), clone.getNativeId());
+        _log.info("Export info data for volume {}: {} .", clone, exportInfoMap);
 
-    	/**
-     	* Resume mirrors after split
-     	*
-     	* @param mirrors  Type: Input/Output.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask resumeVolumeMirror(List<VolumeMirror> mirrors){
-		for (VolumeMirror mirror : mirrors){
-			//RESUME MIRROR
-		}
-                String taskType = "resume-volume-mirror";
-                String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-                DriverTask Task = new DenaliTask(taskId);
-                String msg = String.format("StorageDriver: resumeVolumeMirror for strorage system %s, " + "mirrors nativeId %s - end", mirrors.get(0).getStorageSystemId(), mirrors.toString());
-                _log.info(msg);
-                Task.setMessage(msg);
-                return Task;
-	}
+        return exportInfoMap;
+    }
 
-    	// Block Export operations
+    @Override
+    public Map<String, HostExportInfo> getMirrorExportInfoForHosts(VolumeMirror mirror) {
+        _log.info("Processing export info for volume: {}", mirror);
+        Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(mirror.getStorageSystemId(), mirror.getNativeId());
+        _log.info("Export info data for volume {}: {} .", mirror, exportInfoMap);
 
-	/**
-     	* Get export masks for a given set of initiators.
-     	*
-     	* @param storageSystem Storage system to get ITLs from. Type: Input.
-     	* @param initiators Type: Input.
-     	* @return list of export masks
-     	*/
-	/*
-	@Override
-    	public List<ITL> getITL(StorageSystem storageSystem, List<Initiator> initiators){
-		List<ITL> ITLS = new ArrayList<ITL>();
-		return ITLS;
-	}
-	*/
-	/**
-     	* Export volumes to initiators through a given set of ports. If ports are not provided,
-     	* use port requirements from ExportPathsServiceOption storage capability
-     	*
-     	* @param initiators Type: Input.
-     	* @param volumes    Type: Input.
-     	* @param volumeToHLUMap map of volume nativeID to requested HLU. HLU value of -1 means that HLU is not defined and will be assigned by array.
-     	*                       Type: Input/Output.
-     	* @param recommendedPorts list of storage ports recommended for the export. Optional. Type: Input.
-     	* @param availablePorts list of ports available for the export. Type: Input.
-     	* @param capabilities storage capabilities. Type: Input.
-     	* @param usedRecommendedPorts true if driver used recommended and only recommended ports for the export, false otherwise. Type: Output.
-     	* @param selectedPorts ports selected for the export (if recommended ports have not been used). Type: Output.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask exportVolumesToInitiators(List<Initiator> initiators, List<StorageVolume> volumes, Map<String, String> volumeToHLUMap, List<StoragePort> recommendedPorts, List<StoragePort> availablePorts, StorageCapabilities capabilities, MutableBoolean usedRecommendedPorts, List<StoragePort> selectedPorts){
-		usedRecommendedPorts.setValue(true);
-		selectedPorts.addAll(recommendedPorts);
-		String taskType = "export-volumes-to-initiators";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		String msg = String.format("StorageDriver: exportVolumesToInitiators - end");
-		_log.info(msg);
-		Task.setMessage(msg);
-		return Task;
-	}
+        return exportInfoMap;
+    }
 
+    private Map<String, HostExportInfo> getStorageObjectExportInfo(String systemId, String objectId) {
+        Map<String, HostExportInfo> resultMap = new HashMap<>();
+        Map<String, List<HostExportInfo>> volumeToHostExportInfoMap = arrayToVolumeToVolumeExportInfoMap.get(systemId);
+        // get storage object export data
+        if (volumeToHostExportInfoMap != null) {
+            List<HostExportInfo> volumeExportInfo = volumeToHostExportInfoMap.get(objectId);
+            if (volumeExportInfo != null) {
+                for (HostExportInfo exportInfo : volumeExportInfo) {
+                    resultMap.put(exportInfo.getHostName(), exportInfo);
+                }
+            }
+        }
+        return resultMap;
+    }
 
-	/**
-     	* Unexport volumes from initiators
-     	*
-     	* @param initiators  Type: Input.
-     	* @param volumes     Type: Input.
-     	* @return task
-     	*/
-	@Override
-    	public DriverTask unexportVolumesFromInitiators(List<Initiator> initiators, List<StorageVolume> volumes){
-        	String taskType = "unexport-volumes-from-initiators";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-	        DriverTask Task = new DenaliTask(taskId);
-	        Task.setStatus(DriverTask.TaskStatus.READY);
-        	String msg = String.format("StorageDriver: unexportVolumesFromInitiators - end");
-        	_log.info(msg);
-        	Task.setMessage(msg);
-        	return Task;
-	}
+    @Override
+    public DriverTask exportVolumesToInitiators(List<Initiator> initiators, List<StorageVolume> volumes, Map<String, String> volumeToHLUMap,
+                                                List<StoragePort> recommendedPorts,
+                                                List<StoragePort> availablePorts, StorageCapabilities capabilities, MutableBoolean usedRecommendedPorts,
+                                                List<StoragePort> selectedPorts) {
 
-    	// Consistency group operations.
-    	/**
-     	* Create block consistency group.
-     	* @param consistencyGroup input/output
-     	* @return
-     	*/
-	@Override
-    	public DriverTask createConsistencyGroup(VolumeConsistencyGroup consistencyGroup){
-		consistencyGroup.setNativeId(consistencyGroup.getDisplayName());
-		consistencyGroup.setDeviceLabel(consistencyGroup.getDisplayName());
-		String taskType = "create-volume-cg";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	_log.info("StorageDriver: createConsistencyGroup information for storage system {}, consistencyGroup nativeId {} - end", consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
-		return Task;
-	}
+        usedRecommendedPorts.setValue(true);
+        selectedPorts.addAll(recommendedPorts);
 
+        String taskType = "export-volumes-to-initiators";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: exportVolumesToInitiators - end");
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
 
+    @Override
+    public DriverTask unexportVolumesFromInitiators(List<Initiator> initiators, List<StorageVolume> volumes) {
+        String taskType = "unexport-volumes-from-initiators";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: unexportVolumesFromInitiators - end");
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
 
-	/**
-     	* Delete block consistency group.
-     	* @param consistencyGroup Input
-     	* @return
-     	*/
-	@Override
-    	public DriverTask deleteConsistencyGroup(VolumeConsistencyGroup consistencyGroup){
-        	String taskType = "delete-volume-cg";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        	DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	String msg = String.format("StorageDriver: deleteConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end", consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
-        	_log.info(msg);
-        	Task.setMessage(msg);
-        	return Task;
-	}
+    @Override
+    public DriverTask createConsistencyGroup(VolumeConsistencyGroup consistencyGroup) {
 
-    	/**
-     	* Create snapshot of consistency group.
-     	* @param consistencyGroup input parameter
-     	* @param snapshots   input/output parameter
-    	* @param capabilities Capabilities of snapshots. Type: Input.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask createConsistencyGroupSnapshot(VolumeConsistencyGroup consistencyGroup, List<VolumeSnapshot> snapshots,
-                                            					 List<CapabilityInstance> capabilities){
-	        String snapTimestamp = Long.toString(System.currentTimeMillis());
-        	for (VolumeSnapshot snapshot : snapshots) {
-            		snapshot.setNativeId("snap-" + snapshot.getParentId() + consistencyGroup.getDisplayName() + UUID.randomUUID().toString());
-            		snapshot.setTimestamp(snapTimestamp);
-        	}
-        	String taskType = "create-group-snapshot";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        	DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	Task.setMessage("Created snapshots for consistency group " + snapshots.get(0).getConsistencyGroup());
-        	_log.info("StorageDriver: createGroupSnapshot information for storage system {}, snapshots nativeIds {} - end", snapshots.get(0).getStorageSystemId(), snapshots.toString());
-        	return Task;
-	}
+        consistencyGroup.setNativeId(consistencyGroup.getDisplayName());
+        consistencyGroup.setDeviceLabel(consistencyGroup.getDisplayName());
+        String taskType = "create-volume-cg";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+
+        String msg = String.format("denaliStorageDriver: createConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end",
+                consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask deleteConsistencyGroup(VolumeConsistencyGroup consistencyGroup) {
+
+        String taskType = "delete-volume-cg";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: deleteConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end",
+                consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask createConsistencyGroupSnapshot(VolumeConsistencyGroup consistencyGroup, List<VolumeSnapshot> snapshots, List<CapabilityInstance> capabilities) {
+        String snapTimestamp = Long.toString(System.currentTimeMillis());
+        for (VolumeSnapshot snapshot : snapshots) {
+            snapshot.setNativeId("snap-" + snapshot.getParentId() + consistencyGroup.getDisplayName() + UUID.randomUUID().toString());
+            snapshot.setConsistencyGroup(snapTimestamp);
+            snapshot.setSnapSetId(snapTimestamp);
+        }
+        String taskType = "create-group-snapshot";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        task.setMessage("Created snapshots for consistency group " + snapshots.get(0).getConsistencyGroup());
+
+        _log.info("denaliStorageDriver: createGroupSnapshot information for storage system {}, snapshots nativeIds {} - end",
+                snapshots.get(0).getStorageSystemId(), snapshots.toString());
+        return task;
+    }
+
+    @Override
+    public DriverTask deleteConsistencyGroupSnapshot(List<VolumeSnapshot> snapshots) {
+        String taskType = "delete-volume-cg-snapshot";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: deleteConsistencyGroupSnapshot for storage system %s, " +
+                        "snapshot consistencyGroup nativeId %s, group snapshots %s - end",
+                snapshots.get(0).getStorageSystemId(), snapshots.get(0).getConsistencyGroup(), snapshots.toString());
+        _log.info(msg);
+        task.setMessage(msg);
+        return task;
+    }
+
+    @Override
+    public DriverTask createConsistencyGroupClone(VolumeConsistencyGroup consistencyGroup, List<VolumeClone> clones, List<CapabilityInstance> capabilities) {
+        String cloneTimestamp = Long.toString(System.currentTimeMillis());
+        for (VolumeClone clone : clones) {
+            clone.setNativeId("clone-" + clone.getParentId() + clone.getDisplayName());
+            clone.setWwn(String.format("%s%s", clone.getStorageSystemId(), clone.getNativeId()));
+            clone.setReplicationState(VolumeClone.ReplicationState.SYNCHRONIZED);
+            clone.setDeviceLabel(clone.getNativeId());
+            clone.setProvisionedCapacity(clone.getRequestedCapacity());
+            clone.setAllocatedCapacity(clone.getRequestedCapacity());
+            clone.setConsistencyGroup(consistencyGroup.getNativeId() + "_clone-" + cloneTimestamp);
+        }
+        String taskType = "create-group-clone";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        task.setMessage("Created clones for consistency group " + clones.get(0).getConsistencyGroup());
+
+        _log.info("denaliStorageDriver: createGroupClone information for storage system {}, clones nativeIds {} - end",
+                clones.get(0).getStorageSystemId(), clones.toString());
+        return task;
+    }
 
 
+    @Override
+    public DriverTask getStorageVolumes(StorageSystem storageSystem, List<StorageVolume> storageVolumes, MutableInt token) {
 
-    	/**
-     	* Delete snapshot.
-     	* @param snapshots  Input.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask deleteConsistencyGroupSnapshot(List<VolumeSnapshot> snapshots){
-		DriverTask Task = new DenaliTask("Delete");
-		return Task;
-	}
+        // create set of native volumes for our storage pools
+        // all volumes on the same page belong to the same consistency group
+        if (token.intValue() == 0) {
+            arrayToVolumeToVolumeExportInfoMap.clear();
+        }
 
+        List<StoragePort> ports = new ArrayList<>();
+        discoverStoragePorts(storageSystem, ports);
 
+        for (int vol = 0; vol < NUMBER_OF_VOLUMES_ON_PAGE; vol ++) {
+            StorageVolume driverVolume = new StorageVolume();
+            driverVolume.setStorageSystemId(storageSystem.getNativeId());
+            driverVolume.setStoragePoolId("pool-1234577-" + token.intValue() + storageSystem.getNativeId());
+            driverVolume.setNativeId("driverSimulatorVolume-1234567-" + token.intValue() + "-" + vol);
+            if (VOLUMES_IN_CG) {
+                driverVolume.setConsistencyGroup("driverSimulatorCG-" + token.intValue());
+            }
+            driverVolume.setAccessStatus(StorageVolume.AccessStatus.READ_WRITE);
+            driverVolume.setThinlyProvisioned(true);
+            driverVolume.setThinVolumePreAllocationSize(3000L);
+            driverVolume.setProvisionedCapacity(3*1024*1024*1024L);
+            driverVolume.setAllocatedCapacity(50000L);
+            driverVolume.setDeviceLabel(driverVolume.getNativeId());
+            driverVolume.setWwn(String.format("%s%s", driverVolume.getStorageSystemId(), driverVolume.getNativeId()));
+            storageVolumes.add(driverVolume);
+            _log.info("Unmanaged volume info: pool {}, volume {}", driverVolume.getStoragePoolId(), driverVolume);
 
-    	/**
-     	* Create clone of consistency group.
-     	* It is implementation responsibility to validate consistency of this group operation.
-     	*
-     	* @param consistencyGroup input
-     	* @param clones input/output
-     	* @param capabilities Capabilities of clones. Type: Input.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask createConsistencyGroupClone(VolumeConsistencyGroup consistencyGroup, List<VolumeClone> clones,        									List<CapabilityInstance> capabilities){
-        	consistencyGroup.setNativeId(consistencyGroup.getDisplayName());
-        	consistencyGroup.setDeviceLabel(consistencyGroup.getDisplayName());
-        	String taskType = "create-volume-cg";
-        	String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        	DriverTask Task = new DenaliTask(taskId);
-        	Task.setStatus(DriverTask.TaskStatus.READY);
-        	_log.info("StorageDriver: createConsistencyGroup information for storage system {}, consistencyGroup nativeId {} - end", consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
-        	return Task;
-	}
+            if (GENERATE_EXPORT_DATA) {
+                // add entry to arrayToVolumeToVolumeExportInfoMap for this volume
+                // get host for this page
+                for (String hostName : pageToHostMap.get(token.intValue())) {
+                    _log.info("Process host {}", hostName);
+                    generateExportDataForVolume(hostName, driverVolume.getStorageSystemId(), driverVolume.getNativeId(),
+                            vol, ports, token.intValue());
+                }
+            }
+        }
 
+        String taskType = "create-storage-volumes";
 
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        task.setMessage("Get storage volumes: page " + token);
 
-    	/**
-     	*  Get driver registration data.
-     	*/
-   	public RegistrationData getRegistrationData(String name, String type,Set<CapabilityDefinition> capabilities){
-		RegistrationData Data = new RegistrationData(name,type,capabilities);
-		return Data;
-	}
+        _log.info("denaliStorageDriver: get storage volumes information for storage system {}, token  {} - end",
+                storageSystem.getNativeId(), token);
+        // set next value
+        if (token.intValue() < NUMBER_OF_VOLUME_PAGES-1) { // each page has different consistency group
+            token.setValue(token.intValue() + 1);
+            //    token.setValue(0); // last page
+        } else {
+            token.setValue(0); // last page
+        }
+        return task;
+    }
 
-    	/**
-     	* Discover storage systems and their capabilities
-     	*
-     	* @param storageSystems StorageSystems to discover. Type: Input/Output.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask discoverStorageSystem(List<StorageSystem> storageSystems){
-		StorageSystem storageSystem = storageSystems.get(0);
-		_log.info("StorageDriver: discoverStorageSystem informtion for storage system {}, name {} - start", storageSystem.getIpAddress(), storageSystem.getSystemName());
-		String taskType = "discover-storage-system";
-		String taskId = String.format("%s+%s+%s",DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-        	try {
-            		storageSystem.setSerialNumber(storageSystem.getSystemName());
-            		storageSystem.setNativeId(storageSystem.getSystemName());
-		        storageSystem.setFirmwareVersion("2.4-3.12");
-            		storageSystem.setIsSupportedVersion(true);
-            		// Support both, element and group replicas.
-            		Set<StorageSystem.SupportedReplication> supportedReplications = new HashSet<>();
-            		supportedReplications.add(StorageSystem.SupportedReplication.elementReplica);
-            		supportedReplications.add(StorageSystem.SupportedReplication.groupReplica);
-            		storageSystem.setSupportedReplications(supportedReplications);
+    private void generateExportDataForVolume(String hostName, String storageSystemId, String volumeId, int volumeIndex, List<StoragePort> ports, int page) {
+        Map<String, List<HostExportInfo>> volumeToExportInfoMap = arrayToVolumeToVolumeExportInfoMap.get(storageSystemId);
+        if (volumeToExportInfoMap == null) {
+            volumeToExportInfoMap = new HashMap<>();
+            arrayToVolumeToVolumeExportInfoMap.put(storageSystemId, volumeToExportInfoMap);
+        }
 
-            		Task.setStatus(DriverTask.TaskStatus.READY);
-            		_log.info("StorageDriver: discoverStorageSystem information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
-            		return Task;
-        	} catch (Exception e) {
-            		Task.setStatus(DriverTask.TaskStatus.FAILED);
-            		e.printStackTrace();
-        	}
-        	return Task;
+        List<HostExportInfo> volumeToHostExportInfoList = volumeToExportInfoMap.get(volumeId);
+        if (volumeToHostExportInfoList == null) {
+            volumeToHostExportInfoList = new ArrayList<>();
+            volumeToExportInfoMap.put(volumeId, volumeToHostExportInfoList);
+        }
 
-	}
+        // build volume export info
+        HostExportInfo exportInfo;
+        // get volume info
+        List<String> volumeIds = new ArrayList<>();
+        volumeIds.add(volumeId);
+        // for initiators we only know port network id and host name
+        List<String> hostInitiatorIds = hostToInitiatorPortIdMap.get(hostName);
+        List<Initiator> initiators = new ArrayList<>();
+        for (String initiatorId : hostInitiatorIds) {
+            Initiator initiator = new Initiator();
+            initiator.setHostName(hostName);
+            initiator.setPort(initiatorId);
+            initiators.add(initiator);
+        }
+        // decide about ports.
+        if (page % 2 == 1) {
+            // for odd pages we generate invalid masks for volumes (to test negative scenarios)
+            int portIndex = volumeIndex < ports.size() ? volumeIndex : ports.size() - 1;
+            List<StoragePort> exportPorts = Collections.singletonList(ports.get(portIndex));
+            exportInfo = new HostExportInfo(hostName, volumeIds, initiators, exportPorts);
+        } else {
+            exportInfo = new HostExportInfo(hostName, volumeIds, initiators, ports);
+        }
 
-    	/**
-     	* Discover storage pools and their capabilities.
-     	* @param storageSystem Type: Input.
-     	* @param storagePools  Type: Output.
-     	* @return
-     	*/
-   	@Override
- 	public DriverTask discoverStoragePools(StorageSystem storageSystem, List<StoragePool> storagePools){
-		_log.info("Discover of storage pools for storage system {} .", storageSystem.getNativeId());
-		String taskType = "discover-storage-pools";
-		String taskId = String.format("%s+%s+%s",DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		try {
-			Map<String, List<String>> connectionInfo = driverRegistry.getDriverAttributesForKey("DenaliDriver",storageSystem.getNativeId());
-			_log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
-			for (int i = 0; i <= numPools; i++) {
-				StoragePool pool = new StoragePool();
-				pool.setNativeId("DenaliPool" + i + storageSystem.getNativeId());
-				pool.setStorageSystemId(storageSystem.getNativeId());
-				_log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
-				pool.setDeviceLabel("er-pool" + i + storageSystem.getNativeId());
-				pool.setPoolName(pool.getDeviceLabel());
-				Set<StoragePool.Protocols> protocols = new HashSet<>();
-				protocols.add(StoragePool.Protocols.iSCSI);
-				pool.setProtocols(protocols);
-				pool.setPoolServiceType(StoragePool.PoolServiceType.block);
-				pool.setMaximumThickVolumeSize(maxThick);
-				pool.setMinimumThickVolumeSize(minThick);
-				pool.setMaximumThinVolumeSize(maxThin);
-				pool.setMinimumThinVolumeSize(minThin);
-				pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK);
-				pool.setSubscribedCapacity(subCap);
-				pool.setFreeCapacity(freeCap);
-				pool.setTotalCapacity(totCap);
-				pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
-				Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
-				supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SSD);
-				pool.setSupportedDriveTypes(supportedDriveTypes);
-				storagePools.add(pool);
-			}
-			Task.setStatus(DriverTask.TaskStatus.READY);
-			_log.info("StorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
-		} catch (Exception e) {
-			Task.setStatus(DriverTask.TaskStatus.FAILED);
-			e.printStackTrace();
-		}
-		return Task;
-	}
+        volumeToHostExportInfoList.add(exportInfo);
+        _log.info("VolumeToHostExportInfo: " + volumeToHostExportInfoList);
+    }
 
-    	/**
-     	* Discover storage ports and their capabilities
-     	* @param storageSystem Type: Input.
-     	* @param storagePorts  Type: Output.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask discoverStoragePorts(StorageSystem storageSystem, List<StoragePort> storagePorts){
-		_log.info("Discovery of storage ports for storage system {} .", storageSystem.getNativeId()); 
-		Integer index = systemNameToPortIndexName.get(storageSystem.getNativeId());
-		if(index == null){
-			index = ++portIndex;
-			systemNameToPortIndexName.put(storageSystem.getNativeId(), index);
-		}
-		//Ports with network
-		for (int i = 0; i < numNetPorts ; i++){
-			StoragePort port = new StoragePort();
-			port.setNativeId("DenaliPort-" + i + storageSystem.getNativeId());
-			port.setStorageSystemId(storageSystem.getNativeId());
-			_log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());	
-			port.setDeviceLabel("er-DenaliPort-" +i+storageSystem.getNativeId());
-			port.setPortName(port.getDeviceLabel());
-			port.setNetworkId("DenaliNetwork"+storageSystem.getNativeId());
-			port.setTransportType(StoragePort.TransportType.IP);
-			port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
-			port.setOperationalStatus(StoragePort.OperationalStatus.OK);
-			port.setPortHAZone("zone-"+1);
-			storagePorts.add(port);
-		}
-		//Ports without network
-		for (int i = 0; i < numPorts; i++){
-			StoragePort port = new StoragePort();
-			port.setNativeId("DenaliPort-"+i+storageSystem.getNativeId());
-       			port.setStorageSystemId(storageSystem.getNativeId());
-            		_log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
-            		port.setDeviceLabel("er-DenaliPort-" + i+ storageSystem.getNativeId());
-            		port.setPortName(port.getDeviceLabel());
-		        port.setTransportType(StoragePort.TransportType.IP);
-            		port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
-            		port.setOperationalStatus(StoragePort.OperationalStatus.OK);
-            		port.setPortHAZone("zone-with-many-ports");
-            		storagePorts.add(port);
-		}
-		String taskType = "Discover-storage-ports";
-		String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-		DriverTask Task = new DenaliTask(taskId);
-		Task.setStatus(DriverTask.TaskStatus.READY);
-		_log.info("StorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
-		return Task;
-	}
+    @Override
+    public DriverTask discoverStorageHostComponents(StorageSystem storageSystem, List<StorageHostComponent> embeddedHostComponents) {
+        return null;
+    }
 
+    public void setConnInfoToRegistry(String systemNativeId, String ipAddress, int port, String username, String password) {
+        Map<String, List<String>> attributes = new HashMap<>();
+        List<String> listIP = new ArrayList<>();
+        List<String> listPort = new ArrayList<>();
+        List<String> listUserName = new ArrayList<>();
+        List<String> listPwd = new ArrayList<>();
 
-    	/**
-     	* Discover host components which are part of storage system
-     	*
-     	* @param storageSystem Type: Input.
-     	* @param embeddedStorageHostComponents Type: Output.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask discoverStorageHostComponents(StorageSystem storageSystem, List<StorageHostComponent> embeddedStorageHostComponents){
-		DriverTask Task = new DenaliTask("Discover");
-		return Task;
-	}
+        listIP.add(ipAddress);
+        attributes.put("IP_ADDRESS", listIP);
+        listPort.add(Integer.toString(port));
+        attributes.put("PORT_NUMBER", listPort);
+        listUserName.add(username);
+        attributes.put("USER_NAME", listUserName);
+        listPwd.add(password);
+        attributes.put("PASSWORD", listPwd);
+        _log.info(String.format("denaliStorageDriver: setting connection information for %s, attributes: %s ", systemNativeId, attributes));
+        this.driverRegistry.setDriverAttributesForKey("DenaliDriver", systemNativeId, attributes);
+    }
 
+    @Override
+    public List<VolumeSnapshot> getVolumeSnapshots(StorageVolume volume) {
+        List<VolumeSnapshot> snapshots = new ArrayList<>();
 
-    	/**
-     	* Discover storage volumes
-     	* @param storageSystem  Type: Input.
-     	* @param storageVolumes Type: Output.
-     	* @param token used for paging. Input 0 indicates that the first page should be returned. Output 0 indicates
-     	*              that last page was returned. Type: Input/Output.
-     	* @return
-     	*/
-	@Override
-    	public DriverTask getStorageVolumes(StorageSystem storageSystem, List<StorageVolume> storageVolumes, MutableInt token){
-		DriverTask Task = new DenaliTask("get");
-		return Task;
-	}
+        for (int i=0; i<NUMBER_OF_SNAPS_FOR_VOLUME; i++) {
+            VolumeSnapshot snapshot = new VolumeSnapshot();
+            snapshot.setParentId(volume.getNativeId());
+            snapshot.setNativeId(volume.getNativeId() + "snap-" + i);
+            snapshot.setDeviceLabel(volume.getNativeId() + "snap-" + i);
+            snapshot.setStorageSystemId(volume.getStorageSystemId());
+            snapshot.setAccessStatus(StorageObject.AccessStatus.READ_ONLY);
+            if (SNAPS_IN_CG) {
+                snapshot.setConsistencyGroup(volume.getConsistencyGroup() + "snapSet-" + i);
+            }
+            snapshot.setAllocatedCapacity(1000L);
+            snapshot.setProvisionedCapacity(volume.getProvisionedCapacity());
+            snapshot.setWwn(String.format("%s%s", snapshot.getStorageSystemId(), snapshot.getNativeId()));
+            snapshots.add(snapshot);
 
-    	public DriverTask discoverStorageProvider(StorageProvider storageProvider, List<StorageSystem> storageSystems){
-		DriverTask Task = new DenaliTask("Discover");
-		return Task;
-	}
+            if (GENERATE_EXPORT_DATA) {
+                // generate export data for this snap --- the same export data as for its parent volume
+                generateExportDataForVolumeReplica(volume, snapshot);
+            }
+        }
+        return snapshots;
+    }
 
+    @Override
+    public List<VolumeClone> getVolumeClones(StorageVolume volume) {
+        List<VolumeClone> clones = new ArrayList<>();
 
+        for (int i=0; i<NUMBER_OF_CLONES_FOR_VOLUME; i++) {
+            VolumeClone clone = new VolumeClone();
+            clone.setParentId(volume.getNativeId());
+            clone.setNativeId(volume.getNativeId() + "clone-" + i);
+            clone.setDeviceLabel(volume.getNativeId() + "clone-" + i);
+            clone.setStorageSystemId(volume.getStorageSystemId());
+            clone.setStoragePoolId(volume.getStoragePoolId());
+            clone.setAccessStatus(StorageObject.AccessStatus.READ_WRITE);
+            if (CLONES_IN_CG) {
+                clone.setConsistencyGroup(volume.getConsistencyGroup() + "cloneGroup-" + i);
+            }
+            clone.setAllocatedCapacity(volume.getAllocatedCapacity());
+            clone.setProvisionedCapacity(volume.getProvisionedCapacity());
+            clone.setThinlyProvisioned(true);
+            clone.setWwn(String.format("%s%s", clone.getStorageSystemId(), clone.getNativeId()));
+            clone.setReplicationState(VolumeClone.ReplicationState.SYNCHRONIZED);
+            clones.add(clone);
+
+            if (GENERATE_EXPORT_DATA) {
+                // generate export data for this clone --- the same export data as for its parent volume
+                generateExportDataForVolumeReplica(volume, clone);
+            }
+        }
+        return clones;
+    }
+
+    @Override
+    public List<VolumeMirror> getVolumeMirrors(StorageVolume volume) {
+        return null;
+    }
+
+    private void generateExportDataForVolumeReplica(StorageVolume volume, StorageBlockObject replica) {
+        Map<String, List<HostExportInfo>> volumeToExportInfoMap = arrayToVolumeToVolumeExportInfoMap.get(volume.getStorageSystemId());
+        if (volumeToExportInfoMap != null) {
+            List<HostExportInfo> volumeExportInfoList = volumeToExportInfoMap.get(volume.getNativeId());
+            if (volumeExportInfoList != null && !volumeExportInfoList.isEmpty()) {
+                List<HostExportInfo> replicaExportInfoList = new ArrayList<>();
+                // build replica export info from info of parent volume
+                for (HostExportInfo hostExportInfo : volumeExportInfoList) {
+                    List<String> snapIds = new ArrayList<>();
+                    snapIds.add(replica.getNativeId());
+                    List<Initiator> hostInitiators = hostExportInfo.getInitiators();
+                    List<StoragePort> exportPorts = hostExportInfo.getTargets();
+                    HostExportInfo exportInfo = new HostExportInfo(hostExportInfo.getHostName(), snapIds, hostInitiators, exportPorts);
+                    replicaExportInfoList.add(exportInfo);
+                }
+                _log.info("Export Info for replica: {} --- {}", replica.getNativeId(), replicaExportInfoList);
+                volumeToExportInfoMap.put(replica.getNativeId(), replicaExportInfoList);
+            }
+        }
+    }
+    @Override
+    public DriverTask createConsistencyGroupMirror(VolumeConsistencyGroup consistencyGroup, List<VolumeMirror> mirrors, List<CapabilityInstance> capabilities) {
+        return null;
+    }
+
+    @Override
+    public DriverTask deleteConsistencyGroupMirror(List<VolumeMirror> mirrors) {
+        return null;
+    }
+
+    @Override
+    public DriverTask restoreVolumeMirror(List<VolumeMirror> mirrors) {
+        return null;
+    }
+
+    @Override
+    public DriverTask discoverStorageProvider(StorageProvider storageProvider, List<StorageSystem> storageSystems) {
+        return null;
+    }
 }

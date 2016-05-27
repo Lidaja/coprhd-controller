@@ -1989,6 +1989,7 @@ storageArray.secondaryPasswordConfirm=Confirm MDM Password
 storageArray.secondaryPassword.confirmPassword.not.match=User MDM Password and Confirm MDM Password do not match.
 storageArray.elementManagerURL=Element Manager URL
 storageArray.secretKey=Secret key
+storageArray.deviceType=Format of Denali Storage
 #
 # onboard SMI-S Provider
 #

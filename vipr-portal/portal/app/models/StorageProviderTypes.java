@@ -36,7 +36,7 @@ public class StorageProviderTypes {
             option(DATA_DOMAIN),
             option(IBMXIV),
             option(XTREMIO),
-            option(CEPH)
+            option(CEPH),
             option(XTREMIO)
 	    //option(DENALI)
     };
