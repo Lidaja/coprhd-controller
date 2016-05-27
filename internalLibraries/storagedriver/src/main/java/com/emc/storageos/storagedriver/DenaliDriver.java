@@ -56,7 +56,14 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     private static final boolean SNAPS_IN_CG = true;
     private static final boolean CLONES_IN_CG = true;
     private static final boolean GENERATE_EXPORT_DATA = true;
-
+    private static long MAX_THICK = 3000000L;
+    private static long MIN_THICK = 1000L;
+    private static long MAX_THIN = 5000000L;
+    private static long MIN_THIN = 1000L;
+    private static long SUB_CAP = 5000000L;
+    private static long FREE_CAP = 45000000L;
+    private static long TOT_CAP = 48000000L;
+    private static long VOLUME_CAPACITY = 200L;
     private static Integer portIndex = 0;
     private static Map<String, Integer> systemNameToPortIndexName = new HashMap<>();
 
@@ -100,14 +107,14 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public DriverTask getTask(String taskId) {
-        return null;
+        return (DriverTask) new DenaliTask(taskId);
     }
 
     @Override
     public <T extends StorageObject> T getStorageObject(String storageSystemId, String objectId, Class<T> type) {
         if (StorageVolume.class.getSimpleName().equals(type.getSimpleName())) {
             StorageVolume obj = new StorageVolume();
-            obj.setAllocatedCapacity(200L);
+            obj.setAllocatedCapacity(VOLUME_CAPACITY);
             return (T) obj;
         } else if (VolumeConsistencyGroup.class.getSimpleName().equals(type.getSimpleName())) {
             VolumeConsistencyGroup cg = new VolumeConsistencyGroup();
@@ -118,7 +125,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             return (T) cg;
         } else {
             StorageVolume obj = new StorageVolume();
-            obj.setAllocatedCapacity(200L);
+            obj.setAllocatedCapacity(VOLUME_CAPACITY);
             return (T) obj;
         }
     }
@@ -131,7 +138,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 storageSystem.getIpAddress(), storageSystem.getSystemName());
         String taskType = "discover-storage-system";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
 
         try {
             storageSystem.setSerialNumber(storageSystem.getSystemName());
@@ -165,7 +172,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         _log.info("Discovery of storage pools for storage system {} .", storageSystem.getNativeId());
         String taskType = "discover-storage-pools";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
 
         try {
             // Get connection information.
@@ -185,16 +192,17 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 protocols.add(StoragePool.Protocols.iSCSI);
                 //protocols.add(StoragePool.Protocols.ScaleIO);
                 pool.setProtocols(protocols);
+		
                 pool.setPoolServiceType(StoragePool.PoolServiceType.block);
-                pool.setMaximumThickVolumeSize(3000000L);
-                pool.setMinimumThickVolumeSize(1000L);
-                pool.setMaximumThinVolumeSize(5000000L);
-                pool.setMinimumThinVolumeSize(1000L);
+                pool.setMaximumThickVolumeSize(MAX_THICK);
+                pool.setMinimumThickVolumeSize(MIN_THICK);
+                pool.setMaximumThinVolumeSize(MAX_THIN);
+                pool.setMinimumThinVolumeSize(MIN_THIN);
                 pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK);
 
-                pool.setSubscribedCapacity(5000000L);
-                pool.setFreeCapacity(45000000L);
-                pool.setTotalCapacity(48000000L);
+                pool.setSubscribedCapacity(SUB_CAP);
+                pool.setFreeCapacity(FREE_CAP);
+                pool.setTotalCapacity(TOT_CAP);
                 pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
                 Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
                 supportedDriveTypes.add(StoragePool.SupportedDriveTypes.FC);
@@ -225,7 +233,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         int index = 0;
         // Get "portIndexes" attribute map
-        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("simulatordriver", "portIndexes");
+        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("denalidriver", "portIndexes");
         if (portIndexes != null) {
             List<String>  indexes = portIndexes.get(storageSystem.getNativeId());
             if (indexes != null) {
@@ -248,9 +256,9 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 index ++;
             }
             // set this index for the system in registry
-            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", storageSystem.getNativeId(),
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", storageSystem.getNativeId(),
                     Collections.singletonList(String.valueOf(index)));
-            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", "lastIndex",
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex",
                     Collections.singletonList(String.valueOf(index)));
             _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
         }
@@ -302,7 +310,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String taskType = "discover-storage-ports";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         _log.info("denaliStorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end",
                 storageSystem.getIpAddress(), storageSystem.getNativeId());
@@ -329,7 +337,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         }
         String taskType = "create-storage-volumes";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
         String msg = String.format("denaliStorageDriver: createVolumes information for storage system %s, volume nativeIds %s - end",
@@ -346,7 +354,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         volume.setRequestedCapacity(newCapacity);
         volume.setProvisionedCapacity(newCapacity);
         volume.setAllocatedCapacity(newCapacity);
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
         _log.info("denaliStorageDriver: expandVolume information for storage system {}, volume nativeId {}," +
@@ -360,7 +368,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String taskType = "delete-storage-volumes";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
         _log.info("denaliStorageDriver: deleteVolumes information for storage system {}, volume nativeIds {} - end",
@@ -379,7 +387,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         }
         String taskType = "create-volume-snapshot";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
         _log.info("denaliStorageDriver: createVolumeSnapshot information for storage system {}, snapshots nativeIds {} - end",
@@ -391,7 +399,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask restoreSnapshot(List<VolumeSnapshot> snapshots) {
         String taskType = "restore-snapshot";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: restoreSnapshot for storage system %s, " +
                         "snapshots nativeId %s, snap group %s - end",
@@ -405,7 +413,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask deleteVolumeSnapshot(List<VolumeSnapshot> snapshots) {
         String taskType = "delete-volume-snapshot";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: deleteVolumSnapshot for storage system %s, " +
                         "snapshots nativeId %s - end",
@@ -427,7 +435,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         }
         String taskType = "create-volume-clone";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
         String msg = String.format("denaliStorageDriver: createVolumeClone information for storage system %s, clone nativeIds %s - end",
@@ -441,7 +449,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask detachVolumeClone(List<VolumeClone> clones) {
         String taskType = "detach-volume-clone";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: detachVolumeClone for storage system %s, " +
                         "clones nativeId %s - end",
@@ -455,7 +463,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask restoreFromClone(List<VolumeClone> clones) {
         String taskType = "restore-volume-clones";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: restoreFromClone : clones %s ", clones);
         for (VolumeClone clone : clones) {
@@ -471,7 +479,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask deleteVolumeClone(List<VolumeClone> clones) {
         String taskType = "delete-volume-clone";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: deleteVolumeClone for storage system %s, " +
                         "clones nativeId %s - end",
@@ -564,7 +572,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String taskType = "export-volumes-to-initiators";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: exportVolumesToInitiators - end");
         _log.info(msg);
@@ -576,7 +584,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask unexportVolumesFromInitiators(List<Initiator> initiators, List<StorageVolume> volumes) {
         String taskType = "unexport-volumes-from-initiators";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: unexportVolumesFromInitiators - end");
         _log.info(msg);
@@ -591,7 +599,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         consistencyGroup.setDeviceLabel(consistencyGroup.getDisplayName());
         String taskType = "create-volume-cg";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
         String msg = String.format("denaliStorageDriver: createConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end",
@@ -606,7 +614,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String taskType = "delete-volume-cg";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: deleteConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end",
                 consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
@@ -625,7 +633,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         }
         String taskType = "create-group-snapshot";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         task.setMessage("Created snapshots for consistency group " + snapshots.get(0).getConsistencyGroup());
 
@@ -638,7 +646,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask deleteConsistencyGroupSnapshot(List<VolumeSnapshot> snapshots) {
         String taskType = "delete-volume-cg-snapshot";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: deleteConsistencyGroupSnapshot for storage system %s, " +
                         "snapshot consistencyGroup nativeId %s, group snapshots %s - end",
@@ -662,7 +670,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         }
         String taskType = "create-group-clone";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         task.setMessage("Created clones for consistency group " + clones.get(0).getConsistencyGroup());
 
@@ -716,7 +724,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String taskType = "create-storage-volumes";
 
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
+        DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         task.setMessage("Get storage volumes: page " + token);
 
