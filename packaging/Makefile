@@ -905,17 +905,32 @@ clean-rpm:
 	$(ATSIGN)$(RM) -r $(RPMBUILD_RPM_FILE) $(RPMBUILD_BUILDDIR) $(RPMBUILD_CONTENT_MD5_FILE)
 
 $(RPMBUILD_RPM_FILE): $(RPMBUILD_SPEC_FILE) $(RPMBUILD_CONTENT_MD5_FILE)
+	@$(ECHO) 1
 	@$(ECHO) "Building storageos RPM package (release $(PRODUCT_VERSION).$(PRODUCT_RELEASE))"
+	@$(ECHO) 2
 	$(ATSIGN)$(RM)    $(@)
+	@$(ECHO) 3
 	$(ATSIGN)$(RM) -r       $(RPMBUILD_BUILDDIR)
+	@$(ECHO) 4
 	$(ATSIGN)$(MKDIR) $(@D) $(RPMBUILD_BUILDDIR)
+	@$(ECHO) 5
 	$(ATSIGN)$(MAKE) _install INSTALL_PREFIX="$(RPMBUILD_BUILDROOT)"
+	@$(ECHO) 6
+	
+	@$(ECHO) "RPMBUILD=$(RPMBUILD)"
+	@$(ECHO) "RPMBUILD_FLAGS=$(RPMBUILD_FLAGS)"
+	@$(ECHO) "<=$(<)"
+	@$(ECHO) "TEEOUT=$(TEEOUT)"
+	@$(ECHO) "RPMBUILD_LOG=$(RPMBUILD_LOG)"
 	$(ATSIGN)$(RPMBUILD) $(RPMBUILD_FLAGS) $(<) $(TEEOUT) $(RPMBUILD_LOG)
+	@$(ECHO) 7
 	@[ -f "$(@)" ] || { echo "rpmbuild failed!"; exit 1 ; }
+	@$(ECHO) 8
 	@echo "***"
 	@echo "*** $(RPMBUILD_NAME) RPM:"
 	@echo "***    $(@)"
 	@echo "***"
+	@$(ECHO) 9
 
 $(RPMBUILD_CONTENT_MD5_FILE): FORCE
 	@old=`$(CAT) $(@) 2>/dev/null`; new=`$(FIND) $(BUILD_BASE)/{etc,connectemc,bin,lib,conf,cli,pylib,platform,play,portal} -exec stat -c "%n %y" {} \; 2>/dev/null| sort | md5sum | cut -d " " -f 1`; [ "$${new}" != "$${old}" ] && echo "$${new}" >$(@) || echo "rpm is up-to-date"

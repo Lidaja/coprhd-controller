@@ -29,6 +29,10 @@ all clean::
 #
 .PHONY: _install rpm ovf ova vsphere hyperv iso docker svt controller devkit
 _install rpm ovf ova vsphere hyperv iso docker svt controller: all
+	 
+	echo $(ATSIGN)
+	echo $(MAKE)
+	echo $(@)
 	$(ATSIGN)$(MAKE) -C packaging $(@)
 devkit:
 	$(ATSIGN)$(MAKE) -C packaging $(@)
