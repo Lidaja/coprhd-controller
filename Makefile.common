@@ -136,7 +136,7 @@ endif
                        TR := /usr/bin/tr
                       TAR := /bin/tar
                       RPM := /bin/rpm
-                 RPMBUILD := /tmp/coprhd-controller/build/obj/packaging/rpmbuild
+                 RPMBUILD := /usr/bin/rpmbuild
                   OVFTOOL := /usr/bin/ovftool
                  QEMU_IMG := /usr/bin/qemu-img
                        DD := /bin/dd
