@@ -149,10 +149,10 @@
         // userPassword field
         //
         //$('#storageArray_userName').val('');
-        $('#storageArray_userPassword').val('');        
-        $('#storageArray_confirmPassword').val('');        
-        $('#storageArray_smisUserPassword').val('');        
-        $('#storageArray_smisConfirmPassword').val('');    
+        $('#storageArray_userPassword').val('');     
+        $('#storageArray_confirmPassword').val('');       
+        $('#storageArray_smisUserPassword').val('');     
+        $('#storageArray_smisConfirmPassword').val('');
         $('#storageArray_secretKey').val('');
         
         if ( isUnregistered ) {
@@ -162,7 +162,7 @@
             $('input:text').attr('readonly', 'readonly');
             $('input:checkbox').prop('disabled', true);
             $('input:password').prop('disabled', true);
-            $('select').prop('disabled', true);                        
+            $('select').prop('disabled', true);            
         }
         
         if (resourceType == "block_file") {
@@ -255,7 +255,7 @@
         } else {
             $('#storageArray_deviceTypeControlGroup').hide();
         }
-     if ( !editMode ) {
+      if ( !editMode ) {
           $('fieldset#settings').hide(); //can only set/edit resouce limit value post create
       }
       
