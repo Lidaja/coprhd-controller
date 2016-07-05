@@ -44,6 +44,10 @@ public class StorageSystemTypes {
     public static final String STORAGE_PROVIDER_XTREMIO = "STORAGE_PROVIDER.xtremio";
     public static final String STORAGE_PROVIDER_CEPH = "STORAGE_PROVIDER.ceph";
 
+    public static final String BLOCK = "Block";
+    public static final String FILE = "File";
+    public static final String OBJECT = "Object";
+
     public static final String[] BLOCK_TYPES = {DENALI, VMAX, VNX_BLOCK, VPLEX, HITACHI, OPENSTACK, SCALEIO, SCALEIOAPI, XTREMIO, VNXe, IBMXIV, CEPH, UNITY };
     public static final String[] FILE_TYPES = { ISILON, VNX_FILE, NETAPP, DATA_DOMAIN, VNXe, UNITY, NETAPPC };
     public static final String[] STORAGE_PROVIDER_TYPES = { VMAX, VNX_BLOCK, HITACHI, VPLEX, OPENSTACK, SCALEIO, SCALEIOAPI, DATA_DOMAIN, IBMXIV, XTREMIO, CEPH };
@@ -69,6 +73,12 @@ public class StorageSystemTypes {
             new StringOption(IBMXIV, getDisplayValue(STORAGE_PROVIDER_IBMXIV)),
             new StringOption(XTREMIO, getDisplayValue(STORAGE_PROVIDER_XTREMIO)),
             new StringOption(CEPH, getDisplayValue(STORAGE_PROVIDER_CEPH))
+    };
+
+    public static final StringOption[] DEVICES = {
+	   option(BLOCK),
+	   option(FILE),
+	   option(OBJECT)
     };
 
     public static final StringOption[] SMIS_OPTIONS = StringOption.options(STORAGE_PROVIDER_TYPES, OPTION_PREFIX);

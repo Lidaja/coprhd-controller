@@ -425,7 +425,15 @@
     #{field 'storageArray.serialNumber'}
       #{Form.inputTextControlGroup field:field /}
     #{/field}
-}*    
+}* 
+    #{field 'storageArray.deviceType'}
+    %{
+        field.options = deviceTypeList
+	field.required = !editMode
+      }%
+      #{Form.selectOneControlGroup field:field /}
+    #{/field}
+ 
     #{field 'storageArray.name'}
         %{
           field.required = true
@@ -496,13 +504,7 @@
     #{/field}
  
 
-    #{field 'storageArray.deviceType'}
-    %{
-        field.options = storageArrayTypeList
-	field.required = !editMode
-      }%
-      #{Form.selectOneControlGroup field:field /}
-    #{/field}
+
 
     #{field 'storageArray.elementManagerURL'}
       #{Form.inputTextControlGroup field:field /}
