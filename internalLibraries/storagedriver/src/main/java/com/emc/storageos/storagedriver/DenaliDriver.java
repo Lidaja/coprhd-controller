@@ -44,7 +44,7 @@ import com.emc.storageos.storagedriver.storagecapabilities.StorageCapabilities;
 
 public class DenaliDriver extends AbstractStorageDriver implements BlockStorageDriver {
 
-    private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
+    //private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
     private static final String DRIVER_NAME = "DenaliDriver";
     private static final int NUMBER_OF_VOLUME_PAGES = 3;
     private static final int NUMBER_OF_VOLUMES_ON_PAGE = 2;
@@ -121,7 +121,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             cg.setStorageSystemId(storageSystemId);
             cg.setNativeId(objectId);
             cg.setDeviceLabel(objectId);
-            _log.info("Return volume cg {} from array {}", objectId, storageSystemId);
+            //_log.info("Return volume cg {} from array {}", objectId, storageSystemId);
             return (T) cg;
         } else {
             StorageVolume obj = new StorageVolume();
@@ -134,8 +134,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     @Override
     public DriverTask discoverStorageSystem(List<StorageSystem> storageSystems) {
         StorageSystem storageSystem = storageSystems.get(0);
-        _log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, name {} - start",
-                storageSystem.getIpAddress(), storageSystem.getSystemName());
+        //_log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, name {} - start", storageSystem.getIpAddress(), storageSystem.getSystemName());
         String taskType = "discover-storage-system";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = getTask(taskId);
@@ -155,8 +154,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
 
             task.setStatus(DriverTask.TaskStatus.READY);
-            _log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, nativeId {} - end",
-                    storageSystem.getIpAddress(), storageSystem.getNativeId());
+            //_log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
             return task;
         } catch (Exception e) {
             task.setStatus(DriverTask.TaskStatus.FAILED);
@@ -169,7 +167,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     @Override
     public DriverTask discoverStoragePools(StorageSystem storageSystem, List<StoragePool> storagePools) {
 
-        _log.info("Discovery of storage pools for storage system {} .", storageSystem.getNativeId());
+        //_log.info("Discovery of storage pools for storage system {} .", storageSystem.getNativeId());
         String taskType = "discover-storage-pools";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = getTask(taskId);
@@ -178,12 +176,12 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             // Get connection information.
             Map<String, List<String>> connectionInfo =
                     driverRegistry.getDriverAttributesForKey("DenaliDriver", storageSystem.getNativeId());
-            _log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
+            //_log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
             for (int i =0; i <= 2; i++ ) {
                 StoragePool pool = new StoragePool();
                 pool.setNativeId("pool-1234577-" + i + storageSystem.getNativeId());
                 pool.setStorageSystemId(storageSystem.getNativeId());
-                _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
+                //_log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
 
                 pool.setDeviceLabel("er-pool-1234577" + i + storageSystem.getNativeId());
                 pool.setPoolName(pool.getDeviceLabel());
@@ -218,8 +216,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
             }
             task.setStatus(DriverTask.TaskStatus.READY);
-            _log.info("denaliStorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end",
-                    storageSystem.getIpAddress(), storageSystem.getNativeId());
+            //_log.info("denaliStorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
         } catch (Exception e) {
             task.setStatus(DriverTask.TaskStatus.FAILED);
             e.printStackTrace();
@@ -229,7 +226,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public DriverTask discoverStoragePorts(StorageSystem storageSystem, List<StoragePort> storagePorts) {
-        _log.info("Discovery of storage ports for storage system {} .", storageSystem.getNativeId());
+        //_log.info("Discovery of storage ports for storage system {} .", storageSystem.getNativeId());
 
         int index = 0;
         // Get "portIndexes" attribute map
@@ -238,7 +235,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             List<String>  indexes = portIndexes.get(storageSystem.getNativeId());
             if (indexes != null) {
                 index = Integer.parseInt(indexes.get(0));
-                _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
+                //_log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
             }
         }
 
@@ -260,7 +257,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                     Collections.singletonList(String.valueOf(index)));
             driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex",
                     Collections.singletonList(String.valueOf(index)));
-            _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
+            //_log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
         }
 
 //        Integer index = systemNameToPortIndexName.get(storageSystem.getNativeId());
@@ -277,8 +274,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             StoragePort port = new StoragePort();
             port.setNativeId("port-1234577-" + i + storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
-            _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
-
+            //_log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
             port.setDeviceLabel("er-port-1234577" + i + storageSystem.getNativeId());
             port.setPortName(port.getDeviceLabel());
             //port.setNetworkId("er-network77"+ storageSystem.getNativeId());
@@ -296,7 +292,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             StoragePort port = new StoragePort();
             port.setNativeId("port-1234577-" + i+ storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
-            _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
+            //_log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
 
             port.setDeviceLabel("er-port-1234577" + i+ storageSystem.getNativeId());
             port.setPortName(port.getDeviceLabel());
@@ -312,8 +308,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
-        _log.info("denaliStorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end",
-                storageSystem.getIpAddress(), storageSystem.getNativeId());
+        //_log.info("denaliStorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
         return task;
 
     }
@@ -342,7 +337,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String msg = String.format("denaliStorageDriver: createVolumes information for storage system %s, volume nativeIds %s - end",
                 volumes.get(0).getStorageSystemId(), newVolumes.toString());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -357,9 +352,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
-        _log.info("denaliStorageDriver: expandVolume information for storage system {}, volume nativeId {}," +
-                        " new capacity {} - end",
-                volume.getStorageSystemId(), volume.toString(), volume.getRequestedCapacity());
+        //_log.info("denaliStorageDriver: expandVolume information for storage system {}, volume nativeId {}," + " new capacity {} - end", volume.getStorageSystemId(), volume.toString(), volume.getRequestedCapacity());
         return task;
     }
 
@@ -371,8 +364,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
-        _log.info("denaliStorageDriver: deleteVolumes information for storage system {}, volume nativeIds {} - end",
-                volumes.get(0).getStorageSystemId(), volumes.toString());
+        //_log.info("denaliStorageDriver: deleteVolumes information for storage system {}, volume nativeIds {} - end", volumes.get(0).getStorageSystemId(), volumes.toString());
         return task;
     }
 
@@ -390,8 +382,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
 
-        _log.info("denaliStorageDriver: createVolumeSnapshot information for storage system {}, snapshots nativeIds {} - end",
-                snapshots.get(0).getStorageSystemId(), snapshots.toString());
+        //_log.info("denaliStorageDriver: createVolumeSnapshot information for storage system {}, snapshots nativeIds {} - end", snapshots.get(0).getStorageSystemId(), snapshots.toString());
         return task;
     }
 
@@ -404,7 +395,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("denaliStorageDriver: restoreSnapshot for storage system %s, " +
                         "snapshots nativeId %s, snap group %s - end",
                 snapshots.get(0).getStorageSystemId(), snapshots.toString(), snapshots.get(0).getConsistencyGroup());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -418,7 +409,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("denaliStorageDriver: deleteVolumSnapshot for storage system %s, " +
                         "snapshots nativeId %s - end",
                 snapshots.get(0).getStorageSystemId(), snapshots.toString());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -440,7 +431,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String msg = String.format("denaliStorageDriver: createVolumeClone information for storage system %s, clone nativeIds %s - end",
                 clones.get(0).getStorageSystemId(), clones.toString());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -454,7 +445,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("denaliStorageDriver: detachVolumeClone for storage system %s, " +
                         "clones nativeId %s - end",
                 clones.get(0).getStorageSystemId(), clones.toString());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -469,7 +460,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         for (VolumeClone clone : clones) {
             clone.setReplicationState(VolumeClone.ReplicationState.RESTORED);
         }
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -484,7 +475,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("denaliStorageDriver: deleteVolumeClone for storage system %s, " +
                         "clones nativeId %s - end",
                 clones.get(0).getStorageSystemId(), clones.toString());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -512,36 +503,36 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     @Override
     public Map<String, HostExportInfo> getVolumeExportInfoForHosts(StorageVolume volume) {
 
-        _log.info("Processing export info for volume: {}", volume);
+        //_log.info("Processing export info for volume: {}", volume);
         Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(volume.getStorageSystemId(), volume.getNativeId());
-        _log.info("Export info data for volume {}: {} .", volume, exportInfoMap);
+        //_log.info("Export info data for volume {}: {} .", volume, exportInfoMap);
 
         return exportInfoMap;
     }
 
     @Override
     public Map<String, HostExportInfo> getSnapshotExportInfoForHosts(VolumeSnapshot snapshot) {
-        _log.info("Processing export info for snapshot: {}", snapshot);
+        //_log.info("Processing export info for snapshot: {}", snapshot);
         Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(snapshot.getStorageSystemId(), snapshot.getNativeId());
-        _log.info("Export info data for volume {}: {} .", snapshot, exportInfoMap);
+        //_log.info("Export info data for volume {}: {} .", snapshot, exportInfoMap);
 
         return exportInfoMap;
     }
 
     @Override
     public Map<String, HostExportInfo> getCloneExportInfoForHosts(VolumeClone clone) {
-        _log.info("Processing export info for volume: {}", clone);
+        //_log.info("Processing export info for volume: {}", clone);
         Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(clone.getStorageSystemId(), clone.getNativeId());
-        _log.info("Export info data for volume {}: {} .", clone, exportInfoMap);
+        //_log.info("Export info data for volume {}: {} .", clone, exportInfoMap);
 
         return exportInfoMap;
     }
 
     @Override
     public Map<String, HostExportInfo> getMirrorExportInfoForHosts(VolumeMirror mirror) {
-        _log.info("Processing export info for volume: {}", mirror);
+        //_log.info("Processing export info for volume: {}", mirror);
         Map<String, HostExportInfo> exportInfoMap = getStorageObjectExportInfo(mirror.getStorageSystemId(), mirror.getNativeId());
-        _log.info("Export info data for volume {}: {} .", mirror, exportInfoMap);
+        //_log.info("Export info data for volume {}: {} .", mirror, exportInfoMap);
 
         return exportInfoMap;
     }
@@ -575,7 +566,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: exportVolumesToInitiators - end");
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -587,7 +578,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         DriverTask task = getTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: unexportVolumesFromInitiators - end");
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -604,7 +595,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
         String msg = String.format("denaliStorageDriver: createConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end",
                 consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -618,7 +609,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setStatus(DriverTask.TaskStatus.READY);
         String msg = String.format("denaliStorageDriver: deleteConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end",
                 consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -637,8 +628,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setStatus(DriverTask.TaskStatus.READY);
         task.setMessage("Created snapshots for consistency group " + snapshots.get(0).getConsistencyGroup());
 
-        _log.info("denaliStorageDriver: createGroupSnapshot information for storage system {}, snapshots nativeIds {} - end",
-                snapshots.get(0).getStorageSystemId(), snapshots.toString());
+        //_log.info("denaliStorageDriver: createGroupSnapshot information for storage system {}, snapshots nativeIds {} - end", snapshots.get(0).getStorageSystemId(), snapshots.toString());
         return task;
     }
 
@@ -651,7 +641,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("denaliStorageDriver: deleteConsistencyGroupSnapshot for storage system %s, " +
                         "snapshot consistencyGroup nativeId %s, group snapshots %s - end",
                 snapshots.get(0).getStorageSystemId(), snapshots.get(0).getConsistencyGroup(), snapshots.toString());
-        _log.info(msg);
+        //_log.info(msg);
         task.setMessage(msg);
         return task;
     }
@@ -674,8 +664,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setStatus(DriverTask.TaskStatus.READY);
         task.setMessage("Created clones for consistency group " + clones.get(0).getConsistencyGroup());
 
-        _log.info("denaliStorageDriver: createGroupClone information for storage system {}, clones nativeIds {} - end",
-                clones.get(0).getStorageSystemId(), clones.toString());
+        //_log.info("denaliStorageDriver: createGroupClone information for storage system {}, clones nativeIds {} - end", clones.get(0).getStorageSystemId(), clones.toString());
         return task;
     }
 
@@ -708,15 +697,14 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             driverVolume.setDeviceLabel(driverVolume.getNativeId());
             driverVolume.setWwn(String.format("%s%s", driverVolume.getStorageSystemId(), driverVolume.getNativeId()));
             storageVolumes.add(driverVolume);
-            _log.info("Unmanaged volume info: pool {}, volume {}", driverVolume.getStoragePoolId(), driverVolume);
+            //_log.info("Unmanaged volume info: pool {}, volume {}", driverVolume.getStoragePoolId(), driverVolume);
 
             if (GENERATE_EXPORT_DATA) {
                 // add entry to arrayToVolumeToVolumeExportInfoMap for this volume
                 // get host for this page
                 for (String hostName : pageToHostMap.get(token.intValue())) {
-                    _log.info("Process host {}", hostName);
-                    generateExportDataForVolume(hostName, driverVolume.getStorageSystemId(), driverVolume.getNativeId(),
-                            vol, ports, token.intValue());
+                    //_log.info("Process host {}", hostName);
+                    generateExportDataForVolume(hostName, driverVolume.getStorageSystemId(), driverVolume.getNativeId(), vol, ports, token.intValue());
                 }
             }
         }
@@ -728,8 +716,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setStatus(DriverTask.TaskStatus.READY);
         task.setMessage("Get storage volumes: page " + token);
 
-        _log.info("denaliStorageDriver: get storage volumes information for storage system {}, token  {} - end",
-                storageSystem.getNativeId(), token);
+        //_log.info("denaliStorageDriver: get storage volumes information for storage system {}, token  {} - end", storageSystem.getNativeId(), token);
         // set next value
         if (token.intValue() < NUMBER_OF_VOLUME_PAGES-1) { // each page has different consistency group
             token.setValue(token.intValue() + 1);
@@ -778,7 +765,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         }
 
         volumeToHostExportInfoList.add(exportInfo);
-        _log.info("VolumeToHostExportInfo: " + volumeToHostExportInfoList);
+        //_log.info("VolumeToHostExportInfo: " + volumeToHostExportInfoList);
     }
 
     @Override
@@ -801,7 +788,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         attributes.put("USER_NAME", listUserName);
         listPwd.add(password);
         attributes.put("PASSWORD", listPwd);
-        _log.info(String.format("denaliStorageDriver: setting connection information for %s, attributes: %s ", systemNativeId, attributes));
+        //_log.info(String.format("denaliStorageDriver: setting connection information for %s, attributes: %s ", systemNativeId, attributes));
         this.driverRegistry.setDriverAttributesForKey("DenaliDriver", systemNativeId, attributes);
     }
 
@@ -882,7 +869,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                     HostExportInfo exportInfo = new HostExportInfo(hostExportInfo.getHostName(), snapIds, hostInitiators, exportPorts);
                     replicaExportInfoList.add(exportInfo);
                 }
-                _log.info("Export Info for replica: {} --- {}", replica.getNativeId(), replicaExportInfoList);
+                //_log.info("Export Info for replica: {} --- {}", replica.getNativeId(), replicaExportInfoList);
                 volumeToExportInfoMap.put(replica.getNativeId(), replicaExportInfoList);
             }
         }
