@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import java.io.*;
+
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
@@ -101,6 +103,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public RegistrationData getRegistrationData() {
+
         RegistrationData registrationData = new RegistrationData("denaliDriver", "driversystem", null);
         return registrationData;
     }
@@ -112,7 +115,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public <T extends StorageObject> T getStorageObject(String storageSystemId, String objectId, Class<T> type) {
-        if (StorageVolume.class.getSimpleName().equals(type.getSimpleName())) {
+	
+       if (StorageVolume.class.getSimpleName().equals(type.getSimpleName())) {
             StorageVolume obj = new StorageVolume();
             obj.setAllocatedCapacity(VOLUME_CAPACITY);
             return (T) obj;
@@ -268,7 +272,6 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 //            index = ++portIndex;
 //            systemNameToPortIndexName.put(storageSystem.getNativeId(), index);
 //        }
-
         // Create ports with network
         for (int i =0; i <= NUMBER_OF_PORTS_WITH_NETWORK; i++ ) {
             StoragePort port = new StoragePort();

@@ -13,7 +13,6 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -50,7 +49,7 @@ public class ExceptionOnErrorFilter extends ClientFilter {
     }
 
     private void logAndThrow(RuntimeException e) {
-        log.error(e.getMessage());
+	log.error(e.getMessage());
         throw e;
     }
 
