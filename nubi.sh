@@ -1,3 +1,4 @@
+rm /opt/storageos/logs/*.*
 NAME=$(rpm -qa | grep storageos)
 rpm -e $NAME
 make clobber BUILD_TYPE=oss rpm
@@ -8,7 +9,8 @@ sed -i "12i <entry key=\"denaliStorageDriver\" value=\"denali\"/>" driver-conf.x
 sed -i "21i <value>denali</value>" driver-conf.xml
 sed -i "45i <value>denali</value>" driver-conf.xml
 sed -i "442i <entry key=\"denali\" value-ref=\"denaliStorageDriver\"/>" controller-conf.xml
-sed -i "1042d" controller-conf.xml
+#sed -i "1042d" controller-conf.xml
+sed -i "452i <bean id=\"denaliStorageDriver\" class=\"com.emc.storageos.storagedriver.DenaliDriver\"></bean>" controller-conf.xml
 sed -i "19i <entry key=\"denali\" value-ref=\"denaliStorageDriver\"/>" discovery-externaldevice-context.xml
 jar cf /opt/storageos/lib/denaliStorageDriver.jar /tmp/coprhd-controller/internalLibraries/storagedriver/src/main/java/com/emc/storageos/storagedriver/DenaliDriver.java
 cd /opt/storageos/bin
