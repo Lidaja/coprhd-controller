@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-//import java.io.*;
+import java.io.*;
 
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableInt;
@@ -101,18 +101,13 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public RegistrationData getRegistrationData() {
-
         RegistrationData registrationData = new RegistrationData("denaliDriver", "driversystem", null);
         return registrationData;
     }
 
     @Override
     public DriverTask getTask(String taskId) {
-        /*try{
-		Process p = Runtime.getRuntime().exec("touch LFTF.txt");
-	}catch(IOException e){
-		System.out.println("error");
-	}*/
+
         return (DriverTask) new DenaliTask(taskId);
     }
 
