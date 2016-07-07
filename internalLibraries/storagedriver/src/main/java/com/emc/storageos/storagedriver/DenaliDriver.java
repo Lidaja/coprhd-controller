@@ -15,13 +15,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import java.io.*;
+//import java.io.*;
 
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.emc.storageos.storagedriver.AbstractStorageDriver;
 import com.emc.storageos.storagedriver.BlockStorageDriver;
 import com.emc.storageos.storagedriver.DriverTask;
@@ -68,7 +67,6 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     private static long VOLUME_CAPACITY = 200L;
     private static Integer portIndex = 0;
     private static Map<String, Integer> systemNameToPortIndexName = new HashMap<>();
-
     // map for storage system to host export info data for a volume;
     // key: array native id
     // value: map where key is volume native id and value is list of volume export info object for this volume for different hosts (one entry for each host)
@@ -110,6 +108,11 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public DriverTask getTask(String taskId) {
+        /*try{
+		Process p = Runtime.getRuntime().exec("touch LFTF.txt");
+	}catch(IOException e){
+		System.out.println("error");
+	}*/
         return (DriverTask) new DenaliTask(taskId);
     }
 
