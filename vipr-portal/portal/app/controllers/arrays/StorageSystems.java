@@ -105,6 +105,7 @@ public class StorageSystems extends ViprResourceController {
     private static void addReferenceData() {
         renderArgs.put("storageArrayTypeList", Arrays.asList(StorageSystemTypes.OPTIONS));
 	renderArgs.put("deviceTypeList", Arrays.asList(StorageSystemTypes.DEVICES));
+	renderArgs.put("numNodeList", Arrays.asList(StorageSystemTypes.NODES));
         renderArgs.put("smisStorageSystemTypeList", Arrays.asList(StorageSystemTypes.SMIS_OPTIONS));
         renderArgs.put("nonSmisStorageSystemTypeList", Arrays.asList(StorageSystemTypes.NON_SMIS_OPTIONS));
         renderArgs.put("sslDefaultStorageSystemList", Arrays.asList(StorageSystemTypes.SSL_DEFAULT_OPTIONS));

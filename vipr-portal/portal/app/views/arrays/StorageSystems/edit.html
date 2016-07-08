@@ -434,6 +434,14 @@
       }%
       #{Form.selectOneControlGroup field:field /}
     #{/field}
+    
+    #{field 'storageArray.numNodes'}
+    %{
+	field.options = numNodeList
+	field.required = !editMode
+     }%
+     #{Form.selectOneControlGroup field:field /}
+    #{/field}
  
     #{field 'storageArray.name'}
         %{
@@ -441,7 +449,6 @@
         }%
       #{Form.inputTextControlGroup field:field /}
     #{/field}
-
     #{field 'storageArray.ipAddress'}
       %{
         field.required = true
@@ -504,9 +511,6 @@
       #{Form.inputPasswordControlGroup field:field /}
     #{/field}
  
-
-
-
     #{field 'storageArray.elementManagerURL'}
       #{Form.inputTextControlGroup field:field /}
     #{/field}  

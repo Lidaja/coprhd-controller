@@ -1950,6 +1950,7 @@ StorageSystems.not.registered=Storage Array: '%s' is not registered.  It can not
 storageArray.id=ID
 storageArray.serialNumber=Serial Number
 storageArray.name=Name
+storageArray.numNodes=Number of Nodes
 storageArray.lastDiscoveredDate=Last Discovery
 storageArray.discoveryStatus=Status
 storageArray.registrationStatus=Registered
