@@ -12,7 +12,6 @@
 
 #{set 'moreScripts'}
   <script type="text/javascript">
-  
     var smisStorageSystemTypeList = [];
     #{list items:smisStorageSystemTypeList, as:'typeList'}
        smisStorageSystemTypeList.push('${typeList.id}');
@@ -38,7 +37,7 @@
     #{list items:defaultStorageArrayPortMap, as:'defaultPort'}
       portMap['${defaultPort.id}'] = '${defaultPort.name}';
     #{/list}
-  
+    
     $(document).ready(function() {
     	var editMode = #{get 'editMode'/};
     	var isUnregistered = editMode && ${storageArray.unregistered};
@@ -403,6 +402,28 @@
   			 }
     	 }	
     }
+
+    function arraySave(){
+	//alert("The Format Value is",$('#storageArray_deviceTypeControlGroup').value);
+        //alert("The Format Text is",$('#storageArray_deviceTypeControlGroup').text);
+        //alert("The Format Attr is",$('#storageArray_deviceTypeControlGroup').attr());
+	var saID = "${storageArray.id}";
+	var url = #{jsAction @save() /};
+	//alert(String(url));
+	/*child = exec('ls',function (error, stdout, stderr){
+		console.log('stdout: ' + stdout);
+		console.log('stderr: ' + stderr);
+		if (error !== null){
+			console.log('exec error: ' + error);
+		}
+	});
+	child();*/
+        window.location.href = url() + (saId ? "?id=" + saId : '');
+    }
+
+    function arrayCancel(){
+	window.history.back();
+    }
   </script>
 #{/set}
 
@@ -622,6 +643,9 @@
     #{/set}
   #{/if}
   
-  #{Form.saveCancel /}
+ <!-- #{Form.saveCancel /} -->
+ <button class="btn btn-success btn-large" style="text-align: center;" name="Save" onclick="arraySave(this);return false;" >#{icon 'save'/} SAVE</button>
+ <button class="btn btn-danger btn-large" style="text-align: center;" name="Cancel" onclick="arrayCancel(this);return false;" >#{icon 'cancel'/} Cancel</button>
+
 #{/form}
 </div>
