@@ -253,6 +253,11 @@
         if (selectedType == 'denali') {
             $('#storageArray_deviceTypeControlGroup').show();
 	    $('#storageArray_elementManagerURLControlGroup').hide();
+	    $('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
+            $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
+            $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
+	    $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
+
         } else {
             $('#storageArray_deviceTypeControlGroup').hide();
         }

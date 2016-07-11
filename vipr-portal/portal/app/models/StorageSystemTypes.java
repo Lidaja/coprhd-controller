@@ -56,24 +56,24 @@ public class StorageSystemTypes {
 
 
     public static final StringOption[] OPTIONS = {
-	    option(DENALI),
-            option(ISILON),
-            option(VNX_FILE),
-            option(NETAPP),
-            option(VNXe),
-            option(UNITY),
-            option(NETAPPC),
-            option(ECS),
+	    option(DENALI)
+            //option(ISILON),
+            //option(VNX_FILE),
+            //option(NETAPP),
+            //option(VNXe),
+            //option(UNITY),
+            //option(NETAPPC),
+            //option(ECS),
 	    //new StringOption(DENALI, getDisplayValue(STORAGE_PROVIDER_DENALI)),
-            new StringOption(VMAX, getDisplayValue(STORAGE_PROVIDER_VMAX)),
-            new StringOption(VPLEX, getDisplayValue(STORAGE_PROVIDER_VPLEX)),
-            new StringOption(HITACHI, getDisplayValue(STORAGE_PROVIDER_HITACHI)),
-            new StringOption(OPENSTACK, getDisplayValue(STORAGE_PROVIDER_OPENSTACK)),
-            new StringOption(SCALEIOAPI, getDisplayValue(STORAGE_PROVIDER_SCALEIOAPI)),
-            new StringOption(DATA_DOMAIN, getDisplayValue(STORAGE_PROVIDER_DATA_DOMAIN)),
-            new StringOption(IBMXIV, getDisplayValue(STORAGE_PROVIDER_IBMXIV)),
-            new StringOption(XTREMIO, getDisplayValue(STORAGE_PROVIDER_XTREMIO)),
-            new StringOption(CEPH, getDisplayValue(STORAGE_PROVIDER_CEPH))
+            //new StringOption(VMAX, getDisplayValue(STORAGE_PROVIDER_VMAX)),
+            //new StringOption(VPLEX, getDisplayValue(STORAGE_PROVIDER_VPLEX)),
+            //new StringOption(HITACHI, getDisplayValue(STORAGE_PROVIDER_HITACHI)),
+            //new StringOption(OPENSTACK, getDisplayValue(STORAGE_PROVIDER_OPENSTACK)),
+            //new StringOption(SCALEIOAPI, getDisplayValue(STORAGE_PROVIDER_SCALEIOAPI)),
+            //new StringOption(DATA_DOMAIN, getDisplayValue(STORAGE_PROVIDER_DATA_DOMAIN)),
+            //new StringOption(IBMXIV, getDisplayValue(STORAGE_PROVIDER_IBMXIV)),
+            //new StringOption(XTREMIO, getDisplayValue(STORAGE_PROVIDER_XTREMIO)),
+            //new StringOption(CEPH, getDisplayValue(STORAGE_PROVIDER_CEPH))
     };
 
     public static final StringOption[] DEVICES = {
