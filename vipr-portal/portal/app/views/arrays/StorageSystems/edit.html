@@ -404,20 +404,11 @@
     }
 
     function arraySave(){
-	//alert("The Format Value is",$('#storageArray_deviceTypeControlGroup').value);
-        //alert("The Format Text is",$('#storageArray_deviceTypeControlGroup').text);
-        //alert("The Format Attr is",$('#storageArray_deviceTypeControlGroup').attr());
 	var saID = "${storageArray.id}";
 	var url = #{jsAction @save() /};
-	//alert(String(url));
-	/*child = exec('ls',function (error, stdout, stderr){
-		console.log('stdout: ' + stdout);
-		console.log('stderr: ' + stderr);
-		if (error !== null){
-			console.log('exec error: ' + error);
-		}
-	});
-	child();*/
+	alert($('#storageArray_type').val());
+	alert($('#storageArray_deviceType').val());
+	alert($('#storageArray_numNodes').val());
         window.location.href = url() + (saId ? "?id=" + saId : '');
     }
 
@@ -644,8 +635,8 @@
   #{/if}
   
  <!-- #{Form.saveCancel /} -->
- <button class="btn btn-success btn-large" style="text-align: center;" name="Save" onclick="arraySave(this);return false;" >#{icon 'save'/} SAVE</button>
- <button class="btn btn-danger btn-large" style="text-align: center;" name="Cancel" onclick="arrayCancel(this);return false;" >#{icon 'cancel'/} Cancel</button>
+ <button class="btn btn-success btn-large" name="Save" onclick="arraySave(this);return false;" >#{icon 'save'/} SAVE</button>
+ <button class="btn btn-danger btn-large" name="Cancel" onclick="arrayCancel(this);return false;" >#{icon 'remove'/} Cancel</button>
 
 #{/form}
 </div>
