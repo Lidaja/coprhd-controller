@@ -252,9 +252,9 @@
         if (selectedType == 'denali') {
             $('#storageArray_deviceTypeControlGroup').show();
 	    $('#storageArray_elementManagerURLControlGroup').hide();
-	    $('#storageArray_userNameControlGroup').hide().attr('required', false);
-            $('#storageArray_userPasswordControlGroup').hide().attr('required', false);
-            $('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
+	    //$('#storageArray_userNameControlGroup').hide().attr('required', false);
+            //$('#storageArray_userPasswordControlGroup').hide().attr('required', false);
+            //$('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
 	    $('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
             $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
             $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
@@ -385,7 +385,7 @@
     
     function handleListPools() {
         var saId = "${storageArray.id}";
-        
+	alert(saId);        
         var url = #{jsAction @pools() /};
         window.location.href = url() + (saId ? "?id=" + saId : '');   
    }
@@ -411,11 +411,16 @@
 
     function arraySave(){
 	var saId = "${storageArray.id}";
-	var url = #{jsAction @save() /};
-	alert($('#storageArray_type').val());
-	alert($('#storageArray_deviceType').val());
-	alert($('#storageArray_numNodes').val());
-        window.location.href = url() + (saId ? "?id=" + saId : '');
+	alert("saId="+saId);
+	//alert($('#storageArray_type').val());
+	//alert($('#storageArray_deviceType').val());
+	//alert($('#storageArray_numNodes').val());
+	//var url = #{jsAction @save() /};
+	//alert("urlString="+url);
+	//alert("urlPattern="+url());
+        //window.location.href = url();
+	storageArray.save();
+	// + (saId ? "?id=" + saId : '');
     }
 
     function arrayCancel(){
@@ -647,6 +652,7 @@
   #{/if}
   
  <!-- #{Form.saveCancel /} -->
+ #{Form.saveCancel /}
  <button class="btn btn-success btn-large" name="Save" onclick="arraySave(this);return false;" >#{icon 'save'/} SAVE</button>
  <button class="btn btn-danger btn-large" name="Cancel" onclick="arrayCancel(this);return false;" >#{icon 'remove'/} Cancel</button>
 
