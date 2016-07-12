@@ -252,10 +252,16 @@
         if (selectedType == 'denali') {
             $('#storageArray_deviceTypeControlGroup').show();
 	    $('#storageArray_elementManagerURLControlGroup').hide();
+	    $('#storageArray_userNameControlGroup').hide().attr('required', false);
+            $('#storageArray_userPasswordControlGroup').hide().attr('required', false);
+            $('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
 	    $('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
             $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
             $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
 	    $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
+	    $('#storageArray_vipControlGroup').show().attr('required',true);
+            $('#storageArray_vipControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.vip.help')}");
+
 
         } else {
             $('#storageArray_deviceTypeControlGroup').hide();
@@ -404,7 +410,7 @@
     }
 
     function arraySave(){
-	var saID = "${storageArray.id}";
+	var saId = "${storageArray.id}";
 	var url = #{jsAction @save() /};
 	alert($('#storageArray_type').val());
 	alert($('#storageArray_deviceType').val());
@@ -473,7 +479,13 @@
       }%
       #{Form.inputTextControlGroup field:field /}
     #{/field}
-
+    #{field 'storageArray.vip'}
+      %{
+        field.required = true
+        field.cssClass = 'span3'
+      }%
+      #{Form.inputTextControlGroup field:field /}
+    #{/field}
     #{field 'storageArray.useSSL'}
       #{Form.booleanCheckBoxControlGroup field:field /}
     #{/field}
