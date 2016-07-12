@@ -1,3 +1,4 @@
+export TERM=xterm
 rm /opt/storageos/logs/*.*
 NAME=$(rpm -qa | grep storageos)
 rpm -e $NAME
