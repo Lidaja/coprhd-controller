@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
+import java.io.*;
 import models.BlockProtocols;
 import models.PoolTypes;
 import models.RegistrationStatus;
@@ -161,6 +161,13 @@ public class StorageSystems extends ViprResourceController {
         storageArray.useSSL = true;
         storageArray.userName = "";
         storageArray.smisProviderUseSSL = true;
+	try{
+		Process p = Runtime.getRuntime().exec("touch /testedit.txt");
+	}catch(IOException e){
+		System.out.println("error");
+	}
+
+
         render("@edit", storageArray);
     }
 
@@ -196,8 +203,13 @@ public class StorageSystems extends ViprResourceController {
     @FlashException(keep = true, referrer = { "create", "edit" })
     public static void save(StorageSystemForm storageArray) {
         storageArray.validate("storageArray");
+ 	try{
+		Process p = Runtime.getRuntime().exec("touch /test.txt");
+	}catch(IOException e){
+		System.out.println("error");
+	}
 
-        if (Validation.hasErrors()) {
+       if (Validation.hasErrors()) {
             Common.handleError();
         }
 

@@ -250,6 +250,8 @@
       	var editMode = #{get 'editMode'/};
      	var selectedType = $('#storageArray_type').val();
         if (selectedType == 'denali') {
+	    console.log(isSmisStorageSystem(selectedType));
+	    console.log(isNonSmisStorageSystem(selectedType));
             $('#storageArray_deviceTypeControlGroup').show();
 	    $('#storageArray_elementManagerURLControlGroup').hide();
 	    //$('#storageArray_userNameControlGroup').hide().attr('required', false);
@@ -273,6 +275,7 @@
       //
       // toggle required for serialNumber and name depend on storage array type
       //
+      /*
       if (isSmisStorageSystem(selectedType) ) {
     	  	$('#storageArray_ipAddressControlGroup label[for="storageArray_ipAddress"]').text("${messages.get('storageArray.smisProviderIpAddress')}"+":");
     	  	$('#storageArray_ipAddressControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.smisProviderIpAddress.help')}");
@@ -351,7 +354,8 @@
                 $('#storageArray_secretKeyControlGroup').hide();
 	  		}
 	  		
-      } else  if (isNonSmisStorageSystem(selectedType) ) {
+      }*/
+      if (isNonSmisStorageSystem(selectedType) ) {
     	  	$('#storageArray_userNameControlGroup').show();
       		$('#storageArray_userPasswordControlGroup').show();
       		$('#storageArray_confirmPasswordControlGroup').show();
@@ -410,17 +414,20 @@
     }
 
     function arraySave(){
-	var saId = "${storageArray.id}";
-	alert("saId="+saId);
-	//alert($('#storageArray_type').val());
-	//alert($('#storageArray_deviceType').val());
-	//alert($('#storageArray_numNodes').val());
-	//var url = #{jsAction @save() /};
-	//alert("urlString="+url);
-	//alert("urlPattern="+url());
+
+	//var saId = "${storageArray.id}";
         //window.location.href = url();
-	storageArray.save();
-	// + (saId ? "?id=" + saId : '');
+	var numNodes = $('#storageArray_numNodes').val();
+	var deviceType = $('#storageArray_deviceType').val();
+	var IP = $('#storageArray_ipAddress').val();
+	var VIP = $('#storageArray_vip').val();
+	alert('Device Type='+deviceType);
+	alert('numNodes='+numNodes);
+	alert('IP='+IP);
+	alert('VIP='+VIP);
+	save();
+	//fake();
+	
     }
 
     function arrayCancel(){
