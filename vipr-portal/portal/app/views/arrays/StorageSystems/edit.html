@@ -273,6 +273,7 @@
       //
       // toggle required for serialNumber and name depend on storage array type
       //
+      /*
       if (isSmisStorageSystem(selectedType) ) {
     	  	$('#storageArray_ipAddressControlGroup label[for="storageArray_ipAddress"]').text("${messages.get('storageArray.smisProviderIpAddress')}"+":");
     	  	$('#storageArray_ipAddressControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.smisProviderIpAddress.help')}");
@@ -351,7 +352,7 @@
                 $('#storageArray_secretKeyControlGroup').hide();
 	  		}
 	  		
-      } else  if (isNonSmisStorageSystem(selectedType) ) {
+      } else*/  if (isNonSmisStorageSystem(selectedType) ) {
     	  	$('#storageArray_userNameControlGroup').show();
       		$('#storageArray_userPasswordControlGroup').show();
       		$('#storageArray_confirmPasswordControlGroup').show();
@@ -652,7 +653,7 @@
   #{/if}
   
  <!-- #{Form.saveCancel /} -->
- #{Form.saveCancel /}
+
  <button class="btn btn-success btn-large" name="Save" onclick="arraySave(this);return false;" >#{icon 'save'/} SAVE</button>
  <button class="btn btn-danger btn-large" name="Cancel" onclick="arrayCancel(this);return false;" >#{icon 'remove'/} Cancel</button>
 
