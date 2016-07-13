@@ -248,140 +248,44 @@
     //
     function updateStorageArrayType() {
       	var editMode = #{get 'editMode'/};
-     	var selectedType = $('#storageArray_type').val();
-        if (selectedType == 'denali') {
-            $('#storageArray_deviceTypeControlGroup').show();
-	    $('#storageArray_elementManagerURLControlGroup').hide();
-	    //$('#storageArray_userNameControlGroup').hide().attr('required', false);
-            //$('#storageArray_userPasswordControlGroup').hide().attr('required', false);
-            //$('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
-	    $('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
-            $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
-            $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
-	    $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
-	    $('#storageArray_vipControlGroup').show().attr('required',true);
-            $('#storageArray_vipControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.vip.help')}");
+        $('#storageArray_deviceTypeControlGroup').show();
+	$('#storageArray_elementManagerURLControlGroup').hide();
+	//$('#storageArray_userNameControlGroup').hide().attr('required', false);
+        //$('#storageArray_userPasswordControlGroup').hide().attr('required', false);
+        //$('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
+	$('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
+        $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
+        $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
+	$('#storageArray_secretKeyControlGroup').hide().attr('required', false);
+	$('#storageArray_vipControlGroup').show().attr('required',true);
+        $('#storageArray_vipControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.vip.help')}");
 
 
-        } else {
-            $('#storageArray_deviceTypeControlGroup').hide();
-        }
-      if ( !editMode ) {
-          $('fieldset#settings').hide(); //can only set/edit resouce limit value post create
-      }
+      	if ( !editMode ) {
+        	$('fieldset#settings').hide(); //can only set/edit resouce limit value post create
+      	}
       
-      //
-      // toggle required for serialNumber and name depend on storage array type
-      //
-      /*
-      if (isSmisStorageSystem(selectedType) ) {
-    	  	$('#storageArray_ipAddressControlGroup label[for="storageArray_ipAddress"]').text("${messages.get('storageArray.smisProviderIpAddress')}"+":");
-    	  	$('#storageArray_ipAddressControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.smisProviderIpAddress.help')}");
-//    		$('#storageArray_serialNumberControlGroup').hide().removeClass('required');    		
-//	  		$('#storageArray_nameControlGroup').show().addClass('required');   
-            if (isHideSSLCheckboxStorageSystem(selectedType)) {
-                $('#storageArray_useSSLControlGroup').hide();
-            }
-            else {
-                $('#storageArray_useSSLControlGroup').show();
-            }
-            
-            $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
-            if (!editMode) {
-            	$('#storageArray_elementManagerURLControlGroup').show();
-
-                if ($('#storageArray_type').val() == '${scaleIOStorageSystemType}') {
-                    $('#storageArray_secondaryUsernameControlGroup').show();
-                    $('#storageArray_secondaryPasswordControlGroup').show();
-                    $('#storageArray_secondaryPasswordConfirmControlGroup').show();
-                } else if ($('#storageArray_type').val() == '${scaleIOApiStorageSystemType}') {              	
-                	$('#storageArray_userNameControlGroup').hide();
-                	$('#storageArray_userPasswordControlGroup').hide();
-                	$('#storageArray_confirmPasswordControlGroup').hide();
-                	$('#storageArray_secondaryUsernameControlGroup').show();
-                    $('#storageArray_secondaryPasswordControlGroup').show();
-                    $('#storageArray_secondaryPasswordConfirmControlGroup').show();
-                    $('#storageArray_elementManagerURLControlGroup').hide();
-                } else if ($('#storageArray_type').val() == '${cephStorageSystemType}') {
-                    $('#storageArray_userNameControlGroup').show();
-                	$('#storageArray_secretKeyControlGroup').show().attr('required', true);
-                    $('#storageArray_useSSLControlGroup').hide().attr('required', false);
-                    $('#storageArray_portNumberControlGroup').hide().attr('required', false);
-                    $('#storageArray_userPasswordControlGroup').hide().attr('required', false);
-                    $('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
-                    $('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
-                    $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
-                    $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
-                    $('#storageArray_elementManagerURLControlGroup').hide();
-                } else {
-                	$('#storageArray_userNameControlGroup').show();
-                	$('#storageArray_userPasswordControlGroup').show();
-                	$('#storageArray_confirmPasswordControlGroup').show();
-                    $('#storageArray_secondaryUsernameControlGroup').hide();
-                    $('#storageArray_secondaryPasswordControlGroup').hide();
-                    $('#storageArray_secondaryPasswordConfirmControlGroup').hide();                                  	
-                }    	
-            } else {
-            	$('#storageArray_secondaryUsernameControlGroup').hide();
-                $('#storageArray_secondaryPasswordControlGroup').hide();
-                $('#storageArray_secondaryPasswordConfirmControlGroup').hide();
-                $('#storageArray_elementManagerURLControlGroup').hide();
-                $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
-                if ($('#storageArray_type').val() == '${cephStorageSystemType}') {
-                    $('#storageArray_useSSLControlGroup').hide().attr('required', false);
-                    $('#storageArray_portNumberControlGroup').hide().attr('required', false);
-                    $('#storageArray_userPasswordControlGroup').hide().attr('required', false);
-                    $('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
-                }
-            }
-            
-            $('fieldset.onboardSmisProvider').hide();            
-    	
-	  		if ( !editMode ) {
-	  			if ($('#storageArray_type').val() != '${cephStorageSystemType}') {
-	  			    $('#storageArray_useSSL').trigger('change'); // trigger change
-	  			}
-	  		} else {
-	  		    // if it is a smis managed storage system, hide all but name field for editing purpose
-	  		    $('#storageArray_useSSLControlGroup').hide();
-                $('#storageArray_portNumberControlGroup').hide();
-                $('#storageArray_ipAddressControlGroup').hide();
-                $('#storageArray_userNameControlGroup').hide();
-                $('#storageArray_userPasswordControlGroup').hide();
-                $('#storageArray_confirmPasswordControlGroup').hide();
-                $('#storageArray_secretKeyControlGroup').hide();
-	  		}
+      	//
+      	// toggle required for serialNumber and name depend on storage array type
+      	//
+      	$('#storageArray_userNameControlGroup').show();
+      	$('#storageArray_userPasswordControlGroup').show();
+      	$('#storageArray_confirmPasswordControlGroup').show();
+      	$('#storageArray_ipAddressControlGroup label[for="storageArray_ipAddress"]').text("${messages.get('storageArray.ipAddress')}"+":");
+      	$('#storageArray_ipAddressControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.ipAddress.help')}");
+//    	$('#storageArray_serialNumberControlGroup').show().addClass('required');    		
+//    	$('#storageArray_nameControlGroup').hide().removeClass('required');    		    	  
+      	$('#storageArray_useSSLControlGroup').hide();
+  	$('#storageArray_secondaryUsernameControlGroup').hide();
+  	$('#storageArray_secondaryPasswordControlGroup').hide();
+  	$('#storageArray_secondaryPasswordConfirmControlGroup').hide();
+  	$('#storageArray_elementManagerURLControlGroup').hide();
+      	$('#storageArray_secretKeyControlGroup').hide().attr('required', false);
+       	if ( !editMode ) {
+               	$('#storageArray_useSSL').trigger('change'); // trigger change
+        }
 	  		
-      } else*/  if (isNonSmisStorageSystem(selectedType) ) {
-    	  	$('#storageArray_userNameControlGroup').show();
-      		$('#storageArray_userPasswordControlGroup').show();
-      		$('#storageArray_confirmPasswordControlGroup').show();
-  	  		$('#storageArray_ipAddressControlGroup label[for="storageArray_ipAddress"]').text("${messages.get('storageArray.ipAddress')}"+":");
-  	  	    $('#storageArray_ipAddressControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.ipAddress.help')}");
-//   			$('#storageArray_serialNumberControlGroup').show().addClass('required');    		
-// 	  		$('#storageArray_nameControlGroup').hide().removeClass('required');    		    	  
-	  		$('#storageArray_useSSLControlGroup').hide();
-	  		$('#storageArray_secondaryUsernameControlGroup').hide();
-	  		$('#storageArray_secondaryPasswordControlGroup').hide();
-	  		$('#storageArray_secondaryPasswordConfirmControlGroup').hide();
-	  		$('#storageArray_elementManagerURLControlGroup').hide();
-            $('#storageArray_secretKeyControlGroup').hide().attr('required', false);
-            if ( !editMode ) {
-                $('#storageArray_useSSL').trigger('change'); // trigger change
-            }
-	  		
-	        if ( $('#storageArray_type').val() == '${vnxfileStorageSystemType}') {
-	            $('#storageArray_ipAddressControlGroup label[for="storageArray_ipAddress"]').text("${messages.get('storageArray.vnxFileIPAddress')}"+":");
-	            $('#storageArray_ipAddressControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.vnxFileIPAddress.help')}");
-	            
-	            $('fieldset.onboardSmisProvider').show();
-	            if ( !editMode ) { //only fire change if not set - otherwise let existing value pass through
-	                $('#storageArray_smisProviderUseSSL').trigger('change'); // trigger change
-	            }
-	        } else {
-	            $('fieldset.onboardSmisProvider').hide();            
-	        }	  		
-      }            
+        $('fieldset.onboardSmisProvider').hide();                        
     }
     
     function handleListPools() {
@@ -411,17 +315,18 @@
     }
 
     function arraySave(){
-	var saId = "${storageArray.id}";
-	alert("saId="+saId);
-	//alert($('#storageArray_type').val());
-	//alert($('#storageArray_deviceType').val());
-	//alert($('#storageArray_numNodes').val());
-	//var url = #{jsAction @save() /};
-	//alert("urlString="+url);
-	//alert("urlPattern="+url());
+
+	//var saId = "${storageArray.id}";
         //window.location.href = url();
-	storageArray.save();
-	// + (saId ? "?id=" + saId : '');
+	var numNodes = $('#storageArray_numNodes').val();
+	var deviceType = $('#storageArray_deviceType').val();
+	var IP = $('#storageArray_ipAddress').val();
+	var VIP = $('#storageArray_vip').val();
+	alert('Device Type='+deviceType);
+	alert('numNodes='+numNodes);
+	alert('IP='+IP);
+	alert('VIP='+VIP);
+	save();
     }
 
     function arrayCancel(){

@@ -22,7 +22,10 @@ public class StorageSystemDataTable extends DataTable {
         addColumn("name").setRenderFunction("renderLink");
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
         addColumn("host");
+	addColumn("virtualHost");
+	addColumn("numNodes");
         addColumn("type");
+	addColumn("deviceType");
         addColumn("version").hidden();
         addColumn("userName").hidden();
         StorageSystemInfo.addDiscoveryColumns(this);
@@ -34,8 +37,11 @@ public class StorageSystemDataTable extends DataTable {
         public String id;
         public String name;
         public String host;
+	public String virtualHost;
+	public String numNodes;
         public String userName;
         public String type;
+	public String deviceType;
         public String version;
         public String registrationStatus;
 
@@ -56,6 +62,9 @@ public class StorageSystemDataTable extends DataTable {
                 this.host = storageSystem.getIpAddress();
                 this.userName = storageSystem.getUsername();
             }
+	    this.numNodes = "20";
+	    this.virtualHost = "10.10.30.235";
+	    this.deviceType = "Block";
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());
             this.version = storageSystem.getFirmwareVersion();
             this.registrationStatus = storageSystem.getRegistrationStatus();
