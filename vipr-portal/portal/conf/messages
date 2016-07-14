@@ -1957,7 +1957,6 @@ storageArray.registrationStatus=Registered
 storageArray.errorDetails=Error Details
 storageArray.dataProtectionConnectivity=Data Protection
 storageArray.host=Host
-storageArray.numNodes=Number of Nodes
 storageArray.vip=Virtual IP
 storageArray.deviceType=Type of Storage Device
 storageArray.type=Type
