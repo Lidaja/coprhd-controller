@@ -15,6 +15,7 @@ public class StorageSystemUpdateRequestParam {
 
     private String name;
     private String ipAddress;
+    private String numNodes;
     private Integer portNumber;
     private String userName;
     private String password;
@@ -42,7 +43,6 @@ public class StorageSystemUpdateRequestParam {
     public void setName(String name) {
         this.name = name;
     }
-
     /**
      * IP Address of the storage system
      * 

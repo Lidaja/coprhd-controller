@@ -699,6 +699,7 @@ public class StorageSystems extends ViprResourceController {
         @HostNameOrIpAddress
         public String ipAddress;
 
+
         @Required
         public Integer portNumber;
 
@@ -788,7 +789,6 @@ public class StorageSystems extends ViprResourceController {
             else {
                 this.portNumber = storageArray.getPortNumber();
                 this.ipAddress = storageArray.getIpAddress();
-
                 this.smisProviderIpAddress = storageArray.getSmisProviderIP();
                 this.smisProviderPortNumber = storageArray.getSmisPortNumber();
                 this.smisProviderUseSSL = storageArray.getSmisUseSSL();

@@ -38,6 +38,8 @@ public class StorageSystem extends StorageObject {
     // management interface IP address. Type: Input.
     private String ipAddress;
 
+    private String numNodes;
+
     private List<String> protocols;
 
     // Array Firmware Version
@@ -134,10 +136,11 @@ public class StorageSystem extends StorageObject {
         return ipAddress;
     }
 
+
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
-
+    
     public List<String> getProtocols() {
         return protocols;
     }
