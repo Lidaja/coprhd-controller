@@ -45,7 +45,7 @@ public class StorageSystem extends DiscoveredSystemObject {
     // management interface IP address
     private String _ipAddress;
 
-    //private String _numNodes;
+    private String _numNodes;
 
     // secondary/backup management interface IP addresses
     private StringSet _secondaryIPs;
@@ -254,7 +254,18 @@ public class StorageSystem extends DiscoveredSystemObject {
         this._ipAddress = ipAddress;
         setChanged("ipAddress");
     }
-   
+  
+    @Name("numNodes")
+    public String getNumNodes() {
+        //return _numNodes;
+	return "8";
+    }
+
+    public void setNumNodes(final String numNodes) {
+        this._numNodes = numNodes;
+        setChanged("numNodes");
+    }
+     
    @Name("secondaryIPs")
     public StringSet getSecondaryIPs() {
         return _secondaryIPs;

@@ -389,7 +389,7 @@ public class SystemsMapper {
         to.setMajorVersion(from.getMajorVersion());
         to.setMinorVersion(from.getMinorVersion());
         to.setIpAddress(from.getIpAddress());
-	//to.setNumNodes(from.getNumNodes());
+	to.setNumNodes(from.getNumNodes());
         to.setSecondaryIPs(from.getSecondaryIPs());
         to.setPortNumber(from.getPortNumber());
         to.setSmisProviderIP(from.getSmisProviderIP());

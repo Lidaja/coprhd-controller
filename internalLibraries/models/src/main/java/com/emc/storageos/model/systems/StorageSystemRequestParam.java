@@ -75,10 +75,9 @@ public class StorageSystemRequestParam {
         this.ipAddress = ipAddress;
     }
     /**
-     * IP Address of the storage system
+     * Number of Nodes of the storage system
      * 
      */
-
     /**
      * Port Number used to connect to the storage system
      * 

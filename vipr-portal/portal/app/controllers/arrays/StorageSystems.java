@@ -161,13 +161,6 @@ public class StorageSystems extends ViprResourceController {
         storageArray.useSSL = true;
         storageArray.userName = "";
         storageArray.smisProviderUseSSL = true;
-	try{
-		Process p = Runtime.getRuntime().exec("touch /testedit.txt");
-	}catch(IOException e){
-		System.out.println("error");
-	}
-
-
         render("@edit", storageArray);
     }
 
@@ -203,13 +196,7 @@ public class StorageSystems extends ViprResourceController {
     @FlashException(keep = true, referrer = { "create", "edit" })
     public static void save(StorageSystemForm storageArray) {
         storageArray.validate("storageArray");
- 	try{
-		Process p = Runtime.getRuntime().exec("touch /test.txt");
-	}catch(IOException e){
-		System.out.println("error");
-	}
-
-       if (Validation.hasErrors()) {
+       	if (Validation.hasErrors()) {
             Common.handleError();
         }
 
@@ -845,7 +832,6 @@ public class StorageSystems extends ViprResourceController {
             StorageSystemRequestParam storageArray = new StorageSystemRequestParam();
             storageArray.setName(name);
             storageArray.setSystemType(type);
-
             storageArray.setPassword(userPassword);
             storageArray.setUserName(userName);
             storageArray.setPortNumber(portNumber);

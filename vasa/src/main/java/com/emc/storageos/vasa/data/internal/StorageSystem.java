@@ -90,7 +90,6 @@ public class StorageSystem {
         public String getIpAddress() {
             return ipAddress;
         }
-
         public String getPortNumber() {
             return portNumber;
         }

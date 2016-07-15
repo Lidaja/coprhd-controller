@@ -63,7 +63,7 @@ public class StorageSystemDataTable extends DataTable {
                 this.userName = storageSystem.getUsername();
             }
 	    //this.numNodes = "20";
-	    this.numNodes = "20";
+	    this.numNodes = storageSystem.getNumNodes();
 	    this.vip = "10.10.30.235";
 	    this.deviceType = "Block";
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());

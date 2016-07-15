@@ -131,7 +131,6 @@ public class StorageSystem extends StorageObject {
     public void setPassword(String password) {
         this.password = password;
     }
-
     public String getIpAddress() {
         return ipAddress;
     }
@@ -140,7 +139,8 @@ public class StorageSystem extends StorageObject {
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
-    
+
+   
     public List<String> getProtocols() {
         return protocols;
     }

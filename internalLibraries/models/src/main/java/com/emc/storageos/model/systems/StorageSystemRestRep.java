@@ -113,6 +113,15 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
+
+    @XmlElement(name = "numNodes")
+    public String getNumNodes() {
+	return numNodes;
+    }
+
+    public void setNumNodes(String numNodes) {
+	this.numNodes = numNodes;
+    }
     
     @XmlElement(name = "major_version")
     public String getMajorVersion() {
