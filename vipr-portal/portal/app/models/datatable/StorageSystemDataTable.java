@@ -51,9 +51,7 @@ public class StorageSystemDataTable extends DataTable {
         public StorageSystemInfo(StorageSystemRestRep storageSystem) {
             super(storageSystem);
             this.id = storageSystem.getId().toString();
-            this.name = StringUtils.defaultIfEmpty(
-                    StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),
-                    MessagesUtils.get(NAME_NOT_AVAILABLE));
+            this.name = StringUtils.defaultIfEmpty(StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()), MessagesUtils.get(NAME_NOT_AVAILABLE));
             if (ResourceUtils.id(storageSystem.getActiveProvider()) != null) {
                 this.host = storageSystem.getSmisProviderIP();
                 this.userName = storageSystem.getSmisUserName();
@@ -62,7 +60,6 @@ public class StorageSystemDataTable extends DataTable {
                 this.host = storageSystem.getIpAddress();
                 this.userName = storageSystem.getUsername();
             }
-	    //this.numNodes = "20";
 	    this.numNodes = storageSystem.getNumNodes();
 	    this.vip = "10.10.30.235";
 	    this.deviceType = "Block";

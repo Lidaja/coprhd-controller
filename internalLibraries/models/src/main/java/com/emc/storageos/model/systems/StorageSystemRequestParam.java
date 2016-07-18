@@ -15,7 +15,6 @@ public class StorageSystemRequestParam {
     private String name;
     private String systemType;
     private String ipAddress;
-    private String numNodes;
     private Integer portNumber;
     private String userName;
     private String password;
@@ -74,10 +73,7 @@ public class StorageSystemRequestParam {
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
-    /**
-     * Number of Nodes of the storage system
-     * 
-     */
+    
     /**
      * Port Number used to connect to the storage system
      * 

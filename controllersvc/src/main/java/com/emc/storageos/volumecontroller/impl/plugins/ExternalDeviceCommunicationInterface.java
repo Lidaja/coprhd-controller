@@ -560,7 +560,6 @@ public class ExternalDeviceCommunicationInterface extends
         driverStorageSystem.setNativeId(storageSystem.getNativeId());
         driverStorageSystem.setIpAddress(storageSystem.getIpAddress());
         driverStorageSystem.setSystemName(storageSystem.getLabel());
-
         return driverStorageSystem;
     }
 

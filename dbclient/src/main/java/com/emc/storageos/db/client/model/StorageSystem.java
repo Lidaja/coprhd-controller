@@ -257,13 +257,11 @@ public class StorageSystem extends DiscoveredSystemObject {
   
     @Name("numNodes")
     public String getNumNodes() {
-        //return _numNodes;
-	return "420!";
+        return _numNodes;
     }
 
     public void setNumNodes(final String numNodes) {
-        //this._numNodes = numNodes;
-	this._numNodes = "96";
+        this._numNodes = "Work pls";
         setChanged("numNodes");
     }
      

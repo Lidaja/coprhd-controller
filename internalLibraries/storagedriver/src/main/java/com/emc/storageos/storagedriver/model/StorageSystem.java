@@ -38,8 +38,6 @@ public class StorageSystem extends StorageObject {
     // management interface IP address. Type: Input.
     private String ipAddress;
 
-    private String numNodes;
-
     private List<String> protocols;
 
     // Array Firmware Version

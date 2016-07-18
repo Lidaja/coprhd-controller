@@ -15,7 +15,6 @@ public class StorageSystemUpdateRequestParam {
 
     private String name;
     private String ipAddress;
-    private String numNodes;
     private Integer portNumber;
     private String userName;
     private String password;
