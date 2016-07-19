@@ -44,13 +44,7 @@
         var resourceType = "${storageArray.resourceType}";    	
     	
         $('#storageArray_unlimitResourceControlGroup span.help-block').removeClass('clear');
-
-    	
-        //
-        // know here it came from so can navigate back
-        //
-        // Only set if has not already been set - as in when there is a validation/exception roundtrip back to page
-        var referrer = '${currentReferrerUrl}'; 
+	var referrer = '${currentReferrerUrl}'; 
         if ( !referrer){
             $('input[name="storageArray.referrerUrl"]').val(window.document.referrer);
         }       
@@ -249,14 +243,9 @@
     function updateStorageArrayType() {
       	var editMode = #{get 'editMode'/};
         $('#storageArray_deviceTypeControlGroup').show();
-	$('#storageArray_elementManagerURLControlGroup').hide();
 	//$('#storageArray_userNameControlGroup').hide().attr('required', false);
         //$('#storageArray_userPasswordControlGroup').hide().attr('required', false);
         //$('#storageArray_confirmPasswordControlGroup').hide().attr('required', false);
-	$('#storageArray_secondaryUsernameControlGroup').hide().attr('required', false);
-        $('#storageArray_secondaryPasswordControlGroup').hide().attr('required', false);
-        $('#storageArray_secondaryPasswordConfirmControlGroup').hide().attr('required', false);
-	$('#storageArray_secretKeyControlGroup').hide().attr('required', false);
 	$('#storageArray_vipControlGroup').show().attr('required',true);
         $('#storageArray_vipControlGroup DIV.controls SPAN.help-block').text("${messages.get('storageArray.vip.help')}");
 
@@ -276,11 +265,6 @@
 //    	$('#storageArray_serialNumberControlGroup').show().addClass('required');    		
 //    	$('#storageArray_nameControlGroup').hide().removeClass('required');    		    	  
       	$('#storageArray_useSSLControlGroup').hide();
-  	$('#storageArray_secondaryUsernameControlGroup').hide();
-  	$('#storageArray_secondaryPasswordControlGroup').hide();
-  	$('#storageArray_secondaryPasswordConfirmControlGroup').hide();
-  	$('#storageArray_elementManagerURLControlGroup').hide();
-      	$('#storageArray_secretKeyControlGroup').hide().attr('required', false);
        	if ( !editMode ) {
                	$('#storageArray_useSSL').trigger('change'); // trigger change
         }
@@ -322,10 +306,10 @@
 	var deviceType = $('#storageArray_deviceType').val();
 	var IP = $('#storageArray_ipAddress').val();
 	var VIP = $('#storageArray_vip').val();
-	#alert('Device Type='+deviceType);
-	#alert('numNodes='+numNodes);
-	#alert('IP='+IP);
-	#alert('VIP='+VIP);
+	//alert('Device Type='+deviceType);
+	//alert('numNodes='+numNodes);
+	//alert('IP='+IP);
+	//alert('VIP='+VIP);
 	save();
 	
     }
@@ -431,37 +415,6 @@
       #{Form.inputPasswordControlGroup field:field /}
     #{/field}
     
-    #{field 'storageArray.secondaryUsername'}
-    %{
-        field.required = !editMode
-      }%
-      #{Form.inputTextControlGroup field:field /}
-    #{/field}
- 
-    #{field 'storageArray.secondaryPassword'}
-    %{
-        field.required = !editMode
-      }%
-      #{Form.inputPasswordControlGroup field:field /}
-    #{/field}
- 
-    #{field 'storageArray.secondaryPasswordConfirm'}
-    %{
-        field.required = !editMode
-      }%
-      #{Form.inputPasswordControlGroup field:field /}
-    #{/field}
- 
-    #{field 'storageArray.elementManagerURL'}
-      #{Form.inputTextControlGroup field:field /}
-    #{/field}  
-
-    #{field 'storageArray.secretKey'}
-    %{
-        field.required = !editMode
-      }%
-      #{Form.inputPasswordControlGroup field:field /}
-    #{/field}
     </fieldset>
 
     <fieldset class="onboardSmisProvider" style="display:none">
