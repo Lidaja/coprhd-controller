@@ -121,6 +121,7 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
 
     public void setNumNodes(String numNodes) {
 	this.numNodes = numNodes;
+	//this.numNodes = "666";
     }
     
     @XmlElement(name = "major_version")

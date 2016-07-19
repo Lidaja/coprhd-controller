@@ -4369,7 +4369,8 @@ public class SmisCommandHelper implements SmisConstants {
                     CIMObjectPath seSystemRegistrationSvc =
                             getRegistrationService(storage);
                     UnsignedInteger32[] syncType = new UnsignedInteger32[] {
-                            new UnsignedInteger32(8L)
+                            new UnsignedInteger32(REPLICATION_DATA_SYNC_TYPE),
+                            new UnsignedInteger32(DEVICES_SYNC_TYPE)
                     };
                     CIMObjectPath[] systems = new CIMObjectPath[] {
                             _cimPath.getStorageSystem(storage)
@@ -7339,5 +7340,31 @@ public class SmisCommandHelper implements SmisConstants {
         } catch (Exception e) {
             _log.error("Encountered an error while trying to set the volume name", e);
         } 
+    }
+
+    /**
+     * Get the SMI-S input arguments for setting the Initiator Alias.
+     * @param shidPath A reference to the HardwareID.
+     * @param initiatorAlias The alias that needs to be set
+     * @return An array of CIMArgument
+     */
+    public CIMArgument[] getEMCInitiatorAliasSetArgs(CIMObjectPath shidPath, String initiatorAlias)
+            throws Exception {
+        return new CIMArgument[] {
+                _cimArgument.reference(CP_EXISTING_STORAGEID, shidPath),
+                _cimArgument.string(CP_ALIAS_STORAGEID, initiatorAlias)
+        };
+    }
+
+    /**
+     * Get the SMI-S input arguments for getting the Initiator Alias.
+     * @param shidPath A reference to the existing HardwareID.
+     * @return An array of CIMArgument
+     */
+    public CIMArgument[] getEMCInitiatorAliasGetArgs(CIMObjectPath shidPath)
+            throws Exception {
+        return new CIMArgument[] {
+                _cimArgument.reference(CP_EXISTING_STORAGEID, shidPath)
+        };
     }
 }

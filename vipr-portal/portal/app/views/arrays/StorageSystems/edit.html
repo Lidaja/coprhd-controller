@@ -284,13 +284,13 @@
        	if ( !editMode ) {
                	$('#storageArray_useSSL').trigger('change'); // trigger change
         }
-	  		
+     		  		
         $('fieldset.onboardSmisProvider').hide();                        
     }
     
     function handleListPools() {
         var saId = "${storageArray.id}";
-	alert(saId);        
+	#alert(saId);        
         var url = #{jsAction @pools() /};
         window.location.href = url() + (saId ? "?id=" + saId : '');   
    }
@@ -322,11 +322,12 @@
 	var deviceType = $('#storageArray_deviceType').val();
 	var IP = $('#storageArray_ipAddress').val();
 	var VIP = $('#storageArray_vip').val();
-	alert('Device Type='+deviceType);
-	alert('numNodes='+numNodes);
-	alert('IP='+IP);
-	alert('VIP='+VIP);
+	#alert('Device Type='+deviceType);
+	#alert('numNodes='+numNodes);
+	#alert('IP='+IP);
+	#alert('VIP='+VIP);
 	save();
+	
     }
 
     function arrayCancel(){

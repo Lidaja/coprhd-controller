@@ -134,8 +134,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     // DiscoveryDriver implementation
 
     @Override
-    public DriverTask discoverStorageSystem(List<StorageSystem> storageSystems) {
-        StorageSystem storageSystem = storageSystems.get(0);
+    public DriverTask discoverStorageSystem(StorageSystem storageSystem) {
+	//StorageSystem storageSystem = storageSystems.get(0);
         //_log.info("denaliStorageDriver: discoverStorageSystem information for storage system {}, name {} - start", storageSystem.getIpAddress(), storageSystem.getSystemName());
         String taskType = "discover-storage-system";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
@@ -615,6 +615,36 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         return task;
     }
 
+    public DriverTask addVolumesToConsistencyGroup( List<StorageVolume> volumes, StorageCapabilities capabilities){
+        String taskType = "add-volume-to-cg";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = getTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: addVolumeToConsistencyGroup information for storage system %s, volumes nativeId %s - end", volumes.get(0).getStorageSystemId(), volumes.get(0).getNativeId());
+        //_log.info(msg);
+        task.setMessage(msg);
+        return task;
+
+    }
+
+    /**
+     * Removes multiple volumes from a consistency group.
+     * @param volumes to be delete from the consistency group.
+     * @param capabilities for consistency group.
+     * @return task
+     */
+    public DriverTask removeVolumesFromConsistencyGroup( List<StorageVolume> volumes, StorageCapabilities capabilities){
+        String taskType = "remove-volume-from-cg";
+        String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
+        DriverTask task = getTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("denaliStorageDriver: removeVolumeFromConsistencyGroup information for storage system %s, volumes nativeId %s - end", volumes.get(0).getStorageSystemId(), volumes.get(0).getNativeId());
+        //_log.info(msg);
+        task.setMessage(msg);
+        return task;
+
+    }
+
     @Override
     public DriverTask createConsistencyGroupSnapshot(VolumeConsistencyGroup consistencyGroup, List<VolumeSnapshot> snapshots, List<CapabilityInstance> capabilities) {
         String snapTimestamp = Long.toString(System.currentTimeMillis());
@@ -894,4 +924,26 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
     public DriverTask discoverStorageProvider(StorageProvider storageProvider, List<StorageSystem> storageSystems) {
         return null;
     }
+
+    /**
+     * Validate connection to storage provider.
+     *
+     * @param storageProvider provider to validate connection to.
+     * @return true/false
+     */
+    @Override
+    public boolean validateStorageProviderConnection(StorageProvider storageProvider){
+	return false;
+    }
+    /**
+     * Stop Management of the storage system
+     *
+     * @param Storage System to be detached.
+     * @return task
+     */
+    @Override
+    public DriverTask stopManagement(StorageSystem storageSystem){
+ 	return null;
+    }
+
 }
