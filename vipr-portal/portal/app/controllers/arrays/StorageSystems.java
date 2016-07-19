@@ -110,11 +110,6 @@ public class StorageSystems extends ViprResourceController {
         renderArgs.put("storageArrayTypeList", Arrays.asList(StorageSystemTypes.OPTIONS));
 	renderArgs.put("deviceTypeList", Arrays.asList(StorageSystemTypes.DEVICES));
 	renderArgs.put("numNodeList", Arrays.asList(StorageSystemTypes.NODES));
-        renderArgs.put("smisStorageSystemTypeList", Arrays.asList(StorageSystemTypes.SMIS_OPTIONS));
-        renderArgs.put("nonSmisStorageSystemTypeList", Arrays.asList(StorageSystemTypes.NON_SMIS_OPTIONS));
-        renderArgs.put("sslDefaultStorageSystemList", Arrays.asList(StorageSystemTypes.SSL_DEFAULT_OPTIONS));
-        renderArgs.put("nonSSLStorageSystemList", Arrays.asList(StorageSystemTypes.NON_SSL_OPTIONS));
-        List<EnumOption> defaultStorageArrayPortMap = Arrays.asList(EnumOption.options(DefaultStorageArrayPortMap.values()));
         renderArgs.put("defaultStorageArrayPortMap", defaultStorageArrayPortMap);
         renderArgs.put("vnxfileStorageSystemType", StorageSystemTypes.VNX_FILE);
         renderArgs.put("scaleIOStorageSystemType", StorageSystemTypes.SCALEIO);
