@@ -68,15 +68,14 @@ public class StorageSystemTypes {
 
 
     public static final StringOption[] OPTIONS = {
-	    option(DENALI)
-            //option(ISILON),
-            //option(VNX_FILE),
-            //option(NETAPP),
-            //option(VNXe),
-            //option(UNITY),
-            //option(NETAPPC),
-            //option(ECS),
-	    //new StringOption(DENALI, getDisplayValue(STORAGE_PROVIDER_DENALI)),
+	    //option(DENALI)
+            option(ISILON),
+            option(VNX_FILE),
+            option(NETAPP),
+            option(VNXe),
+            option(UNITY),
+            option(NETAPPC),
+            option(ECS),
             //new StringOption(VMAX, getDisplayValue(STORAGE_PROVIDER_VMAX)),
             //new StringOption(VPLEX, getDisplayValue(STORAGE_PROVIDER_VPLEX)),
             //new StringOption(HITACHI, getDisplayValue(STORAGE_PROVIDER_HITACHI)),

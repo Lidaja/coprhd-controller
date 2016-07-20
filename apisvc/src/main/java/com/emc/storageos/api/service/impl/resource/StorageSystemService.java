@@ -271,7 +271,7 @@ public class StorageSystemService extends TaskResourceService {
         if (!StorageSystem.Type.isDriverManagedStorageSystem(param.getSystemType())) {
 
             ArgValidator.checkFieldValueFromSystemType(param.getSystemType(), "system_type",
-                    Arrays.asList(StorageSystem.Type.vnxfile, StorageSystem.Type.isilon, StorageSystem.Type.rp,
+                    Arrays.asList(StorageSystem.Type.denali, StorageSystem.Type.vnxfile, StorageSystem.Type.isilon, StorageSystem.Type.rp,
                             StorageSystem.Type.netapp, StorageSystem.Type.netappc, StorageSystem.Type.vnxe,
                             StorageSystem.Type.xtremio, StorageSystem.Type.ecs, StorageSystem.Type.unity));
         }
