@@ -45,6 +45,8 @@ public class StorageSystem extends DiscoveredSystemObject {
     // management interface IP address
     private String _ipAddress;
 
+    private String _vipAddress;
+
     // secondary/backup management interface IP addresses
     private StringSet _secondaryIPs;
 
@@ -252,6 +254,19 @@ public class StorageSystem extends DiscoveredSystemObject {
         this._ipAddress = ipAddress;
         setChanged("ipAddress");
     }
+
+    @Name("vipAddress")
+    public String getVipAddress() {
+	//return "omg pls";
+        return _vipAddress;
+    }
+
+    public void setVipAddress(final String vipAddress) {
+        //this._vipAddress = vipAddress;
+	this._vipAddress = "IF THIS WORKS ILL CRY";
+        setChanged("vipAddress");
+    }
+
 
     @Name("secondaryIPs")
     public StringSet getSecondaryIPs() {

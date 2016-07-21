@@ -422,6 +422,14 @@
       #{Form.inputTextControlGroup field:field /}
     #{/field}
 }*    
+     #{field 'storageArray.deviceType'}
+        %{
+	  field.options = storageArrayDeviceTypeList
+	  field.required = true
+	  field.cssClass = 'span6 initialFocus'
+	}%
+	#{Form.selectOneControlGroup field:field /}
+     #{/field}
     #{field 'storageArray.name'}
         %{
           field.required = true
@@ -429,7 +437,24 @@
       #{Form.inputTextControlGroup field:field /}
     #{/field}
 
-    #{field 'storageArray.ipAddress'}
+    #{field 'storageArray.numNodes'}
+      %{
+        field.options = storageArrayNumNodesList
+        field.required = true
+        field.cssClass = 'span6 initialFocus'
+      }%
+      #{Form.selectOneControlGroup field:field /}
+    #{/field}
+
+   #{field 'storageArray.ipAddress'}
+      %{
+        field.required = true
+        field.cssClass = 'span3'
+      }%
+      #{Form.inputTextControlGroup field:field /}
+    #{/field}
+
+    #{field 'storageArray.vipAddress'}
       %{
         field.required = true
         field.cssClass = 'span3'

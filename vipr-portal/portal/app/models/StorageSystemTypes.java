@@ -189,6 +189,24 @@ public class StorageSystemTypes {
         return options;
     }
 
+    public static List<StringOption> getStorageDeviceTypeOptions() {
+        List<StringOption> options = new ArrayList<StringOption>();
+	options.add(new StringOption("Block"));
+	options.add(new StringOption("File"));
+	options.add(new StringOption("Object"));
+        return options;
+    }
+
+
+    public static List<StringOption> getStorageNumNodesOptions() {
+        List<StringOption> options = new ArrayList<StringOption>();
+	for (int i = 1; i <= 100; i++){
+		options.add(new StringOption(Integer.toString(i)));
+	}
+        return options;
+    }
+
+
     public static List<StringOption> getBlockStorageOptions() {
         List<StringOption> options = new ArrayList<StringOption>(Arrays.asList(StringOption.NONE_OPTION));
         StorageSystemTypeList typeList = StorageSystemTypeUtils.getAllStorageSystemTypes(StorageSystemTypeUtils.ALL_TYPE);

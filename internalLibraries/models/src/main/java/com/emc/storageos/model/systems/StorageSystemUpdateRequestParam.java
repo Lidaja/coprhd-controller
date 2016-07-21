@@ -15,6 +15,7 @@ public class StorageSystemUpdateRequestParam {
 
     private String name;
     private String ipAddress;
+    private String vipAddress;
     private Integer portNumber;
     private String userName;
     private String password;
@@ -55,6 +56,19 @@ public class StorageSystemUpdateRequestParam {
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
     }
+    /**
+     * VIP Address of the storage system
+     * 
+     */
+    @XmlElement(name = "vip_address")
+    public String getVipAddress() {
+        return vipAddress;
+    }
+
+    public void setVipAddress(String vipAddress) {
+        this.vipAddress = vipAddress;
+    }
+
 
     /**
      * Port Number used to connect to the storage system

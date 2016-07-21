@@ -101,6 +101,8 @@ public class StorageSystems extends ViprResourceController {
 
     private static void addReferenceData() {
         renderArgs.put("storageArrayTypeList", StorageSystemTypes.getStorageTypeOptions());
+	renderArgs.put("storageArrayDeviceTypeList", StorageSystemTypes.getStorageDeviceTypeOptions());
+	renderArgs.put("storageArrayNumNodesList", StorageSystemTypes.getStorageNumNodesOptions());
         renderArgs.put("smisStorageSystemTypeList", StorageProviderTypes.getProviderOption());
         renderArgs.put("nonSmisStorageSystemTypeList", StorageSystemTypes.getStorageTypeOptions());
         renderArgs.put("sslDefaultStorageSystemList", StorageProviderTypes.getProvidersWithSSL());
@@ -877,6 +879,7 @@ public class StorageSystems extends ViprResourceController {
 
             if (!isStorageProviderManaged()) {
                 storageArray.setIpAddress(ipAddress);
+		storageArray.setVipAddress("TEST1");
                 storageArray.setPortNumber(portNumber);
                 storageArray.setPassword(StringUtils.trimToNull(userPassword));
                 storageArray.setUserName(StringUtils.trimToNull(userName));
@@ -902,6 +905,7 @@ public class StorageSystems extends ViprResourceController {
             storageArray.setUserName(userName);
             storageArray.setPortNumber(portNumber);
             storageArray.setIpAddress(ipAddress);
+	    storageArray.setVipAddress("TEST2");
             // storageArray.setRegistrationMode(RegistrationMode.SYSTEM);
 
             if (isVnxFile()) {
