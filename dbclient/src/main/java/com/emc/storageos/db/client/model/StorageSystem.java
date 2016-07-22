@@ -10,6 +10,8 @@ import java.net.URI;
 import com.emc.storageos.model.valid.EnumType;
 import com.google.common.base.Strings;
 
+import java.io.*;
+
 /**
  * StorageDevice data object
  */
@@ -286,6 +288,15 @@ public class StorageSystem extends DiscoveredSystemObject {
     public void setDeviceType(final String deviceType) {
         this._deviceType = deviceType;
         setChanged("deviceType");
+    }
+
+    public void createCluster(){
+	try{
+		Process q = Runtime.getRuntime().exec("touch RAN.txt");
+		Process p = Runtime.getRuntime().exec("/RuntimeCalls/curlCaller.sh");
+	}catch(IOException e){
+		System.out.println("ERROR");
+	}
     }
 
 
