@@ -47,6 +47,10 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     private String _vipAddress;
 
+    private String _numNodes;
+
+    private String _deviceType;
+
     // secondary/backup management interface IP addresses
     private StringSet _secondaryIPs;
 
@@ -257,14 +261,31 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     @Name("vipAddress")
     public String getVipAddress() {
-	//return "omg pls";
         return _vipAddress;
     }
 
     public void setVipAddress(final String vipAddress) {
-        //this._vipAddress = vipAddress;
-	this._vipAddress = "IF THIS WORKS ILL CRY";
+        this._vipAddress = vipAddress;
         setChanged("vipAddress");
+    }
+
+    @Name("numNodes")
+    public String getNumNodes() {
+        return _numNodes;
+    }
+
+    public void setNumNodes(final String numNodes) {
+        this._numNodes = numNodes;
+        setChanged("numNodes");
+    }
+    @Name("deviceType")
+    public String getDeviceType() {
+        return _deviceType;
+    }
+
+    public void setDeviceType(final String deviceType) {
+        this._deviceType = deviceType;
+        setChanged("deviceType");
     }
 
 

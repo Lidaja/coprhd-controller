@@ -28,6 +28,8 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
     private String minorVersion;
     private String ipAddress;
     private String vipAddress;
+    private String numNodes;
+    private String deviceType;
     private Set<String> secondaryIPs;
     private Integer portNumber;
     private String smisProviderIP;
@@ -121,8 +123,27 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
 
     public void setVipAddress(String vipAddress) {
         this.vipAddress = vipAddress;
-	//this.vipAddress = "10.10.30.LOL";
     }
+
+    @XmlElement(name = "num_nodes")
+    public String getNumNodes() {
+        return numNodes;
+    }
+
+    public void setNumNodes(String numNodes) {
+        this.numNodes = numNodes;
+    }
+
+    @XmlElement(name = "device_type")
+    public String getDeviceType() {
+        return deviceType;
+    }
+
+    public void setDeviceType(String deviceType) {
+        this.deviceType = deviceType;
+    }
+
+
 
     @XmlElement(name = "major_version")
     public String getMajorVersion() {

@@ -63,6 +63,8 @@ public class StorageSystemDataTable extends DataTable {
                 this.userName = storageSystem.getUsername();
             }
 	    this.vipAddress = storageSystem.getVipAddress();
+	    this.numNodes = storageSystem.getNumNodes();
+	    this.deviceType = storageSystem.getDeviceType();
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());
             this.version = storageSystem.getFirmwareVersion();
             this.registrationStatus = storageSystem.getRegistrationStatus();

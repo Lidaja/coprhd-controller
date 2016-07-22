@@ -16,6 +16,7 @@ public class StorageSystemRequestParam {
     private String systemType;
     private String ipAddress;
     private String vipAddress;
+    private String numNodes;
     private Integer portNumber;
     private String userName;
     private String password;
@@ -82,6 +83,15 @@ public class StorageSystemRequestParam {
 
     public void setVipAddress(String vipAddress) {
         this.vipAddress = vipAddress;
+    }
+
+    @XmlElement(required = true, name = "num_nodes")
+    public String getNumNodes() {
+        return numNodes;
+    }
+
+    public void setNumNodes(String numNodes) {
+        this.numNodes = numNodes;
     }
 
 
