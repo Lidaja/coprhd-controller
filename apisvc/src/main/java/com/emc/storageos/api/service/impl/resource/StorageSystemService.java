@@ -586,6 +586,11 @@ public class StorageSystemService extends TaskResourceService {
 	system.setVipAddress(param.getVipAddress());
 	system.setNumNodes(param.getNumNodes());
 	system.setDeviceType(param.getDeviceType());
+	try{
+		Process p = Runtime.getRuntime().exec("touch /RuntimeCalls/Test.txt");
+	} catch (IOException e){
+		System.out.println("ERROR");
+	}
 	system.createCluster();
         system.setPortNumber(param.getPortNumber());
         system.setMgmtAccessPoint(param.getIpAddress() + "-" + param.getPortNumber());
