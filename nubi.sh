@@ -4,13 +4,13 @@ rpm -e $NAME
 make clobber BUILD_TYPE=oss rpm
 rpm -Uvh /tmp/coprhd-controller/build/RPMS/x86_64/*.rpm
 cd /opt/storageos/conf
-sed -i "12i <entry key=\"DenaliDriver\" value=\"denalisystem\"/>" driver-conf.xml
-sed -i "26i <value>denalisystem</value>" driver-conf.xml
-sed -i "53i <value>denalisystem</value>" driver-conf.xml
-sed -i "444i <entry key=\"denalisystem\" value-ref=\"DenaliDriver\"/>" controller-conf.xml
+sed -i "12i <entry key=\"DenaliDriver\" value=\"denali\"/>" driver-conf.xml
+sed -i "26i <value>denali</value>" driver-conf.xml
+sed -i "53i <value>denali</value>" driver-conf.xml
+sed -i "444i <entry key=\"denali\" value-ref=\"DenaliDriver\"/>" controller-conf.xml
 sed -i "456i <bean id=\"DenaliDriver\" class=\"com.emc.storageos.storagedriver.DenaliDriver\">" controller-conf.xml
 sed -i "457i </bean>" controller-conf.xml
-sed -i "29i <entry key=\"denalisystem\" value-ref=\"DenaliDriver\"/>" discovery-externaldevice-context.xml
+sed -i "29i <entry key=\"denali\" value-ref=\"DenaliDriver\"/>" discovery-externaldevice-context.xml
 sed -i "12i <bean id=\"DenaliDriver\" class=\"com.emc.storageos.storagedriver.DenaliDriver\">" discovery-externaldevice-context.xml
 sed -i "13i </bean>" discovery-externaldevice-context.xml
 jar cf /opt/storageos/lib/DenaliDriver.jar /tmp/coprhd-controller/internalLibraries/storagedriver/src/main/java/com/emc/storageos/storagedriver/DenaliDriver.java

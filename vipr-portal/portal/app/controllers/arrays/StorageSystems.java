@@ -757,6 +757,9 @@ public class StorageSystems extends ViprResourceController {
 	@Required
 	public String numNodes;
 
+	@Required
+	public String deviceType;
+
         @Required
         public Integer portNumber;
 
@@ -855,6 +858,7 @@ public class StorageSystems extends ViprResourceController {
             }
 	    this.vipAddress = storageArray.getVipAddress();
 	    this.numNodes = storageArray.getNumNodes();
+	    this.deviceType = storageArray.getDeviceType();
         }
 
         public boolean isNew() {
@@ -888,6 +892,7 @@ public class StorageSystems extends ViprResourceController {
                 storageArray.setIpAddress(ipAddress);
 		storageArray.setVipAddress(vipAddress);
 		storageArray.setNumNodes(numNodes);
+		storageArray.setDeviceType(deviceType);
                 storageArray.setPortNumber(portNumber);
                 storageArray.setPassword(StringUtils.trimToNull(userPassword));
                 storageArray.setUserName(StringUtils.trimToNull(userName));
@@ -915,6 +920,7 @@ public class StorageSystems extends ViprResourceController {
             storageArray.setIpAddress(ipAddress);
 	    storageArray.setVipAddress(vipAddress);
 	    storageArray.setNumNodes(numNodes);
+	    storageArray.setDeviceType(deviceType);
             // storageArray.setRegistrationMode(RegistrationMode.SYSTEM);
 
             if (isVnxFile()) {

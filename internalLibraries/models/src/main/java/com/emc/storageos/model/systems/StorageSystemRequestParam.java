@@ -17,6 +17,7 @@ public class StorageSystemRequestParam {
     private String ipAddress;
     private String vipAddress;
     private String numNodes;
+    private String deviceType;
     private Integer portNumber;
     private String userName;
     private String password;
@@ -92,6 +93,15 @@ public class StorageSystemRequestParam {
 
     public void setNumNodes(String numNodes) {
         this.numNodes = numNodes;
+    }
+
+    @XmlElement(required = true, name = "device_type")
+    public String getDeviceType() {
+        return deviceType;
+    }
+
+    public void setDeviceType(String deviceType) {
+        this.deviceType = deviceType;
     }
 
 

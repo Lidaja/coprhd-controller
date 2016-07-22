@@ -585,6 +585,7 @@ public class StorageSystemService extends TaskResourceService {
         system.setIpAddress(param.getIpAddress());
 	system.setVipAddress(param.getVipAddress());
 	system.setNumNodes(param.getNumNodes());
+	system.setDeviceType(param.getDeviceType());
         system.setPortNumber(param.getPortNumber());
         system.setMgmtAccessPoint(param.getIpAddress() + "-" + param.getPortNumber());
         system.setUsername(param.getUserName());
@@ -626,6 +627,7 @@ public class StorageSystemService extends TaskResourceService {
         system.setSmisPassword(param.getSmisPassword());
 	system.setVipAddress(param.getVipAddress());
 	system.setNumNodes(param.getNumNodes());
+	system.setDeviceType(param.getDeviceType());
 
         _dbClient.persistObject(system);
     }
