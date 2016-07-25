@@ -586,13 +586,8 @@ public class StorageSystemService extends TaskResourceService {
 	system.setVipAddress(param.getVipAddress());
 	system.setNumNodes(param.getNumNodes());
 	system.setDeviceType(param.getDeviceType());
-	try{
-		Process p = Runtime.getRuntime().exec("touch /RuntimeCalls/Test.txt");
-	} catch (IOException e){
-		System.out.println("ERROR");
-	}
-	system.createCluster();
         system.setPortNumber(param.getPortNumber());
+	system.createCluster();
         system.setMgmtAccessPoint(param.getIpAddress() + "-" + param.getPortNumber());
         system.setUsername(param.getUserName());
         system.setPassword(param.getPassword());
@@ -634,7 +629,7 @@ public class StorageSystemService extends TaskResourceService {
 	system.setVipAddress(param.getVipAddress());
 	system.setNumNodes(param.getNumNodes());
 	system.setDeviceType(param.getDeviceType());
-
+	system.createCluster();
         _dbClient.persistObject(system);
     }
 

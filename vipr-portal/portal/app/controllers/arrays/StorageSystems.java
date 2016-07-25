@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
 import org.apache.commons.lang.StringUtils;
 
 import com.emc.storageos.db.client.model.DiscoveredDataObject;

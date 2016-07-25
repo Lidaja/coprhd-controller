@@ -7,7 +7,7 @@ package models.datatable;
 import models.StorageSystemTypes;
 
 import org.apache.commons.lang.StringUtils;
-
+import java.io.*;
 import util.MessagesUtils;
 import util.datatable.DataTable;
 
@@ -21,7 +21,7 @@ public class StorageSystemDataTable extends DataTable {
     public StorageSystemDataTable() {
         addColumn("name").setRenderFunction("renderLink");
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
-        addColumn("host");
+        addColumn("range");
 	addColumn("vipAddress");
 	addColumn("numNodes");
         addColumn("type");
@@ -37,8 +37,11 @@ public class StorageSystemDataTable extends DataTable {
         public String id;
         public String name;
         public String host;
+	public String range;
 	public String vipAddress;
 	public String numNodes;
+	public String[] nums;
+	public String last;
 	public String deviceType;
         public String userName;
         public String type;
@@ -64,7 +67,12 @@ public class StorageSystemDataTable extends DataTable {
             }
 	    this.vipAddress = storageSystem.getVipAddress();
 	    this.numNodes = storageSystem.getNumNodes();
+	    this.nums = this.host.split("\\.");
+	    this.last = this.nums[this.nums.length-1];
+	    this.range = this.nums[0].concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(this.last).concat("-").concat(this.nums[0]).concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(Integer.toString(Integer.parseInt(this.last)+Integer.parseInt(this.numNodes)));
 	    this.deviceType = storageSystem.getDeviceType();
+
+
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());
             this.version = storageSystem.getFirmwareVersion();
             this.registrationStatus = storageSystem.getRegistrationStatus();
