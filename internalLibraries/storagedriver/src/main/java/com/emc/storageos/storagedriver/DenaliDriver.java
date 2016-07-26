@@ -486,8 +486,11 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, "discoverStoragePools", UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
-        task.setStatus(DriverTask.TaskStatus.FAILED);
-
+        task.setStatus(DriverTask.TaskStatus.READY);
+	StoragePool pool = new StoragePool();
+	pool.setPoolName("TestPool");
+	pool.setStorageSystemId(storageSystem.getNativeId());
+	storagePools.add(pool);
         String msg = String.format("%s: %s --- operation is not supported.", driverName, "discoverStoragePools");
         _log.warn(msg);
         task.setMessage(msg);
