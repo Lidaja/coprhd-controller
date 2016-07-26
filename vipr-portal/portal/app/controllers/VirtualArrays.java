@@ -855,7 +855,7 @@ public class VirtualArrays extends ViprResourceController {
         public VirtualArrayStorageSystemsDataTable() {
             alterColumn("name").setRenderFunction(null);
             alterColumn("registrationStatus").hidden();
-            alterColumn("host").hidden();
+            //alterColumn("host").hidden();
         }
     }
 
