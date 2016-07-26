@@ -292,18 +292,20 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     public void createCluster(){
 	try{
-		BufferedWriter out = null;
+		//BufferedWriter out = null;
 		Process p = Runtime.getRuntime().exec("touch /RuntimeCalls/Parameters.txt");
-		FileWriter fstream = new FileWriter("/RuntimeCalls/Parameters.txt", false);
-		out = new BufferedWriter(fstream);
-		out.write(this.getIpAddress().concat("\n"));
-		out.write(this.getVipAddress().concat("\n"));
-		out.write(this.getNumNodes().concat("\n"));
-		out.close();
+		Process r = Runtime.getRuntime().exec("touch /tmp/Parameters.txt");
+		//FileWriter fstream = new FileWriter("/RuntimeCalls/Parameters.txt", false);
+		//out = new BufferedWriter(fstream);
+		//out.write(this.getIpAddress().concat("\n"));
+		//out.write(this.getVipAddress().concat("\n"));
+		//out.write(this.getNumNodes().concat("\n"));
+		//out.close();
 		//Process q = Runtime.getRuntime().exec("./curlCaller.sh \"\$(< Parameters.txt)\"");
-		Process q = Runtime.getRuntime().exec("./curlCaller.sh");
+		Process q = Runtime.getRuntime().exec("/RuntimeCalls/curlCaller.sh");
 	}catch(IOException e){
-		System.err.println("err");
+		this.setNumNodes("666");
+
 	}
     }
 

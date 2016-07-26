@@ -69,7 +69,7 @@ public class StorageSystemDataTable extends DataTable {
 	    this.numNodes = storageSystem.getNumNodes();
 	    this.nums = this.host.split("\\.");
 	    this.last = this.nums[this.nums.length-1];
-	    this.range = this.nums[0].concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(this.last).concat("-").concat(this.nums[0]).concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(Integer.toString(Integer.parseInt(this.last)+Integer.parseInt(this.numNodes)));
+	    this.range = this.nums[0].concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(this.last).concat("-").concat(this.nums[0]).concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(Integer.toString(Integer.parseInt(this.last)+Integer.parseInt(this.numNodes)-1));
 	    this.deviceType = storageSystem.getDeviceType();
 
 
