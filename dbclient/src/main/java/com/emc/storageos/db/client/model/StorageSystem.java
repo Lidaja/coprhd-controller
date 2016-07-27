@@ -10,6 +10,7 @@ import java.net.URI;
 import com.emc.storageos.model.valid.EnumType;
 import com.google.common.base.Strings;
 
+
 import java.io.*;
 
 /**
@@ -292,17 +293,20 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     public void createCluster(){
 	try{
-		BufferedWriter out = null;
+		//BufferedWriter out = null;
 		Process p = Runtime.getRuntime().exec("touch /RuntimeCalls/Parameters.txt");
-		Process r = Runtime.getRuntime().exec("touch /tmp/Parameters.txt");
-		FileWriter fstream = new FileWriter("/RuntimeCalls/Parameters.txt", false);
-		out = new BufferedWriter(fstream);
-		out.write(this.getIpAddress().concat("\n"));
-		out.write(this.getVipAddress().concat("\n"));
-		out.write(this.getNumNodes().concat("\n"));
-		out.close();
+		//Process p = Runtime.getRuntime().exec("touch /tmp/before.txt");
+		//Process q = Runtime.getRuntime().exec("curl --unix-socket /var/run/system-docker.sock -s -H \"Content-Type: application/json\" -X POST -d '{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \"10.10.30.235\", \"10.10.30.234\" ] }' http:/containers/console/exec | jq '.Id' | tr -d '\"' >> /tmp/Test.txt");
+		//Process r = Runtime.getRuntime().exec("touch /tmp/after.txt");
+		//Process r = Runtime.getRuntime().exec("touch /tmp/Parameters.txt");
+		//FileWriter fstream = new FileWriter("/RuntimeCalls/Parameters.txt", false);
+		//out = new BufferedWriter(fstream);
+		//out.write(this.getIpAddress().concat("\n"));
+		//out.write(this.getVipAddress().concat("\n"));
+		//out.write(this.getNumNodes().concat("\n"));
+		//out.close();
 		//Process q = Runtime.getRuntime().exec("./curlCaller.sh \"\$(< Parameters.txt)\"");
-		Process q = Runtime.getRuntime().exec("bash /RuntimeCalls/curlCaller.sh");
+		//Process q = Runtime.getRuntime().exec("/RuntimeCalls/curlCaller.sh");
 	}catch(IOException e){
 		this.setNumNodes("666");
 

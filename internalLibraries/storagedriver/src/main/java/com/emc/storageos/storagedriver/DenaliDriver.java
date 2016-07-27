@@ -23,6 +23,12 @@ import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,6 +40,7 @@ import java.util.UUID;
 public class DenaliDriver extends AbstractStorageDriver implements BlockStorageDriver {
 
     private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
+    private Integer numPools = 2;
 
     @Override
     public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities) {
@@ -467,14 +474,51 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setMessage(msg);
         return task;
     }
+    
+    public void setConnInfoToRegistry(String systemNativeId, String ipAddress, int port, String username, String password) {
+        Map<String, List<String>> attributes = new HashMap<>();
+        List<String> listIP = new ArrayList<>();
+        List<String> listPort = new ArrayList<>();
+        List<String> listUserName = new ArrayList<>();
+        List<String> listPwd = new ArrayList<>();
+
+        listIP.add(ipAddress);
+        attributes.put("IP_ADDRESS", listIP);
+        listPort.add(Integer.toString(port));
+        attributes.put("PORT_NUMBER", listPort);
+        listUserName.add(username);
+        attributes.put("USER_NAME", listUserName);
+        listPwd.add(password);
+        attributes.put("PASSWORD", listPwd);
+        _log.info(String.format("StorageDriver: setting connection information for %s, attributes: %s ", systemNativeId, attributes));
+        this.driverRegistry.setDriverAttributesForKey("StorageDriverSimulator", systemNativeId, attributes);
+    }
 
     @Override
     public DriverTask discoverStorageSystem(StorageSystem storageSystem) {
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, "discoverStorageSystem", UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
-        task.setStatus(DriverTask.TaskStatus.FAILED);
-
+        task.setStatus(DriverTask.TaskStatus.READY);
+	try {
+        	if (storageSystem.getSerialNumber() == null) {
+            		storageSystem.setSerialNumber(storageSystem.getSystemName());
+            	}
+            	if (storageSystem.getNativeId() == null) {
+            		storageSystem.setNativeId(storageSystem.getSystemName());
+            	}
+            	storageSystem.setFirmwareVersion("2.4-3.12");
+            	storageSystem.setIsSupportedVersion(true);
+            	setConnInfoToRegistry(storageSystem.getNativeId(), storageSystem.getIpAddress(), storageSystem.getPortNumber(), storageSystem.getUsername(), storageSystem.getPassword());
+            	// Support both, element and group replicas.
+            	Set<StorageSystem.SupportedReplication> supportedReplications = new HashSet<>();
+            	supportedReplications.add(StorageSystem.SupportedReplication.elementReplica);
+            	supportedReplications.add(StorageSystem.SupportedReplication.groupReplica);
+            	storageSystem.setSupportedReplications(supportedReplications);
+        } catch (Exception e) {
+            	task.setStatus(DriverTask.TaskStatus.FAILED);
+            	e.printStackTrace();
+        }
         String msg = String.format("%s: %s --- operation is not supported.", driverName, "discoverStorageSystem");
         _log.warn(msg);
         task.setMessage(msg);
@@ -487,11 +531,50 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String taskId = String.format("%s+%s+%s", driverName, "discoverStoragePools", UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
-	StoragePool pool = new StoragePool();
-	pool.setPoolName("TestPool");
-	pool.setStorageSystemId(storageSystem.getNativeId());
-	storagePools.add(pool);
-        String msg = String.format("%s: %s --- operation is not supported.", driverName, "discoverStoragePools");
+        try {
+            // Get connection information.
+            Map<String, List<String>> connectionInfo = driverRegistry.getDriverAttributesForKey("StorageDriverSimulator", storageSystem.getNativeId());
+            _log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
+            for (int i = 0; i < numPools; i++ ) {
+                StoragePool pool = new StoragePool();
+                pool.setNativeId("Denali-pool-"+ i +"-"+ storageSystem.getNativeId());
+                pool.setStorageSystemId(storageSystem.getNativeId());
+                _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
+                pool.setDeviceLabel("Denali-pool" + i +"-"+ storageSystem.getNativeId());
+                pool.setPoolName(pool.getDeviceLabel());
+                Set<StoragePool.Protocols> protocols = new HashSet<>();
+                protocols.add(StoragePool.Protocols.iSCSI);
+                pool.setProtocols(protocols);
+                pool.setPoolServiceType(StoragePool.PoolServiceType.block);
+                pool.setMaximumThickVolumeSize(3000000L);
+                pool.setMinimumThickVolumeSize(1000L);
+                pool.setMaximumThinVolumeSize(5000000L);
+                pool.setMinimumThinVolumeSize(1000L);
+                pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK);
+
+                pool.setSubscribedCapacity(5000000L);
+                pool.setFreeCapacity(45000000L);
+                pool.setTotalCapacity(48000000L);
+                pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
+                Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
+		supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SSD);
+                pool.setSupportedDriveTypes(supportedDriveTypes);
+
+                Set<StoragePool.RaidLevels> raidLevels = new HashSet<>();
+                raidLevels.add(StoragePool.RaidLevels.RAID1);
+                raidLevels.add(StoragePool.RaidLevels.RAID2);
+		raidLevels.add(StoragePool.RaidLevels.RAID50);
+		raidLevels.add(StoragePool.RaidLevels.RAID60);
+                pool.setSupportedRaidLevels(raidLevels);
+
+                storagePools.add(pool);
+            }
+	} catch (Exception e) {
+            task.setStatus(DriverTask.TaskStatus.FAILED);
+            e.printStackTrace();
+        }
+
+	String msg = String.format("%s: %s --- operation is not supported.", driverName, "discoverStoragePools");
         _log.warn(msg);
         task.setMessage(msg);
         return task;
@@ -499,16 +582,77 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     @Override
     public DriverTask discoverStoragePorts(StorageSystem storageSystem, List<StoragePort> storagePorts) {
-        String driverName = this.getClass().getSimpleName();
-        String taskId = String.format("%s+%s+%s", driverName, "discoverStoragePorts", UUID.randomUUID().toString());
-        DriverTask task = new DenaliTask(taskId);
-        task.setStatus(DriverTask.TaskStatus.FAILED);
+	_log.info("Discovery of storage ports for storage system {} .", storageSystem.getNativeId());
+        int index = 0;
+        // Get "portIndexes" attribute map
+        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("simulatordriver", "portIndexes");
+        if (portIndexes != null) {
+            List<String>  indexes = portIndexes.get(storageSystem.getNativeId());
+            if (indexes != null) {
+                index = Integer.parseInt(indexes.get(0));
+                _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
+            }
+        }
 
-        String msg = String.format("%s: %s --- operation is not supported.", driverName, "discoverStoragePorts");
-        _log.warn(msg);
-        task.setMessage(msg);
+        if (index == 0) {
+            // no index for this system in the registry
+            // get the last used index and increment by 1 to generate an index
+            if (portIndexes != null) {
+                List<String> indexes = portIndexes.get("lastIndex");
+                if (indexes != null) {
+                    index = Integer.parseInt(indexes.get(0)) + 1;
+                } else {
+                    index ++;
+                }
+            } else {
+                index ++;
+            }
+            // set this index for the system in registry
+            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", storageSystem.getNativeId(), Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", "lastIndex", Collections.singletonList(String.valueOf(index)));
+            _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
+        }
+
+        // Create ports with network
+        for (int i =0; i <= 2; i++ ) {
+            StoragePort port = new StoragePort();
+            port.setNativeId("port-denali-" + i + storageSystem.getNativeId());
+            port.setStorageSystemId(storageSystem.getNativeId());
+            _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
+
+            port.setDeviceLabel("er-port-denali-" + i + storageSystem.getNativeId());
+            port.setPortName(port.getDeviceLabel());
+            port.setNetworkId("11");
+            port.setTransportType(StoragePort.TransportType.IP);
+            port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
+            port.setOperationalStatus(StoragePort.OperationalStatus.OK);
+            port.setPortHAZone("zone-"+i);
+            storagePorts.add(port);
+        }
+
+        // Create ports without network
+        for (int i =3; i <= 6; i++ ) {
+            StoragePort port = new StoragePort();
+            port.setNativeId("port-denali-" + i+ storageSystem.getNativeId());
+            port.setStorageSystemId(storageSystem.getNativeId());
+            _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
+
+            port.setDeviceLabel("er-port-denali" + i+ storageSystem.getNativeId());
+            port.setPortName(port.getDeviceLabel());
+            port.setTransportType(StoragePort.TransportType.FC);
+            port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
+            port.setOperationalStatus(StoragePort.OperationalStatus.OK);
+            port.setPortHAZone("zone-with-many-ports");
+            storagePorts.add(port);
+        }
+
+        String taskType = "discover-storage-ports";
+        String taskId = String.format("%s+%s+%s", "DenaliDriver", taskType, UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+        task.setStatus(DriverTask.TaskStatus.READY);
+        _log.info("StorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
         return task;
-    }
+    }        
 
     @Override
     public DriverTask discoverStorageHostComponents(StorageSystem storageSystem, List<StorageHostComponent> embeddedStorageHostComponents) {
