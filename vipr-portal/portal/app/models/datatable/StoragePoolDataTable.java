@@ -27,6 +27,7 @@ public class StoragePoolDataTable extends DataTable {
         addColumn("storageSystem");
         addColumn("status").hidden();
         addColumn("volumeTypes");
+	addColumn("protocols");
         addColumn("driveTypes");
         addColumn("numOfDataCenters").hidden();
         addColumn("freeCapacity").setRenderFunction("render.sizeInGb");
@@ -42,6 +43,7 @@ public class StoragePoolDataTable extends DataTable {
         public String name;
         public String storageSystem;
         public String status;
+	public String protocols;
         public String driveTypes;
         public Long freeCapacity;
         public Integer numOfDataCenters;
@@ -68,7 +70,7 @@ public class StoragePoolDataTable extends DataTable {
                     WordUtils.capitalizeFully(storagePool.getOperationalStatus()) :
                     MessagesUtils.get("StoragePoolDataTable.notApplicable");
             this.driveTypes = StringUtils.join(storagePool.getDriveTypes(), ", ");
-
+	    this.protocols = StringUtils.join(storagePool.getProtocols(), ", ");
             this.freeCapacity = storagePool.getFreeCapacity();
             this.subscribedCapacity = storagePool.getSubscribedCapacity();
             if (storagePool.getPoolServiceType().equals(OBJECT)) {
