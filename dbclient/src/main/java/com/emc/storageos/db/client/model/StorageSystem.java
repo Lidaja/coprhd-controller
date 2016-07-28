@@ -6,8 +6,9 @@
 package com.emc.storageos.db.client.model;
 import java.net.Socket;
 import java.net.URI;
-import java.net.HttpURLConnection;
+import java.net.HttpsURLConnection;
 import java.net.URL;
+
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.io.*;
@@ -296,11 +297,24 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     public void createCluster(){
 	try{
-	    	URL url = new URL("http://www.google.com");
-		HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+	    	PrintWriter writer = new PrintWriter("/tmp/test.txt", "UTF-8");
+		URL url = new URL("http://google.com");
+	    	//URL url = new URL("http://localhost:2375/containers/console/exec");
+		HttpsURLConnection conn = (HttpURLConnection)url.openConnection();
 		conn.setRequestMethod("POST");
-		conn.setRequestProperty("Content-Type: application/json");
-		conn.setRequestProperty("AttachStdin: false");
+		conn.addRequestProperty("Content-Type", "application/json");
+		conn.addRequestProperty("AttachStdin", "false");
+		conn.addRequestProperty("AttachStdout", "true");
+		conn.addRequestProperty("AttachStderr", "true");
+		conn.addRequestProperty("Tty", "false");
+		conn.addRequestProperty("Cmd", "[ ls ]");
+		InputStream content = conn.getInputStream();
+        	BufferedReader in = new BufferedReader(new InputStreamReader(content));
+        	String line;
+        	while ((line = in.readLine()) != null) {
+            		writer.println(line);
+        	}
+		writer.close();
 
 	} catch(MalformedURLException e){
 		this.setNumNodes("666");
