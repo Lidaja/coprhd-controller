@@ -4,16 +4,20 @@
  */
 
 package com.emc.storageos.db.client.model;
-
+import java.net.Socket;
 import java.net.URI;
+import java.net.HttpsURLConnection;
+import java.net.URL;
 
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.io.*;
 import com.emc.storageos.model.valid.EnumType;
 import com.google.common.base.Strings;
 import java.net.URL;
 import java.net.HttpURLConnection;
 
 import java.io.*;
-
 /**
  * StorageDevice data object
  */
@@ -305,8 +309,7 @@ public class StorageSystem extends DiscoveredSystemObject {
 		int bytes_read;
 		os.close();
 	}catch(IOException e){
-		this.setNumNodes("666");
-
+		error;
 	}
     }
 
