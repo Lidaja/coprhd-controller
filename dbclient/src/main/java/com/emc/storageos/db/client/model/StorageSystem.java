@@ -4,15 +4,18 @@
  */
 
 package com.emc.storageos.db.client.model;
-
+import java.net.Socket;
 import java.net.URI;
-
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.io.*;
 import com.emc.storageos.model.valid.EnumType;
 import com.google.common.base.Strings;
 
 
 import java.io.*;
-
 /**
  * StorageDevice data object
  */
@@ -293,23 +296,16 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     public void createCluster(){
 	try{
-		//BufferedWriter out = null;
-		//Process p = Runtime.getRuntime().exec("touch /RuntimeCalls/Parameters.txt");
-		//Process p = Runtime.getRuntime().exec("touch /tmp/before.txt");
-		//Process q = Runtime.getRuntime().exec("curl --unix-socket /var/run/system-docker.sock -s -H \"Content-Type: application/json\" -X POST -d '{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \"10.10.30.235\", \"10.10.30.234\" ] }' http:/containers/console/exec | jq '.Id' | tr -d '\"' >> /tmp/Test.txt");
-		//Process r = Runtime.getRuntime().exec("touch /tmp/after.txt");
-		//Process r = Runtime.getRuntime().exec("touch /tmp/Parameters.txt");
-		//FileWriter fstream = new FileWriter("/RuntimeCalls/Parameters.txt", false);
-		//out = new BufferedWriter(fstream);
-		//out.write(this.getIpAddress().concat("\n"));
-		//out.write(this.getVipAddress().concat("\n"));
-		//out.write(this.getNumNodes().concat("\n"));
-		//out.close();
-		//Process q = Runtime.getRuntime().exec("./curlCaller.sh \"\$(< Parameters.txt)\"");
-		Process q = Runtime.getRuntime().exec("/RuntimeCalls/curlCaller.sh");
-	}catch(IOException e){
-		this.setNumNodes("666");
+	    	URL url = new URL("http://www.google.com");
+		HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+		conn.setRequestMethod("POST");
+		conn.setRequestProperty("Content-Type: application/json");
+		conn.setRequestProperty("AttachStdin: false");
 
+	} catch(MalformedURLException e){
+		this.setNumNodes("666");
+	} catch(IOException I){
+		this.setNumNodes("420");
 	}
     }
 
