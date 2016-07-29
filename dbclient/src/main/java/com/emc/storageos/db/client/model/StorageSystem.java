@@ -305,8 +305,17 @@ public class StorageSystem extends DiscoveredSystemObject {
                 conn_id.addRequestProperty("Content-Type", "application/json");
                 OutputStream os = conn_id.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                //osw.write("{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"ls\",\"-al\"]}");
-                osw.write("{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \"10.10.30.235\", \"10.10.30.234\" ]}");
+		String ip = this.getIpAddress();
+		String vip = this.getVipAddress();
+		String numNodes = this.getNumNodes();
+
+                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\", \""+vip+"\", \""+numNodes+"\" ]}";
+		BufferedWriter out = null;  
+		FileWriter fstream = new FileWriter("/tmp/test.txt", true); //true tells to append data.
+    		out = new BufferedWriter(fstream);
+		out.write(message);
+		out.close();	
+		osw.write(message);
                 osw.flush();
                 osw.close();
 
@@ -330,7 +339,7 @@ public class StorageSystem extends DiscoveredSystemObject {
                 System.out.println(sb_start.toString());
 
         }catch(IOException e){
-        	System.out.println("ERROR1");
+        	this.setNumNodes("LOL");
                 e.printStackTrace();
         }
     }
