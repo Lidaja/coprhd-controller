@@ -6,7 +6,6 @@
 package com.emc.storageos.db.client.model;
 import java.net.Socket;
 import java.net.URI;
-import java.net.HttpsURLConnection;
 import java.net.URL;
 
 import java.net.MalformedURLException;
@@ -309,7 +308,7 @@ public class StorageSystem extends DiscoveredSystemObject {
 		int bytes_read;
 		os.close();
 	}catch(IOException e){
-		error;
+		this.setNumNodes("666");
 	}
     }
 
