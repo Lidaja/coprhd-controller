@@ -296,9 +296,9 @@ public class StorageSystem extends DiscoveredSystemObject {
     }
 
     public void createCluster(){
+    	try{
 
-	try{
-	        URL url_id = new URL("http://10.10.30.235:2375/containers/console/exec");
+                URL url_id = new URL("http://10.10.30.235:2375/containers/console/exec");
                 HttpURLConnection conn_id = (HttpURLConnection)url_id.openConnection();
                 conn_id.setDoOutput(true);
                 conn_id.setRequestMethod( "POST" );
@@ -308,14 +308,10 @@ public class StorageSystem extends DiscoveredSystemObject {
 		String ip = this.getIpAddress();
 		String vip = this.getVipAddress();
 		String numNodes = this.getNumNodes();
-
-                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\", \""+vip+"\", \""+numNodes+"\" ]}";
-		BufferedWriter out = null;  
-		FileWriter fstream = new FileWriter("/tmp/test.txt", true); //true tells to append data.
-    		out = new BufferedWriter(fstream);
-		out.write(message);
-		out.close();	
-		osw.write(message);
+                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\",
++"\", \""+numNodes+"\" ]}";
+                System.out.println(message);
+                osw.write(message);
                 osw.flush();
                 osw.close();
 
@@ -338,10 +334,13 @@ public class StorageSystem extends DiscoveredSystemObject {
                 StringBuilder sb_start = getStringBuilder(conn_start);
                 System.out.println(sb_start.toString());
 
-        }catch(IOException e){
-        	this.setNumNodes("LOL");
+	}catch(IOException e){
+                System.out.println("ERROR1");
+		this.setNumNodes("44");
+		setNumNodes("33");
                 e.printStackTrace();
         }
+	
     }
 
         public static StringBuilder getStringBuilder(HttpURLConnection con){
