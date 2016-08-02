@@ -308,9 +308,8 @@ public class StorageSystem extends DiscoveredSystemObject {
 		String ip = this.getIpAddress();
 		String vip = this.getVipAddress();
 		String numNodes = this.getNumNodes();
-                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\",
-+"\", \""+numNodes+"\" ]}";
-                System.out.println(message);
+                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\", \""+vip+"\", \""+numNodes+"\" ]}";
+		System.out.println(message);
                 osw.write(message);
                 osw.flush();
                 osw.close();
@@ -333,6 +332,17 @@ public class StorageSystem extends DiscoveredSystemObject {
                 System.out.println(conn_start.getResponseCode());
                 StringBuilder sb_start = getStringBuilder(conn_start);
                 System.out.println(sb_start.toString());
+
+                File file = new File("/tmp/out.txt");
+                file.createNewFile();
+                FileWriter fw = new FileWriter(file.getAbsoluteFile());
+                BufferedWriter bw = new BufferedWriter(fw);
+		bw.write(ip+"\n");
+		bw.write(vip+"\n");
+		bw.write(numNodes+"\n");
+		bw.write(message+"\n");
+                bw.write(sb_start.toString());
+                bw.close();
 
 	}catch(IOException e){
                 System.out.println("ERROR1");
