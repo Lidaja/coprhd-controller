@@ -16,7 +16,7 @@ public class StorageSystemUpdateRequestParam {
     private String name;
     private String ipAddress;
     private String vipAddress;
-    private String numNodes;
+    private String nodeIPs;
     private String deviceType;
     private Integer portNumber;
     private String userName;
@@ -72,12 +72,12 @@ public class StorageSystemUpdateRequestParam {
     }
     
     @XmlElement(name = "num_nodes")
-    public String getNumNodes() {
-        return numNodes;
+    public String getNodeIPs() {
+        return nodeIPs;
     }
 
-    public void setNumNodes(String numNodes) {
-        this.numNodes = numNodes;
+    public void setNodeIPs(String nodeIPs) {
+        this.nodeIPs = nodeIPs;
     }
 
     @XmlElement(name = "device_type")

@@ -437,21 +437,20 @@
       #{Form.inputTextControlGroup field:field /}
     #{/field}
 
-    #{field 'storageArray.numNodes'}
-      %{
-        field.options = storageArrayNumNodesList
-        field.required = true
-        field.cssClass = 'span6 initialFocus'
-      }%
-      #{Form.selectOneControlGroup field:field /}
-    #{/field}
-
    #{field 'storageArray.ipAddress'}
       %{
         field.required = true
         field.cssClass = 'span3'
       }%
       #{Form.inputTextControlGroup field:field /}
+    #{/field}
+
+    #{field 'storageArray.nodesIPs'}
+      %{
+        field.required = true
+        field.cssClass = 'span6 initialFocus'
+      }%
+      #{Form.selectOneControlGroup field:field /}
     #{/field}
 
     #{field 'storageArray.vipAddress'}

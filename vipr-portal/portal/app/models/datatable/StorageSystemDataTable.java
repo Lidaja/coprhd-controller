@@ -23,7 +23,7 @@ public class StorageSystemDataTable extends DataTable {
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
         addColumn("range");
 	addColumn("vipAddress");
-	addColumn("numNodes");
+	addColumn("nodeIPs");
         addColumn("type");
 	addColumn("deviceType");
         addColumn("version").hidden();
@@ -39,7 +39,7 @@ public class StorageSystemDataTable extends DataTable {
         public String host;
 	public String range;
 	public String vipAddress;
-	public String numNodes;
+	public String nodeIPs;
 	public String[] nums;
 	public String last;
 	public String deviceType;
@@ -66,10 +66,10 @@ public class StorageSystemDataTable extends DataTable {
                 this.userName = storageSystem.getUsername();
             }
 	    this.vipAddress = storageSystem.getVipAddress();
-	    this.numNodes = storageSystem.getNumNodes();
-	    this.nums = this.host.split("\\.");
-	    this.last = this.nums[this.nums.length-1];
-	    this.range = this.nums[0].concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(this.last).concat("-").concat(this.nums[0]).concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(Integer.toString(Integer.parseInt(this.last)+Integer.parseInt(this.numNodes)-1));
+	    this.nodeIPs = storageSystem.getNodeIPs();
+	    //this.nums = this.host.split("\\.");
+	    //this.last = this.nums[this.nums.length-1];
+	    //this.range = this.nums[0].concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(this.last).concat("-").concat(this.nums[0]).concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(Integer.toString(Integer.parseInt(this.last)+Integer.parseInt(this.nodeIPs)-1));
 	    this.deviceType = storageSystem.getDeviceType();
 
 

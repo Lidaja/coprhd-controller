@@ -754,7 +754,7 @@ public class StorageSystems extends ViprResourceController {
 	public String vipAddress;
 
 	@Required
-	public String numNodes;
+	public String nodesIPs;
 
 	@Required
 	public String deviceType;
@@ -856,7 +856,7 @@ public class StorageSystems extends ViprResourceController {
                 this.smisProviderUserName = storageArray.getSmisUserName();
             }
 	    this.vipAddress = storageArray.getVipAddress();
-	    this.numNodes = storageArray.getNumNodes();
+	    this.nodeIPs = storageArray.getNodeIPs();
 	    this.deviceType = storageArray.getDeviceType();
         }
 
@@ -890,7 +890,7 @@ public class StorageSystems extends ViprResourceController {
             if (!isStorageProviderManaged()) {
                 storageArray.setIpAddress(ipAddress);
 		storageArray.setVipAddress(vipAddress);
-		storageArray.setNumNodes(numNodes);
+		storageArray.setNodeIPs(nodeIPs);
 		storageArray.setDeviceType(deviceType);
                 storageArray.setPortNumber(portNumber);
                 storageArray.setPassword(StringUtils.trimToNull(userPassword));
@@ -918,7 +918,7 @@ public class StorageSystems extends ViprResourceController {
             storageArray.setPortNumber(portNumber);
             storageArray.setIpAddress(ipAddress);
 	    storageArray.setVipAddress(vipAddress);
-	    storageArray.setNumNodes(numNodes);
+	    storageArray.setNodeIPs(nodeIPs);
 	    storageArray.setDeviceType(deviceType);
             // storageArray.setRegistrationMode(RegistrationMode.SYSTEM);
 

@@ -394,7 +394,7 @@ public class SystemsMapper {
 		to.setMinorVersion(from.getMinorVersion());
 		to.setIpAddress(from.getIpAddress());
 		to.setVipAddress(from.getVipAddress());
-		to.setNumNodes(from.getNumNodes());
+		to.setNodeIPs(from.getNodeIPs());
 		to.setDeviceType(from.getDeviceType());
 		to.setSecondaryIPs(from.getSecondaryIPs());
 		to.setPortNumber(from.getPortNumber());

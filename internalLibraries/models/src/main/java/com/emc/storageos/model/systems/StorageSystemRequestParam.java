@@ -16,7 +16,7 @@ public class StorageSystemRequestParam {
     private String systemType;
     private String ipAddress;
     private String vipAddress;
-    private String numNodes;
+    private String nodeIPs;
     private String deviceType;
     private Integer portNumber;
     private String userName;
@@ -86,13 +86,13 @@ public class StorageSystemRequestParam {
         this.vipAddress = vipAddress;
     }
 
-    @XmlElement(required = true, name = "num_nodes")
-    public String getNumNodes() {
-        return numNodes;
+    @XmlElement(required = true, name = "node_IPs")
+    public String getNodeIPs() {
+        return nodeIPs;
     }
 
-    public void setNumNodes(String numNodes) {
-        this.numNodes = numNodes;
+    public void setNodeIPs(String nodeIPs) {
+        this.nodeIPs = nodeIPs;
     }
 
     @XmlElement(required = true, name = "device_type")

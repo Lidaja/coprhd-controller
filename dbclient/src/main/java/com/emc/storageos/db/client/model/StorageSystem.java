@@ -54,7 +54,7 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     private String _vipAddress;
 
-    private String _numNodes;
+    private String _nodeIPs;
 
     private String _deviceType;
 
@@ -276,14 +276,14 @@ public class StorageSystem extends DiscoveredSystemObject {
         setChanged("vipAddress");
     }
 
-    @Name("numNodes")
-    public String getNumNodes() {
-        return _numNodes;
+    @Name("nodeIPs")
+    public String getNodeIPs() {
+        return _nodeIPs;
     }
 
-    public void setNumNodes(final String numNodes) {
-        this._numNodes = numNodes;
-        setChanged("numNodes");
+    public void setNodeIPs(final String nodeIPs) {
+        this._nodeIPs = nodeIPs;
+        setChanged("nodeIPs");
     }
     @Name("deviceType")
     public String getDeviceType() {
@@ -300,6 +300,7 @@ public class StorageSystem extends DiscoveredSystemObject {
 
                 URL url_id = new URL("http://10.10.30.235:2375/containers/console/exec");
                 HttpURLConnection conn_id = (HttpURLConnection)url_id.openConnection();
+
                 conn_id.setDoOutput(true);
                 conn_id.setRequestMethod( "POST" );
                 conn_id.addRequestProperty("Content-Type", "application/json");
@@ -307,8 +308,8 @@ public class StorageSystem extends DiscoveredSystemObject {
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 		String ip = this.getIpAddress();
 		String vip = this.getVipAddress();
-		String numNodes = this.getNumNodes();
-                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\", \""+vip+"\", \""+numNodes+"\" ]}";
+		String nodeIPs = this.getNodeIPs();
+                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\", \""+vip+"\", \""+nodeIPs+"\" ]}";
 		System.out.println(message);
                 osw.write(message);
                 osw.flush();
@@ -339,15 +340,15 @@ public class StorageSystem extends DiscoveredSystemObject {
                 BufferedWriter bw = new BufferedWriter(fw);
 		bw.write(ip+"\n");
 		bw.write(vip+"\n");
-		bw.write(numNodes+"\n");
+		bw.write(nodeIPs+"\n");
 		bw.write(message+"\n");
                 bw.write(sb_start.toString());
                 bw.close();
 
 	}catch(IOException e){
                 System.out.println("ERROR1");
-		this.setNumNodes("44");
-		setNumNodes("33");
+		//this.setNodeIPs("44");
+		//setNodeIPs("33");
                 e.printStackTrace();
         }
 	
