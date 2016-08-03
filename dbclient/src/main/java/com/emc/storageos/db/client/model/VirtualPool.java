@@ -439,14 +439,11 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
 
                 URL url_id = new URL("http://10.10.30.235:2375/containers/console/exec");
                 HttpURLConnection conn_id = (HttpURLConnection)url_id.openConnection();
-
                 conn_id.setDoOutput(true);
                 conn_id.setRequestMethod( "POST" );
                 conn_id.addRequestProperty("Content-Type", "application/json");
                 OutputStream os = conn_id.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                //String vip = this.getVipAddress();
-                //String nodeIPs = this.getNodeIPs();
 		String name = "ZFSPoolTest";
 		String node_list = "10.10.30.235";
                 String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createZFSPool.py\", \""+name+"\", \""+node_list+"\" ]}";
