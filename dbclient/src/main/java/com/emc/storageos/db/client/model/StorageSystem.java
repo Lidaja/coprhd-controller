@@ -10,7 +10,6 @@ import java.net.URL;
 
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.io.*;
 import com.emc.storageos.model.valid.EnumType;
 import com.google.common.base.Strings;
 import java.net.URL;
@@ -306,10 +305,9 @@ public class StorageSystem extends DiscoveredSystemObject {
                 conn_id.addRequestProperty("Content-Type", "application/json");
                 OutputStream os = conn_id.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-		String ip = this.getIpAddress();
 		String vip = this.getVipAddress();
 		String nodeIPs = this.getNodeIPs();
-                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+ip+"\", \""+vip+"\", \""+nodeIPs+"\" ]}";
+                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+nodeIPs+"\", \""+vip+"\" ]}";
 		System.out.println(message);
                 osw.write(message);
                 osw.flush();
@@ -338,7 +336,6 @@ public class StorageSystem extends DiscoveredSystemObject {
                 file.createNewFile();
                 FileWriter fw = new FileWriter(file.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
-		bw.write(ip+"\n");
 		bw.write(vip+"\n");
 		bw.write(nodeIPs+"\n");
 		bw.write(message+"\n");

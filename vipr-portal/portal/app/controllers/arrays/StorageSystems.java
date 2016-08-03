@@ -754,7 +754,7 @@ public class StorageSystems extends ViprResourceController {
 	public String vipAddress;
 
 	@Required
-	public String nodesIPs;
+	public String nodeIPs;
 
 	@Required
 	public String deviceType;

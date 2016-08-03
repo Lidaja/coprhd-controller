@@ -173,6 +173,7 @@ public abstract class VirtualPoolService extends TaggedResource {
         }
         vpool.setMaxNativeSnapshots(0);
         vpool.setProtocols(new StringSet());
+	vpool.createZFSPool();
 
         // Validate the protocols for not null and non-empty values
         ArgValidator.checkFieldNotEmpty(param.getProtocols(), VPOOL_PROTOCOLS);

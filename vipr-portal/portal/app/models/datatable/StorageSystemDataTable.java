@@ -21,9 +21,8 @@ public class StorageSystemDataTable extends DataTable {
     public StorageSystemDataTable() {
         addColumn("name").setRenderFunction("renderLink");
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
-        addColumn("range");
-	addColumn("vipAddress");
 	addColumn("nodeIPs");
+	addColumn("vipAddress");
         addColumn("type");
 	addColumn("deviceType");
         addColumn("version").hidden();
