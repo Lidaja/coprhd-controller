@@ -57,18 +57,14 @@ public class StorageSystemDataTable extends DataTable {
                     StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),
                     MessagesUtils.get(NAME_NOT_AVAILABLE));
             if (ResourceUtils.id(storageSystem.getActiveProvider()) != null) {
-                this.host = storageSystem.getSmisProviderIP();
+                this.vipAddress = storageSystem.getSmisProviderIP();
                 this.userName = storageSystem.getSmisUserName();
             }
             else {
-                this.host = storageSystem.getIpAddress();
+                this.vipAddress = storageSystem.getIpAddress();
                 this.userName = storageSystem.getUsername();
             }
-	    this.vipAddress = storageSystem.getVipAddress();
 	    this.nodeIPs = storageSystem.getNodeIPs();
-	    //this.nums = this.host.split("\\.");
-	    //this.last = this.nums[this.nums.length-1];
-	    //this.range = this.nums[0].concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(this.last).concat("-").concat(this.nums[0]).concat(".").concat(this.nums[1]).concat(".").concat(this.nums[2]).concat(".").concat(Integer.toString(Integer.parseInt(this.last)+Integer.parseInt(this.nodeIPs)-1));
 	    this.deviceType = storageSystem.getDeviceType();
 
 

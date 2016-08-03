@@ -583,7 +583,6 @@ public class StorageSystemService extends TaskResourceService {
         system.setAutoDiscovered(false);
         system.setRegistrationStatus(RegistrationStatus.REGISTERED.toString());
         system.setIpAddress(param.getIpAddress());
-	system.setVipAddress(param.getVipAddress());
 	system.setNodeIPs(param.getNodeIPs());
 	system.setDeviceType(param.getDeviceType());
         system.setPortNumber(param.getPortNumber());
@@ -626,7 +625,6 @@ public class StorageSystemService extends TaskResourceService {
         system.setSmisPortNumber(param.getSmisPortNumber());
         system.setSmisUserName(param.getSmisUserName());
         system.setSmisPassword(param.getSmisPassword());
-	system.setVipAddress(param.getVipAddress());
 	system.setNodeIPs(param.getNodeIPs());
 	system.setDeviceType(param.getDeviceType());
 	//system.createCluster();

@@ -51,8 +51,6 @@ public class StorageSystem extends DiscoveredSystemObject {
     // management interface IP address
     private String _ipAddress;
 
-    private String _vipAddress;
-
     private String _nodeIPs;
 
     private String _deviceType;
@@ -265,15 +263,6 @@ public class StorageSystem extends DiscoveredSystemObject {
         setChanged("ipAddress");
     }
 
-    @Name("vipAddress")
-    public String getVipAddress() {
-        return _vipAddress;
-    }
-
-    public void setVipAddress(final String vipAddress) {
-        this._vipAddress = vipAddress;
-        setChanged("vipAddress");
-    }
 
     @Name("nodeIPs")
     public String getNodeIPs() {
@@ -305,7 +294,7 @@ public class StorageSystem extends DiscoveredSystemObject {
                 conn_id.addRequestProperty("Content-Type", "application/json");
                 OutputStream os = conn_id.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-		String vip = this.getVipAddress();
+		String vip = this.getIpAddress();
 		String nodeIPs = this.getNodeIPs();
                 String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createCluster.py\", \""+nodeIPs+"\", \""+vip+"\" ]}";
 		System.out.println(message);
@@ -332,7 +321,7 @@ public class StorageSystem extends DiscoveredSystemObject {
                 StringBuilder sb_start = getStringBuilder(conn_start);
                 System.out.println(sb_start.toString());
 
-                File file = new File("/tmp/out.txt");
+                File file = new File("/tmp/cluster.txt");
                 file.createNewFile();
                 FileWriter fw = new FileWriter(file.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
@@ -344,8 +333,6 @@ public class StorageSystem extends DiscoveredSystemObject {
 
 	}catch(IOException e){
                 System.out.println("ERROR1");
-		//this.setNodeIPs("44");
-		//setNodeIPs("33");
                 e.printStackTrace();
         }
 	

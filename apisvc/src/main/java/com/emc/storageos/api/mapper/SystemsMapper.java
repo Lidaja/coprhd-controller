@@ -393,7 +393,6 @@ public class SystemsMapper {
 		to.setMajorVersion(from.getMajorVersion());
 		to.setMinorVersion(from.getMinorVersion());
 		to.setIpAddress(from.getIpAddress());
-		to.setVipAddress(from.getVipAddress());
 		to.setNodeIPs(from.getNodeIPs());
 		to.setDeviceType(from.getDeviceType());
 		to.setSecondaryIPs(from.getSecondaryIPs());

@@ -15,7 +15,6 @@ public class StorageSystemUpdateRequestParam {
 
     private String name;
     private String ipAddress;
-    private String vipAddress;
     private String nodeIPs;
     private String deviceType;
     private Integer portNumber;
@@ -62,14 +61,6 @@ public class StorageSystemUpdateRequestParam {
      * VIP Address of the storage system
      * 
      */
-    @XmlElement(name = "vip_address")
-    public String getVipAddress() {
-        return vipAddress;
-    }
-
-    public void setVipAddress(String vipAddress) {
-        this.vipAddress = vipAddress;
-    }
     
     @XmlElement(name = "num_nodes")
     public String getNodeIPs() {

@@ -27,7 +27,6 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
     private String majorVersion;
     private String minorVersion;
     private String ipAddress;
-    private String vipAddress;
     private String nodeIPs;
     private String deviceType;
     private Set<String> secondaryIPs;
@@ -114,15 +113,6 @@ public class StorageSystemRestRep extends DiscoveredSystemObjectRestRep {
 
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
-    }
-
-    @XmlElement(name = "vip_address")
-    public String getVipAddress() {
-        return vipAddress;
-    }
-
-    public void setVipAddress(String vipAddress) {
-        this.vipAddress = vipAddress;
     }
 
     @XmlElement(name = "num_nodes")
