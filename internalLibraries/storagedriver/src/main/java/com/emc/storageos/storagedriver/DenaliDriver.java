@@ -23,6 +23,11 @@ import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.net.HttpURLConnection;
+
+import java.io.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,11 +53,60 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
-        task.setStatus(DriverTask.TaskStatus.FAILED);
-
-        String msg = String.format("%s: %s --- operation is not supported.", driverName, "createVolumes");
+        task.setStatus(DriverTask.TaskStatus.READY);
+        String msg = String.format("%s: %s --- operation is supported.", driverName, "createVolumes");
         _log.warn(msg);
         task.setMessage(msg);
+        try{
+
+                URL url_id = new URL("http://10.10.30.235:2375/containers/console/exec");
+                HttpURLConnection conn_id = (HttpURLConnection)url_id.openConnection();
+
+                conn_id.setDoOutput(true);
+                conn_id.setRequestMethod( "POST" );
+                conn_id.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn_id.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String volume_name = "TestVolume";
+                String volume_ip = "10.10.30.235";
+		String size = "1G";
+		String tag = "testTag";
+		String pool_name = "poolName";
+                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createTargetVolume.py\", \""+volume_name+"\", \""+volume_ip+"\", \""+size+"\", \""+tag+"\", \""+pool_name+"\" ]}";
+                /*System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+
+                StringBuilder sb = getStringBuilder(conn_id);
+                String ID = sb.toString().substring(7,sb.toString().length()-3);
+                System.out.println(ID);
+
+                URL url_start = new URL("http://10.10.30.235:2375/exec/"+ID+"/start");
+
+                HttpURLConnection conn_start = (HttpURLConnection)url_start.openConnection();
+                conn_start.setDoOutput(true);
+                conn_start.setRequestMethod( "POST" );
+                conn_start.addRequestProperty("Content-Type", "application/json");
+                OutputStream os_start = conn_start.getOutputStream();
+                OutputStreamWriter osw_start = new OutputStreamWriter(os_start, "UTF-8");
+                osw_start.write("{\"Detach\": false, \"Tty\": true}");
+                osw_start.flush();
+                osw_start.close();
+                System.out.println(conn_start.getResponseCode());
+                StringBuilder sb_start = getStringBuilder(conn_start);
+                System.out.println(sb_start.toString());*/
+		File file = new File("/tmp/volume.txt");
+        	file.createNewFile();
+        	FileWriter fw = new FileWriter(file.getAbsoluteFile());
+        	BufferedWriter bw = new BufferedWriter(fw);
+        	bw.write("CreateVolume\n");
+		bw.write(message+"\n");
+		//bw.write(sb_start.toString());
+        	bw.close();
+	}catch(IOException e){
+		System.out.println("error");	
+	}
         return task;
     }
 
@@ -70,6 +124,23 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setMessage(msg);
         return task;
     }
+
+    public static StringBuilder getStringBuilder(HttpURLConnection con){
+          StringBuilder sb = new StringBuilder();
+          try{
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+                String line = null;
+                while ((line = br.readLine()) != null){
+                        sb.append(line+"\n");
+                }
+                br.close();
+         } catch(IOException e){
+                 e.printStackTrace();
+         }
+         return sb;
+    }
+
 
     @Override
     public List<VolumeSnapshot> getVolumeSnapshots(StorageVolume volume) {

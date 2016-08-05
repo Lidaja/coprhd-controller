@@ -338,21 +338,21 @@ public class StorageSystem extends DiscoveredSystemObject {
 	
     }
 
-        public static StringBuilder getStringBuilder(HttpURLConnection con){
-                StringBuilder sb = new StringBuilder();
-                try{
+    public static StringBuilder getStringBuilder(HttpURLConnection con){
+          StringBuilder sb = new StringBuilder();
+          try{
 
-                        BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
-                        String line = null;
-                        while ((line = br.readLine()) != null){
-                                sb.append(line+"\n");
-                        }
-                        br.close();
-                } catch(IOException e){
-                        e.printStackTrace();
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+                String line = null;
+                while ((line = br.readLine()) != null){
+                        sb.append(line+"\n");
                 }
-                return sb;
-        }
+                br.close();
+         } catch(IOException e){
+                 e.printStackTrace();
+         }
+         return sb;
+    }
 
     @Name("secondaryIPs")
     public StringSet getSecondaryIPs() {
