@@ -71,9 +71,9 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 String volume_ip = "10.10.30.235";
 		String size = "1G";
 		String tag = "testTag";
-		String pool_name = "poolName";
+		String pool_name = "testPool";
                 String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createTargetVolume.py\", \""+volume_name+"\", \""+volume_ip+"\", \""+size+"\", \""+tag+"\", \""+pool_name+"\" ]}";
-                /*System.out.println(message);
+                System.out.println(message);
                 osw.write(message);
                 osw.flush();
                 osw.close();
@@ -95,14 +95,14 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 osw_start.close();
                 System.out.println(conn_start.getResponseCode());
                 StringBuilder sb_start = getStringBuilder(conn_start);
-                System.out.println(sb_start.toString());*/
+                System.out.println(sb_start.toString());
 		File file = new File("/tmp/volume.txt");
         	file.createNewFile();
         	FileWriter fw = new FileWriter(file.getAbsoluteFile());
         	BufferedWriter bw = new BufferedWriter(fw);
         	bw.write("CreateVolume\n");
 		bw.write(message+"\n");
-		//bw.write(sb_start.toString());
+		bw.write(sb_start.toString());
         	bw.close();
 	}catch(IOException e){
 		System.out.println("error");	
