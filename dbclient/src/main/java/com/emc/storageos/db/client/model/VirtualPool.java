@@ -341,7 +341,7 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     }
 
     public static enum RaidLevel {
-        RAID0, RAID1, RAID2, RAID3, RAID4, RAID5, RAID6, RAID10;
+        RAID0, RAID1, RAID2, RAID3, RAID4, RAID5, RAID6, RAID10, RAID50, RAID60;
         private static final RaidLevel[] copyOfValues = values();
 
         public static RaidLevel lookup(final String name) {

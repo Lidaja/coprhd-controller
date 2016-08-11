@@ -112,7 +112,7 @@ public class StoragePool extends VirtualArrayTaggedResource {
     }
 
     public static enum RaidLevels {
-        RAID0, RAID1, RAID2, RAID3, RAID4, RAID5, RAID6, RAID10
+        RAID0, RAID1, RAID2, RAID3, RAID4, RAID5, RAID6, RAID10, RAID50, RAID60
     }
 
     public static enum CopyTypes {
