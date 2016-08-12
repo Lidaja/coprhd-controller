@@ -483,7 +483,9 @@ public class BlockVirtualPools extends ViprResourceController {
                 RaidLevel.RAID4,
                 RaidLevel.RAID5,
                 RaidLevel.RAID6,
-                RaidLevel.RAID10
+                RaidLevel.RAID10,
+		RaidLevel.RAID50,
+		RaidLevel.RAID60
                 ));
         renderArgs.put("poolAssignmentOptions", PoolAssignmentTypes.options(
                 PoolAssignmentTypes.AUTOMATIC,
