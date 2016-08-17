@@ -297,6 +297,7 @@ public class VirtualPoolMapper {
         to.setType(from.getType());
         to.setDescription(from.getDescription());
         to.setProtocols(from.getProtocols());
+	to.setIp(from.getIp());
         to.setProvisioningType(from.getSupportedProvisioningType());
         to.setNumPaths(from.getNumPaths());
         if (from.getArrayInfo() != null) {

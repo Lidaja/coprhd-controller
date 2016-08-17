@@ -21,6 +21,7 @@ public class VirtualPoolDataTable extends DataTable {
         addColumn("storageType").hidden();
         addColumn("name").setRenderFunction("renderLink");
         addColumn("description");
+	addColumn("ip");
         addColumn("poolType").hidden();
         addColumn("provisioningType").hidden();
         addColumn("provisionedAs");
@@ -35,6 +36,7 @@ public class VirtualPoolDataTable extends DataTable {
     public static class VirtualPoolInfo {
         public String id;
         public String name;
+	public String ip;
         public String description;
         public Integer numPools;
         public Integer numResources;
@@ -56,7 +58,7 @@ public class VirtualPoolDataTable extends DataTable {
             this.name = vsp.getName();
             this.poolType = vsp.getType();
             this.provisioningType = vsp.getProvisioningType();
-
+	    this.ip = vsp.getIp();
             this.poolTypeDisplay = PoolTypes.getDisplayValue(vsp.getType());
             this.provisioningTypeDisplay = ProvisioningTypes.getDisplayValue(vsp.getProvisioningType());
             this.provisionedAs = String.format("%s (%s)", poolTypeDisplay, provisioningTypeDisplay);

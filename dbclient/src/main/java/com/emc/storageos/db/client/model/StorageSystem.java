@@ -297,7 +297,7 @@ public class StorageSystem extends DiscoveredSystemObject {
                 conn.addRequestProperty("Content-Type", "application/json");
                 OutputStream os = conn.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                String message = "{\"ip\":\"10.10.30.235\",\"vip\":\"10.10.30.234\"}";
+                String message = "{\"ip\":\""+nodeIPs+"\",\"vip\":\""+vip+"\"}";
                 System.out.println(message);
                 osw.write(message);
                 osw.flush();

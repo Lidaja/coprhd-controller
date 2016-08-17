@@ -17,6 +17,7 @@ import java.util.Set;
 @XmlRootElement(name = "vpool")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class VirtualPoolCommonRestRep extends DataObjectRestRep {
+    private String ip;
     private String type;
     private String description;
     private Set<String> protocols;
@@ -46,6 +47,24 @@ public class VirtualPoolCommonRestRep extends DataObjectRestRep {
     public void setType(String type) {
         this.type = type;
     }
+
+    /**
+     * Virtual pool storage resource type.
+     * Valid values:
+     *  block = Volume
+     *  file = File System
+     *  object = Object Store
+     * 
+     */
+    @XmlElement
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
 
     /**
      * 

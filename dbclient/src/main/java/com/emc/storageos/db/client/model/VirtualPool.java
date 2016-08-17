@@ -36,6 +36,7 @@ import com.emc.storageos.model.valid.EnumType;
 public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResource {
     // service type
     private String _type;
+    private String _ip;
     // brief description for this VirtualPool
     private String _description;
     // storage protocols supported by this VirtualPool
@@ -439,25 +440,27 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     public void createZFSPool(){
         String name = "ZFSPoolTest";
         String node_list = "10.10.30.235";
-        ArrayList<String> params = new ArrayList<String>();
-        params.add("bash");
-        params.add("/tmp/Api-Invokers/writer");
-        params.add(name+" "+node_list);
-        params.add("/tmp/zfs.txt");
-        System.out.println(Arrays.toString(params.toArray()));
-        System.out.println(runCommand(params));
-
         try{
-                Thread.sleep(3000);
-        } catch(InterruptedException I){
-                System.out.println("I");
+                URL url = new URL("http://localhost:5000/zfs");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String message = "{\"ip\":\""+node_list+"\",\"name\":\""+name+"\"}";
+                System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+                System.out.println(conn.getResponseCode());
+                StringBuilder sb = getStringBuilder(conn);
+                System.out.println(sb.toString());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
         }
-        params.clear();
-        params.add("sudo");
-        params.add("rm");
-        params.add("/tmp/zfs.txt");
-        System.out.println(Arrays.toString(params.toArray()));
-        System.out.println(runCommand(params));
+
     }
     public static StringBuilder getStringBuilder(HttpURLConnection con){
             StringBuilder sb = new StringBuilder();
@@ -474,48 +477,6 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
             }
             return sb;
     }
-    public static String runCommand(ArrayList params){
-            StringBuilder sb_start = null;
-            try{
-
-                    URL url = new URL("http://10.10.30.235:2375/containers/console/exec");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setDoOutput(true);
-                    conn.setRequestMethod( "POST" );
-                    conn.addRequestProperty("Content-Type", "application/json");
-                    OutputStream os = conn.getOutputStream();
-                    OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                    String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ ";
-                    for (int i = 0;i<params.size()-1;i++){
-                            message = message + "\"" + params.get(i) + "\",";
-                    }
-                    message = message + "\"" + params.get(params.size()-1) + "\" ]}";
-                    osw.write(message);
-                    osw.flush();
-                    osw.close();
-                    System.out.println(message);
-                    StringBuilder sb = getStringBuilder(conn);
-                    String ID = sb.toString().substring(7,sb.toString().length()-3);
-                    URL url_start = new URL("http://10.10.30.235:2375/exec/"+ID+"/start");
-                    HttpURLConnection conn_start = (HttpURLConnection)url_start.openConnection();
-                    conn_start.setDoOutput(true);
-                    conn_start.setRequestMethod( "POST" );
-                    conn_start.addRequestProperty("Content-Type", "application/json");
-                    OutputStream os_start = conn_start.getOutputStream();
-                    OutputStreamWriter osw_start = new OutputStreamWriter(os_start, "UTF-8");
-                    osw_start.write("{\"Detach\": false, \"Tty\": true}");
-                    osw_start.flush();
-                    osw_start.close();
-                    System.out.println(conn_start.getResponseCode());
-                    sb_start = getStringBuilder(conn_start);
-
-            } catch (IOException e){
-                    System.out.println("error");
-            }
-            return (sb_start.toString());
-
-    }
-
     @AlternateId("AltIdIndex")
     @Name("type")
     public String getType() {
@@ -526,6 +487,17 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
         _type = type;
         setChanged("type");
     }
+
+    @Name("ip")
+    public String getIp() {
+        return _ip;
+    }
+
+    public void setIp(final String ip) {
+        _ip = ip;
+        setChanged("ip");
+    }
+
 
     @Name("description")
     public String getDescription() {
