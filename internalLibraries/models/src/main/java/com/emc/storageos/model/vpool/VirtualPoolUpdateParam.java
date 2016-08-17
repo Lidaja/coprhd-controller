@@ -19,6 +19,7 @@ public class VirtualPoolUpdateParam {
     private VirtualArrayAssignmentChanges varrayChanges;
     private String name;
     private String description;
+    private String ip;
     private ProtocolChanges protocolChanges;
     private Boolean useMatchedPools;
     private String systemType;
@@ -32,6 +33,7 @@ public class VirtualPoolUpdateParam {
             Boolean useMatchedPools, String systemType, String provisionType) {
         this.varrayChanges = varrayChanges;
         this.name = name;
+	this.ip = ip;
         this.description = description;
         this.protocolChanges = protocolChanges;
         this.useMatchedPools = useMatchedPools;
@@ -78,6 +80,16 @@ public class VirtualPoolUpdateParam {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    @XmlElement(name = "ip")
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
 
     /**
      * The protocol changes for the virtual pool.

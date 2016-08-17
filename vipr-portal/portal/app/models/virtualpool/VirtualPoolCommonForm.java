@@ -103,6 +103,7 @@ public abstract class VirtualPoolCommonForm<T extends VirtualPoolCommonRestRep> 
     protected void applyCommon(VirtualPoolBuilder builder) {
         builder.setName(name);
         builder.setDescription(description);
+	builder.setIp(ip);
         builder.setVirtualArrays(virtualArrays);
         builder.setProvisioningType(provisioningType);
         builder.setPoolAssignmentType(poolAssignment);
@@ -119,6 +120,7 @@ public abstract class VirtualPoolCommonForm<T extends VirtualPoolCommonRestRep> 
     protected void applyCommon(VirtualPoolUpdateBuilder builder) {
         builder.setName(name);
         builder.setDescription(description);
+	builder.setIp(ip);
         builder.setPoolAssignmentType(poolAssignment);
         builder.setVirtualArrays(defaultList(virtualArrays));
 
@@ -140,6 +142,7 @@ public abstract class VirtualPoolCommonForm<T extends VirtualPoolCommonRestRep> 
         id = ResourceUtils.stringId(virtualPool);
         name = virtualPool.getName();
         description = virtualPool.getDescription();
+	ip = virtualPool.getIp();
         poolType = virtualPool.getType();
         numResources = virtualPool.getNumResources();
         provisioningType = virtualPool.getProvisioningType();

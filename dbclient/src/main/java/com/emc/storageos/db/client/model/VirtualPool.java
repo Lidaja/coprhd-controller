@@ -438,8 +438,8 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     }
 
     public void createZFSPool(){
-        String name = "ZFSPoolTest";
-        String node_list = "10.10.30.235";
+        String name = this.getName();
+        String node_list = this.getIp();
         try{
                 URL url = new URL("http://localhost:5000/zfs");
                 HttpURLConnection conn = (HttpURLConnection)url.openConnection();

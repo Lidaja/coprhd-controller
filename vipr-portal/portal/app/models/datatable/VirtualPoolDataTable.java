@@ -58,11 +58,11 @@ public class VirtualPoolDataTable extends DataTable {
             this.name = vsp.getName();
             this.poolType = vsp.getType();
             this.provisioningType = vsp.getProvisioningType();
-	    this.ip = vsp.getIp();
             this.poolTypeDisplay = PoolTypes.getDisplayValue(vsp.getType());
             this.provisioningTypeDisplay = ProvisioningTypes.getDisplayValue(vsp.getProvisioningType());
             this.provisionedAs = String.format("%s (%s)", poolTypeDisplay, provisioningTypeDisplay);
             this.description = vsp.getDescription();
+	    this.ip = vsp.getIp();
             if (Boolean.TRUE.equals(vsp.getUseMatchedPools())) {
                 this.storagePoolAssignment = "automatic";
                 this.numPools = size(vsp.getMatchedStoragePools());

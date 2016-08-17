@@ -22,6 +22,7 @@ public class BlockVirtualPoolParam extends VirtualPoolCommonParam {
     private Integer maxPaths;
     private Integer minPaths;
     private Integer pathsPerInitiator;
+    private String ip;
     private Set<String> raidLevels;
     // For example, if auto_tiering_policy_name is specified ,then on vnx, ranking
     // algorithm is applied to get matching pools.
@@ -194,6 +195,7 @@ public class BlockVirtualPoolParam extends VirtualPoolCommonParam {
     public void setDriveType(String driveType) {
         this.driveType = driveType;
     }
+
 
     /**
      * PreAllocation size for VMAX Thin volumes.

@@ -162,7 +162,9 @@ public abstract class VirtualPoolService extends TaggedResource {
         if (StringUtils.isNotEmpty(param.getDescription())) {
             vpool.setDescription(param.getDescription());
         }
-
+	 if (StringUtils.isNotEmpty(param.getIp())) {
+            vpool.setIp(param.getIp());
+        }
         ArgValidator.checkFieldNotEmpty(param.getProvisionType(), VPOOL_PROVISIONING_TYPE);
         ArgValidator.checkFieldValueFromEnum(param.getProvisionType(), VPOOL_PROVISIONING_TYPE,
                 EnumSet.of(ProvisioningType.Thick, ProvisioningType.Thin));

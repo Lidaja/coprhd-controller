@@ -49,7 +49,12 @@ public class VirtualPoolUpdateBuilder {
         }
         return this;
     }
-
+    public VirtualPoolUpdateBuilder setIp(String ip) {
+        if (!StringUtils.equals(ip, oldVirtualPool.getIp())) {
+            virtualPool.setIp(ip);
+        }
+        return this;
+    }
     public VirtualPoolUpdateBuilder setDescription(String description) {
         if (!StringUtils.equals(description, oldVirtualPool.getDescription())) {
             virtualPool.setDescription(description);

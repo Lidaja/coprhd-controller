@@ -18,6 +18,7 @@ public class VirtualPoolCommonParam {
 
     private String name;
     private String description;
+    private String ip;
     private Set<String> protocols;
     private Set<String> varrays;
     private Boolean useMatchedPools = true;
@@ -54,6 +55,15 @@ public class VirtualPoolCommonParam {
     public void setDescription(String description) {
         this.description = description;
     }
+    @XmlElement(name = "ip")
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
 
     @XmlElementWrapper(name = "protocols", required = true)
     /**

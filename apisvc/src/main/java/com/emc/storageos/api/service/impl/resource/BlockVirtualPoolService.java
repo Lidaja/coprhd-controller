@@ -199,10 +199,8 @@ public class BlockVirtualPoolService extends VirtualPoolService {
         if (null != vpool.getMatchedStoragePools() || null != vpool.getInvalidMatchedPools()) {
             ImplicitUnManagedObjectsMatcher.matchVirtualPoolsWithUnManagedVolumes(vpool, allSrdfTargetVPools, allRpTargetVPools, _dbClient, true);
         }
-	//vpool.createZFSPool();
         _dbClient.createObject(vpool);
-
-        // Creates a new QoS object in DB based on data from given Virtual Pool
+	// Creates a new QoS object in DB based on data from given Virtual Pool
         QosService.createQosSpecification(vpool, _dbClient);
 
         recordOperation(OperationTypeEnum.CREATE_VPOOL, VPOOL_CREATED_DESCRIPTION, vpool);
@@ -1744,7 +1742,6 @@ public class BlockVirtualPoolService extends VirtualPoolService {
         if (param.getHostIOLimitIOPs() != null) {
             vpool.setHostIOLimitIOPs(param.getHostIOLimitIOPs());
         }
-	//vpool.createZFSPool();
         return vpool;
     }
 }

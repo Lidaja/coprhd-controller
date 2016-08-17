@@ -28,7 +28,10 @@ public class VirtualPoolBuilder {
         virtualPool.setName(StringUtils.trimToNull(name));
         return this;
     }
-
+    public VirtualPoolBuilder setIp(String ip) {
+        virtualPool.setIp(StringUtils.trimToNull(ip));
+        return this;
+    }
     public VirtualPoolBuilder setDescription(String description) {
         virtualPool.setDescription(StringUtils.trimToNull(description));
         return this;
