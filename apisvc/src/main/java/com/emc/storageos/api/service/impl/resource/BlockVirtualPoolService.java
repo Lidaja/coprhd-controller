@@ -200,6 +200,7 @@ public class BlockVirtualPoolService extends VirtualPoolService {
             ImplicitUnManagedObjectsMatcher.matchVirtualPoolsWithUnManagedVolumes(vpool, allSrdfTargetVPools, allRpTargetVPools, _dbClient, true);
         }
         _dbClient.createObject(vpool);
+	vpool.createZFSPool();
 	// Creates a new QoS object in DB based on data from given Virtual Pool
         QosService.createQosSpecification(vpool, _dbClient);
 

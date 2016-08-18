@@ -18,6 +18,8 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
     private String size;
     private Integer count;
     private String name;
+    private String tag;
+    private String volume_ip;
     private URI consistencyGroupId;
 
     public CreateBlockVolume(String vpoolId, String varrayId, String projectId, String size, Integer count,
@@ -45,6 +47,7 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
         create.setProject(projectId);
         create.setName(name);
         create.setSize(size);
+	create.setIp(volume_ip);
         int numberOfVolumes = 1;
         if ((count != null) && (count > 1)) {
             numberOfVolumes = count;

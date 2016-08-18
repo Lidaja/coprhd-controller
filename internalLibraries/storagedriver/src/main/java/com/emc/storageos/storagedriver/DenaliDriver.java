@@ -57,56 +57,31 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("%s: %s --- operation is supported.", driverName, "createVolumes");
         _log.warn(msg);
         task.setMessage(msg);
+	String vol_name = "Volume Name";
+	String ip = "10.10.30.235";
+	String size = "1G";
+	String tag = "tag";
+	String pool_name = "Test";
         try{
-
-                URL url_id = new URL("http://10.10.30.235:2375/containers/console/exec");
-                HttpURLConnection conn_id = (HttpURLConnection)url_id.openConnection();
-
-                conn_id.setDoOutput(true);
-                conn_id.setRequestMethod( "POST" );
-                conn_id.addRequestProperty("Content-Type", "application/json");
-                OutputStream os = conn_id.getOutputStream();
+                URL url = new URL("http://localhost:5000/volume");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                String volume_name = "TestVolume";
-                String volume_ip = "10.10.30.235";
-		String size = "1G";
-		String tag = "testTag";
-		String pool_name = "testPool";
-                String message = "{\"AttachStdin\": false, \"AttachStdout\": true, \"AttachStderr\": true, \"Tty\": false, \"Cmd\": [ \"python\", \"/tmp/Api-Invokers/createTargetVolume.py\", \""+volume_name+"\", \""+volume_ip+"\", \""+size+"\", \""+tag+"\", \""+pool_name+"\" ]}";
+                String message = "{\"ip\":\""+ip+"\",\"pool\":\""+pool_name+"\",\"size\":\""+size+"\",\"tag\":\""+tag+"\",\"name\":\""+vol_name+"\"}";
                 System.out.println(message);
                 osw.write(message);
                 osw.flush();
                 osw.close();
-
-                StringBuilder sb = getStringBuilder(conn_id);
-                String ID = sb.toString().substring(7,sb.toString().length()-3);
-                System.out.println(ID);
-
-                URL url_start = new URL("http://10.10.30.235:2375/exec/"+ID+"/start");
-
-                HttpURLConnection conn_start = (HttpURLConnection)url_start.openConnection();
-                conn_start.setDoOutput(true);
-                conn_start.setRequestMethod( "POST" );
-                conn_start.addRequestProperty("Content-Type", "application/json");
-                OutputStream os_start = conn_start.getOutputStream();
-                OutputStreamWriter osw_start = new OutputStreamWriter(os_start, "UTF-8");
-                osw_start.write("{\"Detach\": false, \"Tty\": true}");
-                osw_start.flush();
-                osw_start.close();
-                System.out.println(conn_start.getResponseCode());
-                StringBuilder sb_start = getStringBuilder(conn_start);
-                System.out.println(sb_start.toString());
-		File file = new File("/tmp/volume.txt");
-        	file.createNewFile();
-        	FileWriter fw = new FileWriter(file.getAbsoluteFile());
-        	BufferedWriter bw = new BufferedWriter(fw);
-        	bw.write("CreateVolume\n");
-		bw.write(message+"\n");
-		bw.write(sb_start.toString());
-        	bw.close();
-	}catch(IOException e){
-		System.out.println("error");	
-	}
+                System.out.println(conn.getResponseCode());
+                StringBuilder sb = getStringBuilder(conn);
+                System.out.println(sb.toString());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
+        }
         return task;
     }
 

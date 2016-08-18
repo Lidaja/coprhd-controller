@@ -19,6 +19,7 @@ public class VolumeCreate {
 
     private String name;
     private String size;
+    private String volume_ip;
     private Integer count;
     private URI vpool;
     private URI varray;
@@ -37,6 +38,7 @@ public class VolumeCreate {
         this.vpool = vpool;
         this.varray = varray;
         this.project = project;
+	this.volume_ip = "10.10.30.235";
         this.consistencyGroup = consistencyGroup;
     }
 
@@ -49,6 +51,7 @@ public class VolumeCreate {
         this.vpool = vpool;
         this.varray = varray;
         this.project = project;
+	this.volume_ip = "10.10.30.235";
     }
 
     /**
@@ -121,6 +124,16 @@ public class VolumeCreate {
     public void setSize(String size) {
         this.size = size;
     }
+
+    @XmlElement(required = true)
+    public String getIp() {
+        return volume_ip;
+    }
+
+    public void setIp(String ip) {
+        this.volume_ip = volume_ip;
+    }
+
 
     /**
      * The virtual array to which the volume will belong.

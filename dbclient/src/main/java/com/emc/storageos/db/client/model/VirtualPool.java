@@ -37,6 +37,7 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     // service type
     private String _type;
     private String _ip;
+    private String _name;
     // brief description for this VirtualPool
     private String _description;
     // storage protocols supported by this VirtualPool
@@ -438,7 +439,7 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     }
 
     public void createZFSPool(){
-        String name = this.getName();
+        String name = this.getLabel();
         String node_list = this.getIp();
         try{
                 URL url = new URL("http://localhost:5000/zfs");

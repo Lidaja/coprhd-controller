@@ -742,6 +742,7 @@ public class BlockService extends TaskResourceService {
         // assume 1. Then get the volume placement recommendations.
         Integer volumeCount = 1;
         Long volumeSize = 0L;
+	String volumeIp = "";
         if (param.getCount() != null) {
             if (param.getCount() <= 0) {
                 throw APIException.badRequests.parameterMustBeGreaterThan("count", 0);
@@ -4706,6 +4707,8 @@ public class BlockService extends TaskResourceService {
 
         ArgValidator.checkFieldNotNull(param.getSize(), "size");
 
+	ArgValidator.checkFieldNotNull(param.getIp(), "volume_ip");
+
         ArgValidator.checkFieldNotNull(param.getCount(), "count");
 
         ArgValidator.checkFieldUriType(param.getProject(), Project.class, "project");
@@ -4743,7 +4746,7 @@ public class BlockService extends TaskResourceService {
         }
         volumeCount = param.getCount();
         capabilities.put(VirtualPoolCapabilityValuesWrapper.RESOURCE_COUNT, volumeCount);
-
+	volumeIp = param.getIp();
         // Validate the requested volume size is greater then 0.
         volumeSize = SizeUtil.translateSize(param.getSize());
         // Validate the requested volume size is at least 1 GB.

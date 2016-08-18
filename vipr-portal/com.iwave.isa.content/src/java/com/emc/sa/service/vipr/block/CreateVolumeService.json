@@ -27,6 +27,20 @@
                 max:128
               }
             },
+            volume_ip:{
+              type:"text",
+              validation:{
+                min:2,
+                max:128
+              }
+            },
+            tag:{
+              type:"text",
+              validation:{
+                min:2,
+                max:128
+              }
+            },
             size:{
               type:"storageSize",
               validation:{
