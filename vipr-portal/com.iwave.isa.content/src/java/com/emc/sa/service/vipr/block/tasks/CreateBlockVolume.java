@@ -36,6 +36,7 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
         this.count = count;
         this.name = name;
         this.consistencyGroupId = consistencyGroupId;
+	this.volume_ip = "10.10.30.235";
         provideDetailArgs(name, size, vpoolId, varrayId, projectId);
     }
 

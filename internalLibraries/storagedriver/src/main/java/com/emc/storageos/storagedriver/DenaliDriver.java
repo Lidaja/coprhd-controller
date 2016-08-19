@@ -57,6 +57,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String msg = String.format("%s: %s --- operation is supported.", driverName, "createVolumes");
         _log.warn(msg);
         task.setMessage(msg);
+	/*
 	String vol_name = "Volume Name";
 	String ip = "10.10.30.235";
 	String size = "1G";
@@ -81,7 +82,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         } catch (IOException e){
                 e.getStackTrace();
                 System.out.println("error");
-        }
+        }*/
         return task;
     }
 

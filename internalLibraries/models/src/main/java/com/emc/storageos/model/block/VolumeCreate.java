@@ -124,13 +124,13 @@ public class VolumeCreate {
     public void setSize(String size) {
         this.size = size;
     }
-
+    
     @XmlElement(required = true)
     public String getIp() {
         return volume_ip;
     }
 
-    public void setIp(String ip) {
+    public void setIp(String volume_ip) {
         this.volume_ip = volume_ip;
     }
 

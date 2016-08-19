@@ -29,8 +29,8 @@ public abstract class BaseVirtualPoolForm<T extends DataObjectRestRep> {
     public String description;
 
     @MaxSize(2048)
-    @Required
     public String ip;
+
     public boolean isNew() {
         return StringUtils.isBlank(id);
     }
