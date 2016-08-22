@@ -659,7 +659,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", "lastIndex", Collections.singletonList(String.valueOf(index)));
             _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
         }
-
+	/*
         // Create ports with network
         for (int i =0; i <= 2; i++ ) {
             StoragePort port = new StoragePort();
@@ -676,9 +676,9 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             port.setPortHAZone("zone-"+i);
             storagePorts.add(port);
         }
-
+	*/
         // Create ports without network
-        for (int i =3; i <= 6; i++ ) {
+        for (int i =0; i <= 3; i++ ) {
             StoragePort port = new StoragePort();
             port.setNativeId("port-denali-" + i+ storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
