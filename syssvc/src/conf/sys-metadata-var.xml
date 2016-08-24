@@ -1025,6 +1025,19 @@
 		<property name="value" value="3600" />
 		<property name="controlNodeOnly" value="true" />
 	</bean>
+	<bean id="controller_arrayaffinity_discovery_interval" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Array Affinity Discovery" />
+		<property name="description" value="Number of seconds between array affinity discovery operations." />
+		<property name="type" value="uint32" />
+		<property name="tag" value="Discovery" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="true" />
+		<property name="value" value="3600" />
+		<property name="controlNodeOnly" value="true" />
+	</bean>
 	<bean id="controller_discovery_core_pool_size" class="com.emc.storageos.model.property.PropertyMetadata">
 		<property name="label" value="Discovery Threads" />
 		<property name="description" value="Number of threads each node uses for discovery of storage system." />
@@ -1107,6 +1120,19 @@
 	<bean id="controller_discovery_refresh_interval" class="com.emc.storageos.model.property.PropertyMetadata">
 		<property name="label" value="Storage Systems Refresh Interval" />
 		<property name="description" value="Number of seconds before a new discovery operation is allowed since the last discovery operation." />
+		<property name="type" value="uint32" />
+		<property name="tag" value="Discovery" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="true" />
+		<property name="value" value="600" />
+		<property name="controlNodeOnly" value="true" />
+	</bean>
+	<bean id="controller_arrayaffinity_discovery_refresh_interval" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Array Affinity Refresh Interval" />
+		<property name="description" value="Number of seconds before a new discovery operation is allowed since the last array affinity discovery operation." />
 		<property name="type" value="uint32" />
 		<property name="tag" value="Discovery" />
 		<property name="advanced" value="true" />
@@ -1209,6 +1235,20 @@
 		<property name="reconfigRequired" value="false" />
 		<property name="rebootRequired" value="true" />
 		<property name="value" value="true" />
+		<property name="controlNodeOnly" value="true" />
+	</bean>
+	<bean id="controller_enable_arrayaffinity_discovery" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Enable Array Affinity Discovery" />
+		<property name="description" value="Indicates whether array affinity discovery is enabled." />
+		<property name="type" value="string" />
+		<property name="allowedValues" value="true,false" />
+		<property name="tag" value="Discovery" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="true" />
+		<property name="value" value="false" />
 		<property name="controlNodeOnly" value="true" />
 	</bean>
 	<bean id="controller_enable_autoscan" class="com.emc.storageos.model.property.PropertyMetadata">
@@ -1832,6 +1872,34 @@
 		<property name="value" value="300" />
 		<property name="controlNodeOnly" value="false" />
 	</bean>
+	<bean id="controller_mds_clone_zoneset" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Clone Cisco Zonesets" />
+		<property name="description" value="Clone Cisco zoneset before committing zoning changes. Creating zoneset clones will increase the size of the zoneDB. Manual removal of zoneset clones might be required if the zoneDB size grows close to the allowed limits for zoneDB." />
+		<property name="type" value="string" />
+		<property name="allowedValues" value="true,false" />
+		<property name="tag" value="Controller" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="true" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="false" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="controller_mds_allow_zoneset_commit" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Allow Cisco Zone changes" />
+		<property name="description" value="Allow Cisco zoning changes to be committed if zoneset clone fails" />
+		<property name="type" value="string" />
+		<property name="allowedValues" value="true,false" />
+		<property name="tag" value="Controller" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="true" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="false" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
 	<bean id="controller_rp_consistency_group_lock_timeout" class="com.emc.storageos.model.property.PropertyMetadata">
 		<property name="label" value="Timeout in sec." />
 		<property name="description" value="Timeout for RP Consistency Group Locking" />
@@ -1943,6 +2011,32 @@
 		<property name="rebootRequired" value="false" />
 		<property name="value" value="300" />
 		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="event_clean_interval" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Event Cleaning Interval" />
+		<property name="description" value="Time interval in minutes between event cleaning operations. (Minimum 60 minutes)" />
+		<property name="type" value="uint32" />
+		<property name="tag" value="Other" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="true" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="true" />
+		<property name="value" value="60" />
+		<property name="controlNodeOnly" value="true" />
+	</bean>
+	<bean id="event_ttl" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Event Time To Live" />
+		<property name="description" value="Length of time in minutes that events should be kept. (Minimum 60 minutes)" />
+		<property name="type" value="uint32" />
+		<property name="tag" value="Other" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="true" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="43200" />
+		<property name="controlNodeOnly" value="true" />
 	</bean>
 	<bean id="task_clean_interval" class="com.emc.storageos.model.property.PropertyMetadata">
 		<property name="label" value="Task Cleaning Interval" />
@@ -2734,6 +2828,78 @@
 		<property name="value" value="480" />
 		<property name="controlNodeOnly" value="true" />
 	</bean>
+	<bean id="workflow_suspend_on_error" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Suspend on workflow ERROR" />
+		<property name="description" value="Suspend on an ERROR in a workflow or task instead of rollback by default" />
+		<property name="type" value="boolean" />
+		<property name="tag" value="Controller" />
+		<property name="hidden" value="true" />
+		<property name="advanced" value="false" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="false" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="workflow_suspend_on_class_method" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Suspend on workflow class and method" />
+		<property name="description" value="Suspend on a workflow when encounters Class.Method" />
+		<property name="type" value="string" />
+		<property name="minLen" value="1" />
+		<property name="tag" value="Controller" />
+		<property name="hidden" value="true" />
+		<property name="advanced" value="false" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="" />
+		<property name="controlNodeOnly" value="true" />
+	</bean>
+	<bean id="validation_check" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Basic validation check performed on volumes and exports against the storage array" />
+		<property name="description" value="Volume and Export checks are performed on the storage array to ensure management operations are performed on objects properly" />
+		<property name="type" value="boolean" />
+		<property name="tag" value="Controller" />
+		<property name="hidden" value="true" />
+		<property name="advanced" value="false" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="true" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="refresh_provider_on_validation" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Perform a refresh provider on validation operations.  Slows performance, but guarantees accurate results of array resources" />
+		<property name="description" value="Perform a refresh provider on validation operations.  Slows performance, but guarantees accurate results of array resources" />
+		<property name="type" value="boolean" />
+		<property name="tag" value="Controller" />
+		<property name="hidden" value="true" />
+		<property name="advanced" value="false" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="true" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="artificial_failure" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Internal failure invoker" />
+		<property name="description" value="Invoke an error in the controller in an automated fashion to promote negative testing.  Internal Option Only." />
+		<property name="type" value="string" />
+		<property name="minLen" value="1" />
+		<property name="tag" value="Controller" />
+		<property name="hidden" value="true" />
+		<property name="advanced" value="false" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
 	<bean id="controller_file_operations_lock_timeout" class="com.emc.storageos.model.property.PropertyMetadata">
 		<property name="label" value="Timeout in seconds" />
 		<property name="description" value="Timeout for VNX file Provisioning Locking" />
@@ -2746,6 +2912,78 @@
 		<property name="rebootRequired" value="false" />
 		<property name="value" value="300" />
 		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="controller_file_mount_operations_lock_timeout" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Timeout in seconds" />
+		<property name="description" value="Timeout for Filesystem mount locking" />
+		<property name="type" value="uint32" />
+		<property name="tag" value="Controller" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="true" />
+		<property name="reconfigRequired" value="false" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="300" />
+		<property name="controlNodeOnly" value="false" />
+	</bean>
+	<bean id="system_syslog_enable" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Enable Remote Syslog" />
+		<property name="description" value="Use Remote Syslog Forwarder." />
+		<property name="type" value="string" />
+		<property name="allowedValues" value="True,False" />
+		<property name="tag" value="Syslog Forwarder" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="true" />
+		<property name="rebootRequired" value="true" />
+		<property name="value" value="False" />
+		<property name="controlNodeOnly" value="false" />
+		<property name="notifiers" value="syslog" />
+	</bean>
+	<bean id="system_syslog_transport_protocol" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Syslog Transport Protocol" />
+		<property name="description" value="List of acceptable transport options for Remote Syslog server transmission." />
+		<property name="type" value="string" />
+		<property name="maxLen" value="3" />
+		<property name="allowedValues" value="TCP,UDP,TLS" />
+		<property name="tag" value="Syslog Forwarder" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="true" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="UDP" />
+		<property name="controlNodeOnly" value="false" />
+		<property name="notifiers" value="syslog" />
+	</bean>
+	<bean id="system_syslog_driver_ca" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value=" remote syslog server certificate file" />
+		<property name="description" value="Certifiacte file from remote syslog server" />
+		<property name="type" value="text" />
+		<property name="maxLen" value="8192" />
+		<property name="tag" value="Syslog Forwarder" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="false" />
+		<property name="reconfigRequired" value="true" />
+		<property name="rebootRequired" value="false" />
+		<property name="controlNodeOnly" value="false" />
+		<property name="notifiers" value="syslog" />
+	</bean>
+	<bean id="network_syslog_remote_servers_ports" class="com.emc.storageos.model.property.PropertyMetadata">
+		<property name="label" value="Remote Syslog Servers &amp; Ports" />
+		<property name="description" value="Syslog servers address &amp;  ports." />
+		<property name="type" value="ipportlist" />
+		<property name="tag" value="Syslog Forwarder" />
+		<property name="advanced" value="true" />
+		<property name="userMutable" value="true" />
+		<property name="userConfigurable" value="true" />
+		<property name="reconfigRequired" value="true" />
+		<property name="rebootRequired" value="false" />
+		<property name="value" value="" />
+		<property name="controlNodeOnly" value="false" />
+		<property name="notifiers" value="syslog" />
 	</bean>
 	<bean id="metadata" class="com.emc.storageos.model.property.PropertiesMetadata">
 		<property name="metadata">
@@ -2822,6 +3060,7 @@
 				<entry key="system_permit_root_console" value-ref="system_permit_root_console" />
 				<entry key="controller_metering_interval" value-ref="controller_metering_interval" />
 				<entry key="controller_discovery_interval" value-ref="controller_discovery_interval" />
+				<entry key="controller_arrayaffinity_discovery_interval" value-ref="controller_arrayaffinity_discovery_interval" />
 				<entry key="controller_discovery_core_pool_size" value-ref="controller_discovery_core_pool_size" />
 				<entry key="controller_scan_interval" value-ref="controller_scan_interval" />
 				<entry key="controller_ns_discovery_interval" value-ref="controller_ns_discovery_interval" />
@@ -2829,6 +3068,7 @@
 				<entry key="controller_cs_discovery_interval" value-ref="controller_cs_discovery_interval" />
 				<entry key="controller_metering_refresh_interval" value-ref="controller_metering_refresh_interval" />
 				<entry key="controller_discovery_refresh_interval" value-ref="controller_discovery_refresh_interval" />
+				<entry key="controller_arrayaffinity_discovery_refresh_interval" value-ref="controller_arrayaffinity_discovery_refresh_interval" />
 				<entry key="controller_scan_refresh_interval" value-ref="controller_scan_refresh_interval" />
 				<entry key="controller_ns_discovery_refresh_interval" value-ref="controller_ns_discovery_refresh_interval" />
 				<entry key="controller_compute_discovery_refresh_interval" value-ref="controller_compute_discovery_refresh_interval" />
@@ -2836,6 +3076,7 @@
 				<entry key="controller_enable_auto_discovery_metering_scan_single_node_deployments" value-ref="controller_enable_auto_discovery_metering_scan_single_node_deployments" />
 				<entry key="controller_enable_metering" value-ref="controller_enable_metering" />
 				<entry key="controller_enable_autodiscovery" value-ref="controller_enable_autodiscovery" />
+				<entry key="controller_enable_arrayaffinity_discovery" value-ref="controller_enable_arrayaffinity_discovery" />
 				<entry key="controller_enable_autoscan" value-ref="controller_enable_autoscan" />
 				<entry key="controller_enable_monitoring" value-ref="controller_enable_monitoring" />
 				<entry key="controller_smis_provider_version" value-ref="controller_smis_provider_version" />
@@ -2879,6 +3120,8 @@
 				<entry key="controller_ns_zone_refresh_always" value-ref="controller_ns_zone_refresh_always" />
 				<entry key="controller_ns_brocade_discovery_by_fabric_association" value-ref="controller_ns_brocade_discovery_by_fabric_association" />
 				<entry key="controller_mds_communication_timeout" value-ref="controller_mds_communication_timeout" />
+				<entry key="controller_mds_clone_zoneset" value-ref="controller_mds_clone_zoneset" />
+				<entry key="controller_mds_allow_zoneset_commit" value-ref="controller_mds_allow_zoneset_commit" />
 				<entry key="controller_rp_consistency_group_lock_timeout" value-ref="controller_rp_consistency_group_lock_timeout" />
 				<entry key="controller_rp_vplex_consistency_group_lock_timeout" value-ref="controller_rp_vplex_consistency_group_lock_timeout" />
 				<entry key="controller_array_consistency_group_lock_timeout" value-ref="controller_array_consistency_group_lock_timeout" />
@@ -2887,6 +3130,8 @@
 				<entry key="controller_rp_export_lock_timeout" value-ref="controller_rp_export_lock_timeout" />
 				<entry key="controller_vplex_api_lib_lock_timeout" value-ref="controller_vplex_api_lib_lock_timeout" />
 				<entry key="controller_srdf_provisioning_lock_timeout" value-ref="controller_srdf_provisioning_lock_timeout" />
+				<entry key="event_clean_interval" value-ref="event_clean_interval" />
+				<entry key="event_ttl" value-ref="event_ttl" />
 				<entry key="task_clean_interval" value-ref="task_clean_interval" />
 				<entry key="task_ttl" value-ref="task_ttl" />
 				<entry key="internal_api_key_algo" value-ref="internal_api_key_algo" />
@@ -2942,7 +3187,17 @@
 				<entry key="compute_vmware_esx_version" value-ref="compute_vmware_esx_version" />
 				<entry key="use_short_node_name" value-ref="use_short_node_name" />
 				<entry key="cim_connection_max_inactive_time" value-ref="cim_connection_max_inactive_time" />
+				<entry key="workflow_suspend_on_error" value-ref="workflow_suspend_on_error" />
+				<entry key="workflow_suspend_on_class_method" value-ref="workflow_suspend_on_class_method" />
+				<entry key="validation_check" value-ref="validation_check" />
+				<entry key="refresh_provider_on_validation" value-ref="refresh_provider_on_validation" />
+				<entry key="artificial_failure" value-ref="artificial_failure" />
 				<entry key="controller_file_operations_lock_timeout" value-ref="controller_file_operations_lock_timeout" />
+				<entry key="controller_file_mount_operations_lock_timeout" value-ref="controller_file_mount_operations_lock_timeout" />
+				<entry key="system_syslog_enable" value-ref="system_syslog_enable" />
+				<entry key="system_syslog_transport_protocol" value-ref="system_syslog_transport_protocol" />
+				<entry key="system_syslog_driver_ca" value-ref="system_syslog_driver_ca" />
+				<entry key="network_syslog_remote_servers_ports" value-ref="network_syslog_remote_servers_ports" />
 			</map>
 		</property>
 	</bean>

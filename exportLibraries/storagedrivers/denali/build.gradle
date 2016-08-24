@@ -1,0 +1,8 @@
+dependencies {
+    compile project(":storagedriver"),
+        library(httpclient4),
+        library(slf4j),
+        library(commons_lang)
+
+    testCompile library(easymock)
+}
