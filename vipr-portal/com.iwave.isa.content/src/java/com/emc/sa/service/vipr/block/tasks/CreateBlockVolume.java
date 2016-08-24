@@ -21,14 +21,15 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
     private String tag;
     private String volume_ip;
     private URI consistencyGroupId;
+    private URI computeResource;
 
     public CreateBlockVolume(String vpoolId, String varrayId, String projectId, String size, Integer count,
             String name, String consistencyGroupId) {
-        this(uri(vpoolId), uri(varrayId), uri(projectId), size, count, name, uri(consistencyGroupId));
+        this(uri(vpoolId), uri(varrayId), uri(projectId), size, count, name, uri(consistencyGroupId), null);
     }
 
     public CreateBlockVolume(URI vpoolId, URI varrayId, URI projectId, String size, Integer count, String name,
-            URI consistencyGroupId) {
+            URI consistencyGroupId, URI computeResource) {
         this.vpoolId = vpoolId;
         this.varrayId = varrayId;
         this.projectId = projectId;
@@ -37,6 +38,7 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
         this.name = name;
         this.consistencyGroupId = consistencyGroupId;
 	this.volume_ip = "10.10.30.235";
+        this.computeResource = computeResource;
         provideDetailArgs(name, size, vpoolId, varrayId, projectId);
     }
 
@@ -55,6 +57,9 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
         }
         create.setCount(numberOfVolumes);
         create.setConsistencyGroup(consistencyGroupId);
+        if (computeResource != null) {
+            create.setComputeResource(computeResource);
+        }
 
         Tasks<VolumeRestRep> tasks = getClient().blockVolumes().create(create);
         // There should only be as many tasks as is the count

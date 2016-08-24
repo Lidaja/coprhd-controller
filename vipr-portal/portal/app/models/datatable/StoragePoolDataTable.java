@@ -5,18 +5,17 @@
 package models.datatable;
 
 import static com.emc.vipr.client.core.util.ResourceUtils.name;
-import models.StorageSystemTypes;
-import models.SupportedResourceTypes;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.WordUtils;
 
-import util.MessagesUtils;
-import util.datatable.DataTable;
-
 import com.emc.storageos.model.pools.StoragePoolRestRep;
 import com.emc.storageos.model.systems.StorageSystemRestRep;
 import com.emc.vipr.client.core.util.CachedResources;
+
+import models.SupportedResourceTypes;
+import util.MessagesUtils;
+import util.datatable.DataTable;
 
 public class StoragePoolDataTable extends DataTable {
 
@@ -29,6 +28,7 @@ public class StoragePoolDataTable extends DataTable {
         addColumn("volumeTypes");
 	addColumn("protocols");
         addColumn("driveTypes");
+        addColumn("compressionEnabled").setRenderFunction("render.boolean");
         addColumn("numOfDataCenters").hidden();
         addColumn("freeCapacity").setRenderFunction("render.sizeInGb");
         addColumn("subscribedCapacity").setRenderFunction("render.sizeInGb");
@@ -53,6 +53,7 @@ public class StoragePoolDataTable extends DataTable {
         public String volumeTypes;
         public String network;
         public boolean assigned;
+        public boolean compressionEnabled;
 
         public StoragePoolInfo(StoragePoolRestRep storagePool) {
             this(storagePool, (String) null);
@@ -80,6 +81,7 @@ public class StoragePoolDataTable extends DataTable {
             this.totalCapacity = storagePool.getTotalCapacity();
             this.registrationStatus = storagePool.getRegistrationStatus();
             this.volumeTypes = SupportedResourceTypes.getDisplayValue(storagePool.getSupportedResourceTypes());
+            this.compressionEnabled = storagePool.getCompressionEnabled();
         }
     }
 }
