@@ -9,7 +9,7 @@
      </bean>
     
     <bean id="dellsc" class="com.emc.storageos.driver.dellsc.DellSCStorageDriver"/>
-
+    
     <bean id="unManagedVolumeDiscoverer" class="com.emc.storageos.volumecontroller.impl.externaldevice.ExternalDeviceUnManagedVolumeDiscoverer">
         <property name="networkDeviceController" ref="networkDeviceController"/>
         <property name="coordinator" ref="coordinator"/>
@@ -30,6 +30,7 @@
                 <entry key="hp3par" value-ref="hp3Par"/>
                 <entry key="dellscprovider" value-ref="dellsc"/>
                 <entry key="dellscsystem" value-ref="dellsc"/>
+                <entry key="denali" value-ref="DenaliSD"/>
             </map>
         </property>
         <property name="capabilityDefinitions">
@@ -40,6 +41,8 @@
         </property>
     </bean>
     
+    <bean id="DenaliSD" class="com.emc.storageos.driver.denali.DenaliDriver">
+    </bean>
     <bean id="hp3Par" class="com.emc.storageos.hp3par.impl.HP3PARStorageDriver" init-method="init">
     </bean>
     <bean id="autoTieringPolicyCapabilityDefinition" class="com.emc.storageos.storagedriver.storagecapabilities.AutoTieringPolicyCapabilityDefinition">

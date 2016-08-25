@@ -3,7 +3,7 @@
  * All Rights Reserved
  */
 
-package com.emc.storageos.driver.denali;
+package com.emc.storageos.driver;
 
 import com.emc.storageos.storagedriver.model.Initiator;
 import com.emc.storageos.storagedriver.model.StorageHostComponent;
