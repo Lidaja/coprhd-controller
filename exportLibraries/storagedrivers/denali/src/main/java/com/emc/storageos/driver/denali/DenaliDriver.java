@@ -33,7 +33,7 @@ import java.util.UUID;
  * Can be use as a base class for SDK storage drivers.
  */
 
-public class DefaultStorageDriver extends AbstractStorageDriver implements BlockStorageDriver {
+public class DenaliDriver extends AbstractStorageDriver implements BlockStorageDriver {
 
     private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
 
