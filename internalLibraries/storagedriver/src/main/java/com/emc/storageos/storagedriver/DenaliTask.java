@@ -3,7 +3,7 @@
  * All Rights Reserved
  */
 
-package com.emc.storageos.driver.denali;
+package com.emc.storageos.storagedriver;
 
 import com.emc.storageos.storagedriver.DriverTask;
 

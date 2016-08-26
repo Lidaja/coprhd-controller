@@ -155,9 +155,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setMessage(msg);
         return task;
     }
-
     @Override
-    public DriverTask deleteVolumes(List<StorageVolume> volumes) {
+    public DriverTask deleteVolume(StorageVolume volume) {
         String taskType = "delete-storage-volumes";
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, taskType, UUID.randomUUID().toString());
@@ -210,9 +209,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setMessage(msg);
         return task;
     }
-
     @Override
-    public DriverTask deleteVolumeSnapshot(List<VolumeSnapshot> snapshots) {
+    public DriverTask deleteVolumeSnapshot(VolumeSnapshot snapshot) {
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, "deleteVolumeSnapshot", UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
@@ -262,9 +260,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setMessage(msg);
         return task;
     }
-
     @Override
-    public DriverTask deleteVolumeClone(List<VolumeClone> clones) {
+    public DriverTask deleteVolumeClone(VolumeClone clone) {
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, "deleteVolumeClone", UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
@@ -301,9 +298,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         task.setMessage(msg);
         return task;
     }
-
     @Override
-    public DriverTask deleteVolumeMirror(List<VolumeMirror> mirrors) {
+    public DriverTask deleteVolumeMirror(VolumeMirror mirror) {
         String driverName = this.getClass().getSimpleName();
         String taskId = String.format("%s+%s+%s", driverName, "deleteVolumeMirror", UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
@@ -632,7 +628,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 	_log.info("Discovery of storage ports for storage system {} .", storageSystem.getNativeId());
         int index = 0;
         // Get "portIndexes" attribute map
-        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("simulatordriver", "portIndexes");
+        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("denalidriver", "portIndexes");
         if (portIndexes != null) {
             List<String>  indexes = portIndexes.get(storageSystem.getNativeId());
             if (indexes != null) {
@@ -655,8 +651,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
                 index ++;
             }
             // set this index for the system in registry
-            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", storageSystem.getNativeId(), Collections.singletonList(String.valueOf(index)));
-            driverRegistry.addDriverAttributeForKey("simulatordriver", "portIndexes", "lastIndex", Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", storageSystem.getNativeId(), Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex", Collections.singletonList(String.valueOf(index)));
             _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
         }
 	
@@ -676,7 +672,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             port.setPortHAZone("zone-"+i);
             storagePorts.add(port);
         }
-	/*	
+		
         // Create ports without network
         for (int i =3; i <= 6; i++ ) {
             StoragePort port = new StoragePort();
@@ -692,7 +688,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
             port.setPortHAZone("zone-with-many-ports");
             storagePorts.add(port);
         }
-	*/
+	
         String taskType = "discover-storage-ports";
         String taskId = String.format("%s+%s+%s", "DenaliDriver", taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);

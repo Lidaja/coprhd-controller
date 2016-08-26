@@ -41,7 +41,7 @@
         </property>
     </bean>
     
-    <bean id="DenaliSD" class="com.emc.storageos.driver.denali.DenaliDriver">
+    <bean id="DenaliSD" class="com.emc.storageos.storagedriver.DenaliDriver">
     </bean>
     <bean id="hp3Par" class="com.emc.storageos.hp3par.impl.HP3PARStorageDriver" init-method="init">
     </bean>

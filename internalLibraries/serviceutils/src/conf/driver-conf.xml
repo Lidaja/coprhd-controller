@@ -47,7 +47,6 @@
                          <value>providersystem</value>
                    <!--      <value>scaleiosystem</value>  -->
                    <value>dellscsystem</value>
-		   <value>denali</value>
 
                </set>
            </property>
