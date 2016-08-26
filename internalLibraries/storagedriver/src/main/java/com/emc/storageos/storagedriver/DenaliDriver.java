@@ -46,6 +46,7 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
 
     private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
     private Integer numPools = 2;
+    static final String DRIVER_NAME = "denali";
 
     @Override
     public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities) {
@@ -728,7 +729,8 @@ public class DenaliDriver extends AbstractStorageDriver implements BlockStorageD
         String driverName = this.getClass().getSimpleName();
         String msg = String.format("%s: %s --- operation is not supported.", driverName, "getRegistrationData");
         _log.warn(msg);
-        throw new UnsupportedOperationException(msg);
+        //throw new UnsupportedOperationException(msg);
+        return new RegistrationData("Denali Storage", DRIVER_NAME, null);
     }
 
     @Override
