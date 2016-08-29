@@ -4,7 +4,6 @@
  */
 
 package com.emc.storageos.driver.denali;
-
 import com.emc.storageos.storagedriver.DriverTask;
 
 /**

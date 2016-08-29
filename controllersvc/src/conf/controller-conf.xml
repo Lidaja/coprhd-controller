@@ -451,7 +451,7 @@
                 <entry key="hp3par" value-ref="hp3Par"/>
                 <entry key="dellscprovider" value-ref="dellsc"/>
                 <entry key="dellscsystem" value-ref="dellsc"/>
-		<entry key="denali" value-ref="DenaliSD"/>
+		<entry key="denali" value-ref="DenaliStorageDriver"/>
             </map>
         </property>
     </bean>
@@ -465,8 +465,7 @@
      <bean id="hp3Par" class="com.emc.storageos.hp3par.impl.HP3PARStorageDriver" init-method="init">
     </bean>
     
-    <bean id="DenaliSD" class="com.emc.storageos.storagedriver.DenaliDriver">
-    </bean>	
+    <bean id="DenaliStorageDriver" class="com.emc.storageos.driver.denali.DenaliDriver"/>	
 
     <bean id="dellsc" class="com.emc.storageos.driver.dellsc.DellSCStorageDriver"/>
     

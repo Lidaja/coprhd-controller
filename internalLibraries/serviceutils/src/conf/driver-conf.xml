@@ -12,7 +12,7 @@
                  <entry key="ScaleioDriver" value="scaleiosystem"/>
                  <entry key="HP3ParDriver" value="hp3par"/>
                  <entry key="DellSCDriver" value="dellscsystem"/>
-                 <entry key="DenaliSD" value="denali"/>
+                 <entry key="DenaliStorageDriver" value="denali"/>
               </map>
            </property>
 
