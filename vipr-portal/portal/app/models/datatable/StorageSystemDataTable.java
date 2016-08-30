@@ -53,9 +53,8 @@ public class StorageSystemDataTable extends DataTable {
         public StorageSystemInfo(StorageSystemRestRep storageSystem) {
             super(storageSystem);
             this.id = storageSystem.getId().toString();
-            this.name = StringUtils.defaultIfEmpty(
-                    StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),
-                    MessagesUtils.get(NAME_NOT_AVAILABLE));
+	    //this.id = "1337";
+            this.name = StringUtils.defaultIfEmpty(StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),MessagesUtils.get(NAME_NOT_AVAILABLE));
             if (ResourceUtils.id(storageSystem.getActiveProvider()) != null) {
                 this.vipAddress = storageSystem.getSmisProviderIP();
                 this.userName = storageSystem.getSmisUserName();

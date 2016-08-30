@@ -9,7 +9,6 @@
      </bean>
     
     <bean id="dellsc" class="com.emc.storageos.driver.dellsc.DellSCStorageDriver"/> 
-    <bean id="DenaliStorageDriver" class="com.emc.storageos.driver.denali.DenaliDriver/">
     <bean id="unManagedVolumeDiscoverer" class="com.emc.storageos.volumecontroller.impl.externaldevice.ExternalDeviceUnManagedVolumeDiscoverer">
         <property name="networkDeviceController" ref="networkDeviceController"/>
         <property name="coordinator" ref="coordinator"/>
@@ -41,6 +40,8 @@
         </property>
     </bean>
     
+    <bean id="DenaliStorageDriver" class="com.emc.storageos.driver.denali.DenaliDriver">
+    </bean>
     <bean id="hp3Par" class="com.emc.storageos.hp3par.impl.HP3PARStorageDriver" init-method="init">
     </bean>
     <bean id="autoTieringPolicyCapabilityDefinition" class="com.emc.storageos.storagedriver.storagecapabilities.AutoTieringPolicyCapabilityDefinition">
