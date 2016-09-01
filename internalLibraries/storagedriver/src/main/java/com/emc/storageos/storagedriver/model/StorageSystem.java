@@ -17,8 +17,6 @@ public class StorageSystem extends StorageObject {
     // system name, ex: los123.lss.emc.com . Type: Input.
     private String systemName;
 
-    private String nativeId;
-
     // serial number.
     private String serialNumber;
 
@@ -88,15 +86,6 @@ public class StorageSystem extends StorageObject {
     public void setSystemName(String systemName) {
         this.systemName = systemName;
     }
-
-    public String getNativeId() {
-        return nativeId;
-    }
-
-    public void setNativeId(String nativeId) {
-        this.nativeId = nativeId;
-    }
-
     public String getSerialNumber() {
         return serialNumber;
     }
