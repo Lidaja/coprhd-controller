@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import java.io.PrintWriter;
-import java.io.*;
+import java.io.IOException;
 
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableInt;
@@ -25,6 +25,9 @@ import com.emc.storageos.storagedriver.DefaultStorageDriver;
 import com.emc.storageos.storagedriver.DriverTask;
 import com.emc.storageos.storagedriver.HostExportInfo;
 import com.emc.storageos.storagedriver.RegistrationData;
+
+
+
 import com.emc.storageos.storagedriver.model.Initiator;
 import com.emc.storageos.storagedriver.model.StorageBlockObject;
 import com.emc.storageos.storagedriver.model.StorageHostComponent;
@@ -40,6 +43,7 @@ import com.emc.storageos.storagedriver.model.VolumeClone;
 import com.emc.storageos.storagedriver.model.VolumeConsistencyGroup;
 import com.emc.storageos.storagedriver.model.VolumeMirror;
 import com.emc.storageos.storagedriver.model.VolumeSnapshot;
+
 import com.emc.storageos.storagedriver.storagecapabilities.AutoTieringPolicyCapabilityDefinition;
 import com.emc.storageos.storagedriver.storagecapabilities.CapabilityInstance;
 import com.emc.storageos.storagedriver.storagecapabilities.StorageCapabilities;
@@ -80,23 +84,29 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         try {
-            /*if (storageSystem.getSerialNumber() == null) {
+            if (storageSystem.getSerialNumber() == null) {
             	storageSystem.setSerialNumber(storageSystem.getSystemName());
             }
+	    
+	    String id = storageSystem.getNativeId();	    
+/*	    try{
+                        PrintWriter writer = new PrintWriter("/tmp/id.txt","UTF-8");
+                        writer.println("The ID is "+ id);
+                        writer.close();
+            } catch(IOException e){
+                        System.out.println("Error");
+            }*/
+
+	    /*
             if (storageSystem.getNativeId() == null) {
             	storageSystem.setNativeId(storageSystem.getSystemName());
             }*/
-            //storageSystem.setFirmwareVersion("2.4-3.12");
-            //storageSystem.setIsSupportedVersion(true);
+            storageSystem.setFirmwareVersion("2.4-3.12");
+            storageSystem.setIsSupportedVersion(true);
             setConnInfoToRegistry(storageSystem.getNativeId(), storageSystem.getIpAddress(), storageSystem.getPortNumber(), storageSystem.getUsername(), storageSystem.getPassword());
-            // Support both, element and group replicas.
-            //Set<StorageSystem.SupportedReplication> supportedReplications = new HashSet<>();
-            //supportedReplications.add(StorageSystem.SupportedReplication.elementReplica);
-            //supportedReplications.add(StorageSystem.SupportedReplication.groupReplica);
-	    //List<String> protocols = new ArrayList<String>();
-	    //protocols.add(Protocols.iSCSI.toString());
-	    //storageSystem.setProtocols(protocols);
-            //storageSystem.setSupportedReplications(supportedReplications);
+	    List<String> protocols = new ArrayList<String>();
+	    protocols.add(Protocols.iSCSI.toString());
+	    storageSystem.setProtocols(protocols);
             task.setStatus(DriverTask.TaskStatus.READY);
             _log.info("StorageDriver: discoverStorageSystem information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
         } catch (Exception e) {
