@@ -19,6 +19,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -373,7 +381,14 @@ public class ExternalDeviceCommunicationInterface extends
             driverStorageSystem.setNativeId(storageSystem.getNativeId());
             _log.info("discoverStorageSystem: set nativeId to {}", driverStorageSystem.getNativeId());
         }
-
+	try{
+		Charset utf8 = StandardCharsets.UTF_8;
+		List<String> lines = Arrays.asList(storageSystem.getNativeId(), "The second line");
+		Path file = Paths.get("/tmp/testFile.txt");
+	        Files.write(Paths.get("/tmp/testFile.txt"), lines, utf8);
+	}catch(IOException e){
+		System.out.println("Error");
+	}
         try {
             _log.info("discoverStorageSystem information for storage system {}, name {}, ip address (), port {} - start",
                     accessProfile.getSystemId(), driverStorageSystem.getSystemName(), driverStorageSystem.getIpAddress(),

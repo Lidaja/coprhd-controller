@@ -86,7 +86,10 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         try {
             if (storageSystem.getSerialNumber() == null) {
             	storageSystem.setSerialNumber(storageSystem.getSystemName());
-            } 
+            }
+	    
+	    System.out.println(storageSystem.getNativeId());
+	    //storageSystem.setNativeId("denali");
             storageSystem.setFirmwareVersion("2.4-3.12");
             storageSystem.setIsSupportedVersion(true);
             setConnInfoToRegistry(storageSystem.getNativeId(), storageSystem.getIpAddress(), storageSystem.getPortNumber(), storageSystem.getUsername(), storageSystem.getPassword());
