@@ -12,6 +12,7 @@
                  <entry key="ScaleioDriver" value="scaleiosystem"/>
                  <entry key="HP3ParDriver" value="hp3par"/>
                  <entry key="DellSCDriver" value="dellscsystem"/>
+		 <entry key="DenaliDriver" value="denalisystem"/>
               </map>
            </property>
 
@@ -29,6 +30,7 @@
                    <value>scaleiosystem</value>
                    <value>hp3par</value> <!-- HP3Par Driver-->
                    <value>dellscsystem</value>
+		   <value>denali</value>
                </set>
            </property>
 
@@ -55,6 +57,7 @@
                    <value>driversystem</value>
                    <value>scaleiosystem</value>
                    <value>hp3par</value> <!-- HP3Par Driver-->
+		   <value>denalisystem</value>
                </set>
            </property>
 
