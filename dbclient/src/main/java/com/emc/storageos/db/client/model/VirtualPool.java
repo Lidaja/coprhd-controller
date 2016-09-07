@@ -32,6 +32,9 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     private String _type;
     // brief description for this VirtualPool
     private String _description;
+
+    private String _ip;
+
     // storage protocols supported by this VirtualPool
     private StringSet _protocols;
     // number of multiple paths to access storage, block only
@@ -471,6 +474,16 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     public void setDescription(final String description) {
         _description = description;
         setChanged("description");
+    }
+
+    @Name("ip")
+    public String getIp() {
+        return _ip;
+    }
+
+    public void setip(final String ip) {
+        _ip = ip;
+        setChanged("ip");
     }
 
     /**

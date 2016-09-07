@@ -172,6 +172,7 @@ public abstract class VirtualPoolService extends TaggedResource {
         }
         if (StringUtils.isNotEmpty(param.getDescription())) {
             vpool.setDescription(param.getDescription());
+	    vpool.getIp(param.getIp());
         }
 
         ArgValidator.checkFieldNotEmpty(param.getProvisionType(), VPOOL_PROVISIONING_TYPE);
@@ -190,7 +191,6 @@ public abstract class VirtualPoolService extends TaggedResource {
         // Validate the protocols for type of VirtualPool.
         validateVirtualPoolProtocol(vpool.getType(), param.getProtocols());
         vpool.getProtocols().addAll(param.getProtocols());
-
         // validate and set neighborhoods
         if (param.getVarrays() != null) {
             vpool.setVirtualArrays(new StringSet());
@@ -290,6 +290,7 @@ public abstract class VirtualPoolService extends TaggedResource {
 
         if (null != param.getDescription()) {
             vpool.setDescription(param.getDescription());
+	    vpool.setIp(param.getIp());
         }
 
         if (null != param.getUseMatchedPools()) {
