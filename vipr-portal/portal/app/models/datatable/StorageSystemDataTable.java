@@ -21,7 +21,8 @@ public class StorageSystemDataTable extends DataTable {
     public StorageSystemDataTable() {
         addColumn("name").setRenderFunction("renderLink");
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
-        addColumn("host");
+	addColumn("nodeIPs");
+        addColumn("ipAddress");
         addColumn("type");
         addColumn("version").hidden();
         addColumn("userName").hidden();
@@ -33,6 +34,8 @@ public class StorageSystemDataTable extends DataTable {
     public static class StorageSystemInfo extends DiscoveredSystemInfo {
         public String id;
         public String name;
+	public String nodeIPs;
+	public String ipAddress;
         public String host;
         public String userName;
         public String type;
@@ -49,14 +52,15 @@ public class StorageSystemDataTable extends DataTable {
                     StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),
                     MessagesUtils.get(NAME_NOT_AVAILABLE));
             if (ResourceUtils.id(storageSystem.getActiveProvider()) != null) {
-                this.host = storageSystem.getSmisProviderIP();
+                this.ipAddress = storageSystem.getSmisProviderIP();
                 this.userName = storageSystem.getSmisUserName();
             }
             else {
-                this.host = storageSystem.getIpAddress();
+                this.ipAddress = storageSystem.getIpAddress();
                 this.userName = storageSystem.getUsername();
             }
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());
+	    this.nodeIPs = storageSystem.getNodeIPs();
             this.version = storageSystem.getFirmwareVersion();
             this.registrationStatus = storageSystem.getRegistrationStatus();
         }

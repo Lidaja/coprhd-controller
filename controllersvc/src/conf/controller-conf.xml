@@ -451,7 +451,7 @@
                 <entry key="hp3par" value-ref="hp3Par"/>
                 <entry key="dellscprovider" value-ref="dellsc"/>
                 <entry key="dellscsystem" value-ref="dellsc"/>
-		<entry key="denali" value-ref="denaliDriver"/>
+		<entry key="denalisystem" value-ref="denaliDriver"/>
             </map>
         </property>
     </bean>

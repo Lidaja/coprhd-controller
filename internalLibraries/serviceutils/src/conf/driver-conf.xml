@@ -30,7 +30,7 @@
                    <value>scaleiosystem</value>
                    <value>hp3par</value> <!-- HP3Par Driver-->
                    <value>dellscsystem</value>
-		   <value>denali</value>
+		   <value>denalisystem</value>
                </set>
            </property>
 

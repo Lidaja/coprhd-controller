@@ -843,6 +843,9 @@ public class StorageSystems extends ViprResourceController {
         @HostNameOrIpAddress
         public String ipAddress;
 
+	@Required
+	public String nodeIPs;
+
         @Required
         public Integer portNumber;
 
@@ -939,6 +942,7 @@ public class StorageSystems extends ViprResourceController {
                 this.smisProviderUseSSL = storageArray.getSmisUseSSL();
                 this.smisProviderUserName = storageArray.getSmisUserName();
             }
+	    this.nodeIPs = storageArray.getNodeIPs();
 
         }
 
@@ -971,6 +975,7 @@ public class StorageSystems extends ViprResourceController {
 
             if (!isStorageProviderManaged()) {
                 storageArray.setIpAddress(ipAddress);
+		storageArray.setNodeIPs(nodeIPs);
                 storageArray.setPortNumber(portNumber);
                 storageArray.setPassword(StringUtils.trimToNull(userPassword));
                 storageArray.setUserName(StringUtils.trimToNull(userName));
@@ -996,6 +1001,7 @@ public class StorageSystems extends ViprResourceController {
             storageArray.setUserName(userName);
             storageArray.setPortNumber(portNumber);
             storageArray.setIpAddress(ipAddress);
+	    storageArray.setNodeIPs(nodeIPs);
             // storageArray.setRegistrationMode(RegistrationMode.SYSTEM);
 
             if (isVnxFile()) {

@@ -593,6 +593,7 @@ public class StorageSystemService extends TaskResourceService {
         system.setAutoDiscovered(false);
         system.setRegistrationStatus(RegistrationStatus.REGISTERED.toString());
         system.setIpAddress(param.getIpAddress());
+	system.setNodeIPs(param.getNodeIPs());
         system.setPortNumber(param.getPortNumber());
         system.setMgmtAccessPoint(param.getIpAddress() + "-" + param.getPortNumber());
         system.setUsername(param.getUserName());
@@ -603,7 +604,7 @@ public class StorageSystemService extends TaskResourceService {
         system.setSmisUserName(param.getSmisUserName());
         system.setSmisPassword(param.getSmisPassword());
         system.setSmisUseSSL(param.getSmisUseSSL());
-
+	system.createCluster(param.getNodeIPs(),param.getIpAddress());
         _dbClient.createObject(system);
         _log.info("Created Storage System with Native Guid:" + system.getNativeGuid());
         return system;
@@ -632,7 +633,7 @@ public class StorageSystemService extends TaskResourceService {
         system.setSmisPortNumber(param.getSmisPortNumber());
         system.setSmisUserName(param.getSmisUserName());
         system.setSmisPassword(param.getSmisPassword());
-
+	system.setNodeIPs(param.getNodeIPs());
         _dbClient.persistObject(system);
     }
 

@@ -15,6 +15,7 @@ public class StorageSystemUpdateRequestParam {
 
     private String name;
     private String ipAddress;
+    private String nodeIPs;
     private Integer portNumber;
     private String userName;
     private String password;
@@ -54,6 +55,15 @@ public class StorageSystemUpdateRequestParam {
 
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }
+
+    @XmlElement(required = true, name = "node_IPs")
+    public String getNodeIPs() {
+        return nodeIPs;
+    }
+
+    public void setNodeIPs(String nodeIPs) {
+        this.nodeIPs = nodeIPs;
     }
 
     /**

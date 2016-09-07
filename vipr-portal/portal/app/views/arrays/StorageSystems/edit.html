@@ -442,6 +442,14 @@
       #{Form.inputTextControlGroup field:field /}
     #{/field}
 
+    #{field 'storageArray.nodeIPs'}
+      %{
+        field.required = true
+        field.cssClass = 'span6 initialFocus'
+      }%
+      #{Form.inputTextControlGroup field:field /}
+    #{/field}
+
     #{field 'storageArray.useSSL'}
       #{Form.booleanCheckBoxControlGroup field:field /}
     #{/field}

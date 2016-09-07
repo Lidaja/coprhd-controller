@@ -1,0 +1,11 @@
+./vipr-portal/portal/app/views/arrays/StorageSystems/edit.html
+./vipr-portal/portal/app/controllers/arrays/StorageSystems.java
+./internalLibraries/models/src/main/java/com/emc/storageos/model/systems/StorageSystemRequestParam.java
+./internalLibraries/models/src/main/java/com/emc/storageos/model/systems/StorageSystemUpdateRequestParam.java
+./apisvc/src/main/java/com/emc/storageos/api/service/impl/resource/StorageSystemService.java
+./dbclient/src/main/java/com/emc/storageos/db/client/model/StorageSystem.java
+./apisvc/src/main/java/com/emc/storageos/api/mapper/SystemsMapper.java
+./internalLibraries/models/src/main/java/com/emc/storageos/model/systems/StorageSystemRestRep.java
+./vipr-portal/portal/app/models/datatable/StorageSystemDataTable.java
+./vipr-portal/portal/app/views/arrays/StorageSystems/list.html
+

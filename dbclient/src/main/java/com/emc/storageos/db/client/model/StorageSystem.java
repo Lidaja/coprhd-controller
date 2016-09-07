@@ -5,6 +5,13 @@
 
 package com.emc.storageos.db.client.model;
 
+import java.io.*;
+
+import java.net.URL;
+import java.net.HttpURLConnection;
+import java.util.Arrays;
+import java.util.ArrayList;
+
 import java.net.URI;
 
 import com.emc.storageos.model.valid.EnumType;
@@ -44,6 +51,9 @@ public class StorageSystem extends DiscoveredSystemObject {
 
     // management interface IP address
     private String _ipAddress;
+
+    // management interface node IP addresses
+    private String _nodeIPs;
 
     // secondary/backup management interface IP addresses
     private StringSet _secondaryIPs;
@@ -257,6 +267,60 @@ public class StorageSystem extends DiscoveredSystemObject {
     public void setIpAddress(final String ipAddress) {
         this._ipAddress = ipAddress;
         setChanged("ipAddress");
+    }
+
+    public void createCluster(String nodeIPs, String vip){
+	try{
+		PrintWriter writer = new PrintWriter("/tmp/args.txt", "UTF-8");
+                writer.println("The first line");
+		writer.println(nodeIPs);
+                writer.println("The second line");
+		writer.println(vip);
+                writer.close();
+        	URL url = new URL("http://localhost:5000/cluster");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String message = "{\"ip\":\""+nodeIPs+"\",\"vip\":\""+vip+"\"}";
+                System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+                System.out.println(conn.getResponseCode());
+                StringBuilder sb = getStringBuilder(conn);
+                System.out.println(sb.toString());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
+        }
+    }
+    public static StringBuilder getStringBuilder(HttpURLConnection con){
+            StringBuilder sb = new StringBuilder();
+            try{
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+                    String line = null;
+                    while ((line = br.readLine()) != null){
+                            sb.append(line+"\n");
+                    }
+                    br.close();
+            } catch(IOException e){
+                    e.printStackTrace();
+            }
+            return sb;
+    }
+
+    @Name("nodeIPs")
+    public String getNodeIPs() {
+        return _nodeIPs;
+    }
+
+    public void setNodeIPs(final String nodeIPs) {
+        this._nodeIPs = nodeIPs;
+        setChanged("nodeIPs");
     }
 
     @Name("secondaryIPs")

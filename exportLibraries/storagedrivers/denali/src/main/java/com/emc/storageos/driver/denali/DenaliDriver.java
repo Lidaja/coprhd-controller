@@ -54,7 +54,7 @@ import com.emc.storageos.storagedriver.storagecapabilities.StorageCapabilities;
 
 public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDriver {
 
-    //private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
+    private static final Logger _log = LoggerFactory.getLogger(DenaliDriver.class);
     public static final String DRIVER_NAME = "DenaliDriver";
     private static final int NUMBER_OF_VOLUME_PAGES = 3;
     private static final int NUMBER_OF_VOLUMES_ON_PAGE = 2;
@@ -64,7 +64,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
     private static final boolean SNAPS_IN_CG = true;
     private static final boolean CLONES_IN_CG = true;
     private static final boolean GENERATE_EXPORT_DATA = true;
-    private static final String SIMULATOR_CONF_FILE = "denali-conf.xml";
+    private static final String DENALI_CONF_FILE = "denali-conf.xml";
     private static final String CONFIG_BEAN_NAME = "denaliConfig";
 
     private ApplicationContext parentApplicationContext;
@@ -106,7 +106,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
     //StorageDriver implementation
 
     public DenaliDriver() {
-        ApplicationContext context = new ClassPathXmlApplicationContext(new String[] {SIMULATOR_CONF_FILE}, parentApplicationContext);
+        ApplicationContext context = new ClassPathXmlApplicationContext(new String[] {DENALI_CONF_FILE}, parentApplicationContext);
         denaliConfig = (DenaliConfiguration) context.getBean(CONFIG_BEAN_NAME);
     }
     
@@ -220,76 +220,63 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         AutoTieringPolicyCapabilityDefinition capabilityDefinition = new AutoTieringPolicyCapabilityDefinition();
-
         try {
             // Get connection information.
             Map<String, List<String>> connectionInfo = driverRegistry.getDriverAttributesForKey("DenaliDriver", storageSystem.getNativeId());
             _log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
-            for (int i =0; i <= 2; i++ ) {
-                StoragePool pool = new StoragePool();
-                pool.setNativeId("pool-1234577-" + i + storageSystem.getNativeId());
-                pool.setStorageSystemId(storageSystem.getNativeId());
-                _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
+            StoragePool pool = new StoragePool();
+            pool.setNativeId("DenaliPool-" + storageSystem.getNativeId());
+            pool.setStorageSystemId(storageSystem.getNativeId());
+            _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
 
-                pool.setDeviceLabel("er-pool-1234577" + i + storageSystem.getNativeId());
-                pool.setPoolName(pool.getDeviceLabel());
-                Set<StoragePool.Protocols> protocols = new HashSet<>();
-                protocols.add(StoragePool.Protocols.FC);
-                protocols.add(StoragePool.Protocols.iSCSI);
-                //protocols.add(StoragePool.Protocols.ScaleIO);
-                pool.setProtocols(protocols);
-                pool.setPoolServiceType(StoragePool.PoolServiceType.block);
-                pool.setMaximumThickVolumeSize(3000000L);
-                pool.setMinimumThickVolumeSize(1000L);
-                pool.setMaximumThinVolumeSize(5000000L);
-                pool.setMinimumThinVolumeSize(1000L);
-                if (i%2 == 0) {
-                    pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_ONLY);
-                } else {
-                    pool.setSupportedResourceType(StoragePool.SupportedResourceType.THICK_ONLY);
-                }
+            pool.setDeviceLabel("er-DenaliPool-"+ storageSystem.getNativeId());
+            pool.setPoolName(pool.getDeviceLabel());
+            Set<StoragePool.Protocols> protocols = new HashSet<>();
+            protocols.add(StoragePool.Protocols.iSCSI);
+            pool.setProtocols(protocols);
+            pool.setPoolServiceType(StoragePool.PoolServiceType.block);
+            pool.setMaximumThickVolumeSize(3000000L);
+            pool.setMinimumThickVolumeSize(1000L);
+            pool.setMaximumThinVolumeSize(5000000L);
+            pool.setMinimumThinVolumeSize(1000L);
+            pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK); 
+            pool.setSubscribedCapacity(5000000L);
+            pool.setFreeCapacity(45000000L);
+            pool.setTotalCapacity(48000000L);
+            pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
+            Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
+            supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SSD);
+            pool.setSupportedDriveTypes(supportedDriveTypes);
 
-                pool.setSubscribedCapacity(5000000L);
-                pool.setFreeCapacity(45000000L);
-                pool.setTotalCapacity(48000000L);
-                pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
-                Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
-                supportedDriveTypes.add(StoragePool.SupportedDriveTypes.FC);
-                supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SATA);
-                pool.setSupportedDriveTypes(supportedDriveTypes);
-
-                //            Set<StoragePool.RaidLevels> raidLevels = new HashSet<>();
-                //            raidLevels.add(StoragePool.RaidLevels.RAID5);
-                //            raidLevels.add(StoragePool.RaidLevels.RAID6);
-                //            pool.setSupportedRaidLevels(raidLevels);
-                
-                
-                List<CapabilityInstance> capabilities = new ArrayList<>();
-                for (int j = 1; j <= 2; j++) {
-                    String policyId = "Auto-Tier-Policy-" + i + j;
-                    Map<String, List<String>> props = new HashMap<>();
-                    props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.POLICY_ID.name(), Arrays.asList(policyId));
-                    String provisioningType;
-                    if (i%2 == 0) {
-                        provisioningType = StoragePool.AutoTieringPolicyProvisioningType.ThinlyProvisioned.name();
-                    } else {
-                        provisioningType = StoragePool.AutoTieringPolicyProvisioningType.ThicklyProvisioned.name();
-                    }
-                    props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.PROVISIONING_TYPE.name(), Arrays.asList(provisioningType));
-                    CapabilityInstance capabilityInstance = new CapabilityInstance(capabilityDefinition.getId(), policyId, props);
-                    capabilities.add(capabilityInstance);
-                }
-                pool.setCapabilities(capabilities);
-
-                storagePools.add(pool);
-
+            Set<StoragePool.RaidLevels> raidLevels = new HashSet<>();
+            raidLevels.add(StoragePool.RaidLevels.RAID1);
+            raidLevels.add(StoragePool.RaidLevels.RAID2);
+            raidLevels.add(StoragePool.RaidLevels.RAID50);
+            raidLevels.add(StoragePool.RaidLevels.RAID60);
+            pool.setSupportedRaidLevels(raidLevels);
+            
+            
+            List<CapabilityInstance> capabilities = new ArrayList<>();
+            for (int j = 1; j <= 2; j++) {
+                String policyId = "Auto-Tier-Policy-" + j;
+                Map<String, List<String>> props = new HashMap<>();
+                props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.POLICY_ID.name(), Arrays.asList(policyId));
+                String provisioningType;
+                provisioningType = StoragePool.AutoTieringPolicyProvisioningType.All.name();
+                props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.PROVISIONING_TYPE.name(), Arrays.asList(provisioningType));
+                CapabilityInstance capabilityInstance = new CapabilityInstance(capabilityDefinition.getId(), policyId, props);
+                capabilities.add(capabilityInstance);
             }
+            pool.setCapabilities(capabilities);
+
+            storagePools.add(pool);
             task.setStatus(DriverTask.TaskStatus.READY);
             _log.info("StorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
         } catch (Exception e) {
             task.setStatus(DriverTask.TaskStatus.FAILED);
             e.printStackTrace();
         }
+	
         return task;
     }
 
@@ -299,7 +286,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
         int index = 0;
         // Get "portIndexes" attribute map
-        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("simulatordriver", "portIndexes");
+        Map<String, List<String>> portIndexes = driverRegistry.getDriverAttributesForKey("denalidriver", "portIndexes");
         if (portIndexes != null) {
             List<String>  indexes = portIndexes.get(storageSystem.getNativeId());
             if (indexes != null) {
@@ -337,24 +324,22 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 //        }
 
         // Create ports with network
-        for (int i =0; i <= 2; i++ ) {
+        for (int i =0; i <= 0; i++ ) {
             StoragePort port = new StoragePort();
-            port.setNativeId("port-1234577-" + i + storageSystem.getNativeId());
+            port.setNativeId("DenaliPort-" + storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
             _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
 
-            port.setDeviceLabel("er-port-1234577" + i + storageSystem.getNativeId());
+            port.setDeviceLabel("er-DenaliPort-" + storageSystem.getNativeId());
             port.setPortName(port.getDeviceLabel());
-            //port.setNetworkId("er-network77"+ storageSystem.getNativeId());
-            port.setNetworkId("11");
-            port.setTransportType(StoragePort.TransportType.FC);
-            //port.setTransportType(StoragePort.TransportType.IP);
+            port.setNetworkId("DenaliNetwork");
+            port.setTransportType(StoragePort.TransportType.IP);
             port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
             port.setOperationalStatus(StoragePort.OperationalStatus.OK);
             port.setPortHAZone("zone-"+i);
             storagePorts.add(port);
         }
-
+	/*
         // Create ports without network
         for (int i =3; i <= 6; i++ ) {
             StoragePort port = new StoragePort();
@@ -371,7 +356,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             port.setPortHAZone("zone-with-many-ports");
             storagePorts.add(port);
         }
-
+	*/
         String taskType = "discover-storage-ports";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
@@ -403,7 +388,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         Set<String> newVolumes = new HashSet<>();
 
         for (StorageVolume volume : volumes) {
-            volume.setNativeId("driverSimulatorVolume" + UUID.randomUUID().toString());
+            volume.setNativeId("denaliDriverVolume" + UUID.randomUUID().toString());
             volume.setAccessStatus(StorageVolume.AccessStatus.READ_WRITE);
             volume.setProvisionedCapacity(volume.getRequestedCapacity());
             volume.setAllocatedCapacity(volume.getRequestedCapacity());
