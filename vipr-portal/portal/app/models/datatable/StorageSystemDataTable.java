@@ -22,7 +22,7 @@ public class StorageSystemDataTable extends DataTable {
         addColumn("name").setRenderFunction("renderLink");
         addColumn("registrationStatus").setRenderFunction("render.registrationStatus");
 	addColumn("nodeIPs");
-        addColumn("ipAddress");
+        addColumn("host");
         addColumn("type");
         addColumn("version").hidden();
         addColumn("userName").hidden();
@@ -52,11 +52,11 @@ public class StorageSystemDataTable extends DataTable {
                     StringUtils.defaultIfEmpty(storageSystem.getName(), storageSystem.getSerialNumber()),
                     MessagesUtils.get(NAME_NOT_AVAILABLE));
             if (ResourceUtils.id(storageSystem.getActiveProvider()) != null) {
-                this.ipAddress = storageSystem.getSmisProviderIP();
+                this.host = storageSystem.getSmisProviderIP();
                 this.userName = storageSystem.getSmisUserName();
             }
             else {
-                this.ipAddress = storageSystem.getIpAddress();
+                this.host = storageSystem.getIpAddress();
                 this.userName = storageSystem.getUsername();
             }
             this.type = StorageSystemTypes.getDisplayValue(storageSystem.getSystemType());

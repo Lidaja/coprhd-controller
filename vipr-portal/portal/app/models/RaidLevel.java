@@ -19,8 +19,10 @@ public class RaidLevel {
     public static final String RAID5 = "RAID5";
     public static final String RAID6 = "RAID6";
     public static final String RAID10 = "RAID10";
+    public static final String RAID50 = "RAID50";
+    public static final String RAID60 = "RAID60";
 
-    public static final String[] VALUES = { RAID0, RAID1, RAID2, RAID3, RAID4, RAID5, RAID6, RAID10 };
+    public static final String[] VALUES = { RAID0, RAID1, RAID2, RAID3, RAID4, RAID5, RAID6, RAID10, RAID50, RAID60 };
 
     public static StringOption option(String type) {
         return new StringOption(type, getDisplayValue(type));

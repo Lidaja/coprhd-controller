@@ -28,6 +28,7 @@ public abstract class BaseVirtualPoolForm<T extends DataObjectRestRep> {
     @Required
     public String description;
 
+
     public boolean isNew() {
         return StringUtils.isBlank(id);
     }

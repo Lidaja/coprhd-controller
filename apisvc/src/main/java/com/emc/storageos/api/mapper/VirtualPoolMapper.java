@@ -303,7 +303,6 @@ public class VirtualPoolMapper {
         to.setLink(new RestLinkRep("self", RestLinkFactory.newLink(type, from.getId())));
         to.setType(from.getType());
         to.setDescription(from.getDescription());
-	to.setIp(from.getIp());
         to.setProtocols(from.getProtocols());
         to.setProvisioningType(from.getSupportedProvisioningType());
         to.setNumPaths(from.getNumPaths());

@@ -34,6 +34,7 @@ public class VirtualPoolBuilder {
         return this;
     }
 
+
     public VirtualPoolBuilder setProvisioningType(String provisioningType) {
         virtualPool.setProvisionType(provisioningType);
         return this;

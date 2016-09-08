@@ -79,6 +79,7 @@ public class VirtualPoolUpdateParam {
         this.description = description;
     }
 
+
     /**
      * The protocol changes for the virtual pool.
      * 
