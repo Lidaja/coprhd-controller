@@ -15,13 +15,13 @@
         #{if controllers.security.Security.isSystemAdminOrRestrictedSystemAdmin() && isActiveSite }
           #{license.ifController}
             <a class="list-group-item" href="@{arrays.StorageSystems.list()}">&{'adminDashboard.storageArrays'} #{badgeNumber storageArrayCount/}</a>
-            <a class="list-group-item" href="@{arrays.StorageProviders.list()}">&{'adminDashboard.smisProviders'} #{badgeNumber smisProviderCount/}</a>
-            <a class="list-group-item" href="@{arrays.DataProtectionSystems.list()}">&{'adminDashboard.dataProtectionSystems'} #{badgeNumber dataProtectionSystemCount/}</a>
-            <a class="list-group-item" href="@{arrays.SanSwitches.list()}">&{'adminDashboard.fabricManagers'} #{badgeNumber fabricManagerCount/}</a>
+            <!-- <a class="list-group-item" href="@{arrays.StorageProviders.list()}">&{'adminDashboard.smisProviders'} #{badgeNumber smisProviderCount/}</a> -->
+            <!-- <a class="list-group-item" href="@{arrays.DataProtectionSystems.list()}">&{'adminDashboard.dataProtectionSystems'} #{badgeNumber dataProtectionSystemCount/}</a> -->
+            <!-- <a class="list-group-item" href="@{arrays.SanSwitches.list()}">&{'adminDashboard.fabricManagers'} #{badgeNumber fabricManagerCount/}</a> -->
             <a class="list-group-item" href="@{arrays.Networks.list()}">&{'adminDashboard.networks'} #{badgeNumber networksCount/}</a>
-            <a class="list-group-item" href="@{compute.ComputeImages.list()}">&{'adminDashboard.computeImages'} #{badgeNumber computeImageCount/}</a>
-            <a class="list-group-item" href="@{compute.ComputeImageServers.list()}">&{'adminDashboard.computeImageServers'} #{badgeNumber computeImageServerCount/}</a>
-            <a class="list-group-item" href="@{compute.ComputeSystems.list()}">&{'adminDashboard.computeSystems'} #{badgeNumber computeSystemCount/}</a>
+            <!-- <a class="list-group-item" href="@{compute.ComputeImages.list()}">&{'adminDashboard.computeImages'} #{badgeNumber computeImageCount/}</a> -->
+            <!-- <a class="list-group-item" href="@{compute.ComputeImageServers.list()}">&{'adminDashboard.computeImageServers'} #{badgeNumber computeImageServerCount/}</a> -->
+            <!-- <a class="list-group-item" href="@{compute.ComputeSystems.list()}">&{'adminDashboard.computeSystems'} #{badgeNumber computeSystemCount/}</a> -->
             #{/license.ifController}
         #{/if}
         #{else}
@@ -40,7 +40,7 @@
           #{if controllers.security.Security.isTenantAdmin() && isActiveSite }
             <a class="list-group-item" href="@{compute.Hosts.list()}">&{'adminDashboard.hosts'} #{badgeNumber hostCount/}</a>
             <a class="list-group-item" href="@{compute.HostClusters.list()}">&{'adminDashboard.clusters'} #{badgeNumber clusterCount/}</a>
-            <a class="list-group-item" href="@{compute.VCenters.list()}">&{'adminDashboard.vcenters'} #{badgeNumber vcenterCount/}</a>
+            <!-- <a class="list-group-item" href="@{compute.VCenters.list()}">&{'adminDashboard.vcenters'} #{badgeNumber vcenterCount/}</a> -->
           #{/if}
           #{else}
             <li class="list-group-item">&{'adminDashboard.hosts'} #{badgeNumber hostCount/}</li>
