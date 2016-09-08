@@ -339,9 +339,9 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             port.setPortHAZone("zone-"+i);
             storagePorts.add(port);
         }
-	/*
+	/*	
         // Create ports without network
-        for (int i =3; i <= 6; i++ ) {
+        for (int i =3; i <= 3; i++ ) {
             StoragePort port = new StoragePort();
             port.setNativeId("port-1234577-" + i+ storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
@@ -349,14 +349,13 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
             port.setDeviceLabel("er-port-1234577" + i+ storageSystem.getNativeId());
             port.setPortName(port.getDeviceLabel());
-            //port.setNetworkId("er-network77"+ storageSystem.getNativeId());
             port.setTransportType(StoragePort.TransportType.FC);
             port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
             port.setOperationalStatus(StoragePort.OperationalStatus.OK);
             port.setPortHAZone("zone-with-many-ports");
             storagePorts.add(port);
-        }
-	*/
+        }*/
+	
         String taskType = "discover-storage-ports";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);

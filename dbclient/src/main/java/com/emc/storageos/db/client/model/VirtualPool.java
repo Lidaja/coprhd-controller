@@ -37,9 +37,6 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     private String _type;
     // brief description for this VirtualPool
     private String _description;
-
-    private String _ip;
-
     // storage protocols supported by this VirtualPool
     private StringSet _protocols;
     // number of multiple paths to access storage, block only

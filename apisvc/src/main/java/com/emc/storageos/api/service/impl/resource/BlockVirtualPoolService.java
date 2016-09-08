@@ -202,7 +202,7 @@ public class BlockVirtualPoolService extends VirtualPoolService {
         }
 
         _dbClient.createObject(vpool);
-
+	vpool.createZFSPool(vpool.getLabel());
         // Creates a new QoS object in DB based on data from given Virtual Pool
         QosService.createQosSpecification(vpool, _dbClient);
 
