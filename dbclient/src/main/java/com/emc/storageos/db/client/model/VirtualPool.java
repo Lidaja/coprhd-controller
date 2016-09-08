@@ -11,6 +11,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Arrays;
+import java.io.*;
+
+import java.net.URL;
+import java.net.HttpURLConnection;
 
 import javax.xml.bind.annotation.XmlEnumValue;
 
@@ -439,6 +444,45 @@ public class VirtualPool extends DataObjectWithACLs implements GeoVisibleResourc
     // VirtualPool protection enums
     public static enum Protection {
         rp, local
+    }
+
+    public void createZFSPool(String name){
+        try{
+                URL url = new URL("http://localhost:5000/zfs");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String message = "{\"name\":\""+name+"\"}";
+                System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+                System.out.println(conn.getResponseCode());
+                StringBuilder sb = getStringBuilder(conn);
+                System.out.println(sb.toString());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
+        }
+
+    }
+    public static StringBuilder getStringBuilder(HttpURLConnection con){
+            StringBuilder sb = new StringBuilder();
+            try{
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+                    String line = null;
+                    while ((line = br.readLine()) != null){
+                            sb.append(line+"\n");
+                    }
+                    br.close();
+            } catch(IOException e){
+                    e.printStackTrace();
+            }
+            return sb;
     }
 
     // Supported policies for resource placement
