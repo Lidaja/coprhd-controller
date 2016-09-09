@@ -212,7 +212,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
     }
 
-    @Override
+@Override
     public DriverTask discoverStoragePools(StorageSystem storageSystem, List<StoragePool> storagePools) {
 
         _log.info("Discovery of storage pools for storage system {} .", storageSystem.getNativeId());
@@ -220,63 +220,75 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         AutoTieringPolicyCapabilityDefinition capabilityDefinition = new AutoTieringPolicyCapabilityDefinition();
+
         try {
             // Get connection information.
-            Map<String, List<String>> connectionInfo = driverRegistry.getDriverAttributesForKey("DenaliDriver", storageSystem.getNativeId());
+            Map<String, List<String>> connectionInfo =
+                    driverRegistry.getDriverAttributesForKey("DenaliStorageDriver", storageSystem.getNativeId());
             _log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
-            StoragePool pool = new StoragePool();
-            pool.setNativeId("DenaliPool-" + storageSystem.getNativeId());
-            pool.setStorageSystemId(storageSystem.getNativeId());
-            _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
+            for (int i =0; i <= 0; i++ ) {
+                StoragePool pool = new StoragePool();
+                pool.setNativeId("DenaliPool-" + i + storageSystem.getNativeId());
+                pool.setStorageSystemId(storageSystem.getNativeId());
+                _log.info("Discovered Pool {}, storageSystem {}", pool.getNativeId(), pool.getStorageSystemId());
 
-            pool.setDeviceLabel("er-DenaliPool-"+ storageSystem.getNativeId());
-            pool.setPoolName(pool.getDeviceLabel());
-            Set<StoragePool.Protocols> protocols = new HashSet<>();
-            protocols.add(StoragePool.Protocols.iSCSI);
-            pool.setProtocols(protocols);
-            pool.setPoolServiceType(StoragePool.PoolServiceType.block);
-            pool.setMaximumThickVolumeSize(3000000L);
-            pool.setMinimumThickVolumeSize(1000L);
-            pool.setMaximumThinVolumeSize(5000000L);
-            pool.setMinimumThinVolumeSize(1000L);
-            pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK); 
-            pool.setSubscribedCapacity(5000000L);
-            pool.setFreeCapacity(45000000L);
-            pool.setTotalCapacity(48000000L);
-            pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
-            Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
-            supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SSD);
-            pool.setSupportedDriveTypes(supportedDriveTypes);
+                pool.setDeviceLabel("er-DenaliPool" + i + storageSystem.getNativeId());
+                pool.setPoolName(pool.getDeviceLabel());
+                Set<StoragePool.Protocols> protocols = new HashSet<>();
+                protocols.add(StoragePool.Protocols.iSCSI);
+                pool.setProtocols(protocols);
+                pool.setPoolServiceType(StoragePool.PoolServiceType.block);
+                pool.setMaximumThickVolumeSize(3000000L);
+                pool.setMinimumThickVolumeSize(1000L);
+                pool.setMaximumThinVolumeSize(5000000L);
+                pool.setMinimumThinVolumeSize(1000L);
 
-            Set<StoragePool.RaidLevels> raidLevels = new HashSet<>();
-            raidLevels.add(StoragePool.RaidLevels.RAID1);
-            raidLevels.add(StoragePool.RaidLevels.RAID2);
-            raidLevels.add(StoragePool.RaidLevels.RAID50);
-            raidLevels.add(StoragePool.RaidLevels.RAID60);
-            pool.setSupportedRaidLevels(raidLevels);
-            
-            
-            List<CapabilityInstance> capabilities = new ArrayList<>();
-            for (int j = 1; j <= 2; j++) {
-                String policyId = "Auto-Tier-Policy-" + j;
-                Map<String, List<String>> props = new HashMap<>();
-                props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.POLICY_ID.name(), Arrays.asList(policyId));
-                String provisioningType;
-                provisioningType = StoragePool.AutoTieringPolicyProvisioningType.All.name();
-                props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.PROVISIONING_TYPE.name(), Arrays.asList(provisioningType));
-                CapabilityInstance capabilityInstance = new CapabilityInstance(capabilityDefinition.getId(), policyId, props);
-                capabilities.add(capabilityInstance);
+		pool.setSupportedResourceType(StoragePool.SupportedResourceType.THIN_AND_THICK);
+                pool.setSubscribedCapacity(5000000L);
+                pool.setFreeCapacity(45000000L);
+                pool.setTotalCapacity(48000000L);
+                pool.setOperationalStatus(StoragePool.PoolOperationalStatus.READY);
+                Set<StoragePool.SupportedDriveTypes> supportedDriveTypes = new HashSet<>();
+                supportedDriveTypes.add(StoragePool.SupportedDriveTypes.SSD);
+                pool.setSupportedDriveTypes(supportedDriveTypes);
+
+                Set<StoragePool.RaidLevels> raidLevels = new HashSet<>();
+                raidLevels.add(StoragePool.RaidLevels.RAID1);
+                raidLevels.add(StoragePool.RaidLevels.RAID2);
+		raidLevels.add(StoragePool.RaidLevels.RAID50);
+		raidLevels.add(StoragePool.RaidLevels.RAID60);
+                pool.setSupportedRaidLevels(raidLevels);
+                
+                
+                List<CapabilityInstance> capabilities = new ArrayList<>();
+                for (int j = 1; j <= 2; j++) {
+                    String policyId = "Auto-Tier-Policy-" + i + j;
+                    Map<String, List<String>> props = new HashMap<>();
+                    props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.POLICY_ID.name(), Arrays.asList(policyId));
+                    String provisioningType;
+		    /*
+                    if (i%2 == 0) {
+                        provisioningType = StoragePool.AutoTieringPolicyProvisioningType.ThinlyProvisioned.name();
+                    } else {
+                        provisioningType = StoragePool.AutoTieringPolicyProvisioningType.ThicklyProvisioned.name();
+                    }*/
+                    provisioningType = StoragePool.AutoTieringPolicyProvisioningType.All.name();
+                    props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.PROVISIONING_TYPE.name(), Arrays.asList(provisioningType));
+                    CapabilityInstance capabilityInstance = new CapabilityInstance(capabilityDefinition.getId(), policyId, props);
+                    capabilities.add(capabilityInstance);
+                }
+                pool.setCapabilities(capabilities);
+
+                storagePools.add(pool);
+
             }
-            pool.setCapabilities(capabilities);
-
-            storagePools.add(pool);
             task.setStatus(DriverTask.TaskStatus.READY);
-            _log.info("StorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
+            _log.info("StorageDriver: discoverStoragePools information for storage system {}, nativeId {} - end",
+                    storageSystem.getIpAddress(), storageSystem.getNativeId());
         } catch (Exception e) {
             task.setStatus(DriverTask.TaskStatus.FAILED);
             e.printStackTrace();
         }
-	
         return task;
     }
 
@@ -309,8 +321,10 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
                 index ++;
             }
             // set this index for the system in registry
-            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", storageSystem.getNativeId(), Collections.singletonList(String.valueOf(index)));
-            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex", Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", storageSystem.getNativeId(),
+                    Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex",
+                    Collections.singletonList(String.valueOf(index)));
             _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
         }
 
@@ -324,13 +338,13 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 //        }
 
         // Create ports with network
-        for (int i =0; i <= 0; i++ ) {
+        for (int i =0; i <= 2; i++ ) {
             StoragePort port = new StoragePort();
-            port.setNativeId("DenaliPort-" + storageSystem.getNativeId());
+            port.setNativeId("DenaliPort-" + i + storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
             _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
 
-            port.setDeviceLabel("er-DenaliPort-" + storageSystem.getNativeId());
+            port.setDeviceLabel("er-DenaliPort" + i + storageSystem.getNativeId());
             port.setPortName(port.getDeviceLabel());
             port.setNetworkId("DenaliNetwork");
             port.setTransportType(StoragePort.TransportType.IP);
@@ -339,32 +353,34 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             port.setPortHAZone("zone-"+i);
             storagePorts.add(port);
         }
-	/*	
+
         // Create ports without network
-        for (int i =3; i <= 3; i++ ) {
+        for (int i =3; i <= 6; i++ ) {
             StoragePort port = new StoragePort();
-            port.setNativeId("port-1234577-" + i+ storageSystem.getNativeId());
+            port.setNativeId("DenaliPort-" + i+ storageSystem.getNativeId());
             port.setStorageSystemId(storageSystem.getNativeId());
             _log.info("Discovered Port {}, storageSystem {}", port.getNativeId(), port.getStorageSystemId());
 
-            port.setDeviceLabel("er-port-1234577" + i+ storageSystem.getNativeId());
+            port.setDeviceLabel("er-DenaliPort" + i+ storageSystem.getNativeId());
             port.setPortName(port.getDeviceLabel());
-            port.setTransportType(StoragePort.TransportType.FC);
+            port.setTransportType(StoragePort.TransportType.IP);
             port.setPortNetworkId("6" + Integer.toHexString(index) + ":FE:FE:FE:FE:FE:FE:1" + i);
             port.setOperationalStatus(StoragePort.OperationalStatus.OK);
             port.setPortHAZone("zone-with-many-ports");
             storagePorts.add(port);
-        }*/
-	
+        }
+
         String taskType = "discover-storage-ports";
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
-        _log.info("StorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
+        _log.info("StorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end",
+                storageSystem.getIpAddress(), storageSystem.getNativeId());
         return task;
 
     }
-    
+
+   
     @Override
     public DriverTask stopManagement(StorageSystem driverStorageSystem){
     	_log.info("Stopping management for StorageSystem {}", driverStorageSystem.getNativeId());
@@ -871,7 +887,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         listPwd.add(password);
         attributes.put("PASSWORD", listPwd);
         _log.info(String.format("StorageDriver: setting connection information for %s, attributes: %s ", systemNativeId, attributes));
-        this.driverRegistry.setDriverAttributesForKey("DenaliDriver", systemNativeId, attributes);
+        this.driverRegistry.setDriverAttributesForKey("DenaliStorageDriver", systemNativeId, attributes);
     }
 
     @Override
