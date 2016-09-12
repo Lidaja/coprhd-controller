@@ -31,6 +31,7 @@ public class VolumeRestRep extends BlockObjectRestRep {
     private String preAllocationSize;
     private boolean isComposite;
     private RelatedResourceRep vpool;
+    private String tag;
     private Boolean thinlyProvisioned;
     private RelatedResourceRep autoTierPolicyUri;
     private List<RelatedResourceRep> haVolumes;
@@ -448,6 +449,16 @@ public class VolumeRestRep extends BlockObjectRestRep {
     public void setVirtualPool(RelatedResourceRep vpool) {
         this.vpool = vpool;
     }
+
+    @XmlElement
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
 
     /**
      * Specifies whether this is a composite (meta) volume.

@@ -18,22 +18,24 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
     private String size;
     private Integer count;
     private String name;
+    private String tag;
     private URI consistencyGroupId;
     private URI computeResource;
 
     public CreateBlockVolume(String vpoolId, String varrayId, String projectId, String size, Integer count,
-            String name, String consistencyGroupId) {
-        this(uri(vpoolId), uri(varrayId), uri(projectId), size, count, name, uri(consistencyGroupId), null);
+            String name, String consistencyGroupId, String tag) {
+        this(uri(vpoolId), uri(varrayId), uri(projectId), size, count, name, uri(consistencyGroupId), null, tag);
     }
 
     public CreateBlockVolume(URI vpoolId, URI varrayId, URI projectId, String size, Integer count, String name,
-            URI consistencyGroupId, URI computeResource) {
+            URI consistencyGroupId, URI computeResource, String tag) {
         this.vpoolId = vpoolId;
         this.varrayId = varrayId;
         this.projectId = projectId;
         this.size = size;
         this.count = count;
         this.name = name;
+	this.tag = tag;
         this.consistencyGroupId = consistencyGroupId;
         this.computeResource = computeResource;
         provideDetailArgs(name, size, vpoolId, varrayId, projectId);
@@ -47,6 +49,7 @@ public class CreateBlockVolume extends WaitForTasks<VolumeRestRep> {
         create.setProject(projectId);
         create.setName(name);
         create.setSize(size);
+	create.setTag(tag);
         int numberOfVolumes = 1;
         if ((count != null) && (count > 1)) {
             numberOfVolumes = count;

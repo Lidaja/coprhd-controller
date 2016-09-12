@@ -20,6 +20,7 @@ public class VolumeCreate {
     private String name;
     private String size;
     private Integer count;
+    private String tag;
     private URI vpool;
     private URI varray;
     private URI project;
@@ -96,6 +97,15 @@ public class VolumeCreate {
         this.name = name;
     }
 
+    @XmlElement(required = true)
+    @Length(min = 2, max = 128)
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
     /**
      * The ViPR project to which the volume will belong.
      * 

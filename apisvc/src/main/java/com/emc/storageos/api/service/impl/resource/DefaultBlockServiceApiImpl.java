@@ -91,13 +91,13 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
     @Override
     public TaskList createVolumes(VolumeCreate param, Project project, VirtualArray neighborhood,
             VirtualPool cos, Map<VpoolUse, List<Recommendation>> recommendationMap, TaskList taskList,
-            String task, VirtualPoolCapabilityValuesWrapper cosCapabilities) throws InternalException {
+            String task, VirtualPoolCapabilityValuesWrapper cosCapabilities, String tag) throws InternalException {
         
         Long size = SizeUtil.translateSize(param.getSize());
         List<VolumeDescriptor> existingDescriptors = new ArrayList<VolumeDescriptor>();
         List<VolumeDescriptor> volumeDescriptors = createVolumesAndDescriptors(
                 existingDescriptors, param.getName(), size, 
-                project, neighborhood, cos, recommendationMap.get(VpoolUse.ROOT), taskList, task, cosCapabilities);
+                project, neighborhood, cos, recommendationMap.get(VpoolUse.ROOT), taskList, task, cosCapabilities, tag);
         List<Volume> preparedVolumes = getPreparedVolumes(volumeDescriptors);
         
         //Check for special characters in volume names
@@ -146,7 +146,7 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
     public List<VolumeDescriptor> createVolumesAndDescriptors(List<VolumeDescriptor> descriptors, String volumeLabel, Long size,
             Project project,
             VirtualArray varray, VirtualPool vpool, List<Recommendation> recommendations, TaskList taskList, String task,
-            VirtualPoolCapabilityValuesWrapper vpoolCapabilities) {
+            VirtualPoolCapabilityValuesWrapper vpoolCapabilities, String tag) {
         // Prepare the Bourne Volumes to be created and associated
         // with the actual storage system volumes created. Also create
         // a BlockTaskList containing the list of task resources to be
@@ -160,7 +160,7 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
         // Prepare the volumes
         _scheduler.prepareRecommendedVolumes(size, task, taskList, project,
                 varray, vpool, vpoolCapabilities.getResourceCount(), recommendations,
-                consistencyGroup, volumeCounter, volumeLabel, preparedVolumes, vpoolCapabilities, false);
+                consistencyGroup, volumeCounter, volumeLabel, preparedVolumes, vpoolCapabilities, false, tag);
 
         // Prepare the volume descriptors based on the recommendations
         final List<VolumeDescriptor> volumeDescriptors = prepareVolumeDescriptors(preparedVolumes, vpoolCapabilities);

@@ -9,6 +9,7 @@ import static com.emc.sa.service.ServiceParams.NAME;
 import static com.emc.sa.service.ServiceParams.NUMBER_OF_VOLUMES;
 import static com.emc.sa.service.ServiceParams.PROJECT;
 import static com.emc.sa.service.ServiceParams.SIZE_IN_GB;
+import static com.emc.sa.service.ServiceParams.TAG;
 import static com.emc.sa.service.ServiceParams.VIRTUAL_ARRAY;
 import static com.emc.sa.service.ServiceParams.VIRTUAL_POOL;
 import static com.emc.sa.service.vipr.ViPRExecutionUtils.logInfo;
@@ -31,6 +32,9 @@ public class CreateBlockVolumeHelper {
     @Param(NAME)
     protected String nameParam;
 
+    @Param(TAG)
+    protected String tag;
+
     @Param(SIZE_IN_GB)
     protected Double sizeInGb;
 
@@ -42,7 +46,7 @@ public class CreateBlockVolumeHelper {
 
     public List<URI> createVolumes(URI computeResource) {
         List<URI> volumeIds = BlockStorageUtils.createVolumes(project, virtualArray, virtualPool, nameParam,
-                sizeInGb, count, consistencyGroup, computeResource);
+                sizeInGb, count, consistencyGroup, computeResource, tag);
         for (URI volumeId : volumeIds) {
             logInfo("create.block.volume.create.volume", volumeId);
         }
@@ -51,6 +55,10 @@ public class CreateBlockVolumeHelper {
 
     public String getName() {
         return this.nameParam;
+    }
+
+    public String getTag() {
+        return this.tag;
     }
 
     public URI getProject() {

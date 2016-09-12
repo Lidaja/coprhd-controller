@@ -31,6 +31,9 @@ public class Volume extends BlockObject implements ProjectResource {
     private NamedURI _project;
     // total capacity in bytes
     private Long _capacity;
+
+    private String _volumeTag;
+
     // thinVolumePreAllocate size in bytes
     private Long _thinVolumePreAllocationSize;
     // thin or thick volume type
@@ -297,6 +300,16 @@ public class Volume extends BlockObject implements ProjectResource {
     public void setThinlyProvisioned(Boolean thinlyProvisioned) {
         _thinlyProvisioned = thinlyProvisioned;
         setChanged("thinlyProvisioned");
+    }
+
+    @Name("tag")
+    public String getVolumeTag() {
+        return _volumeTag;
+    }
+
+    public void setVolumeTag(String tag) {
+        _volumeTag = tag;
+        setChanged("tag");
     }
 
     @RelationIndex(cf = "RelationIndex", type = VirtualPool.class)

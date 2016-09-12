@@ -834,7 +834,7 @@ public class BlockMirrorServiceApiImpl extends AbstractBlockServiceApiImpl<Stora
         // only mirror will be prepared (the source already exist)
         _scheduler.prepareRecommendedVolumes(null, taskId, taskList, null, null, sourceVolumeVPool,
                 volumeCount, currentRecommendation, null, volumeCounter, volumeLabel, preparedVolumes,
-                capabilities, false);
+                capabilities, false, null);
         volumeRecommendations.addAll(currentRecommendation);
     }
 

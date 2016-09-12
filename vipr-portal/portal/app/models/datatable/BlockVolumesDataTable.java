@@ -32,6 +32,7 @@ public class BlockVolumesDataTable extends DataTable {
         addColumn("capacity").setRenderFunction("render.sizeInGb");
         addColumn("varray");
         addColumn("vpool");
+	addColumn("tag");
         addColumn("protocols");
         addColumn("wwn");
         sortAll();
@@ -78,6 +79,7 @@ public class BlockVolumesDataTable extends DataTable {
         public String capacity;
         public String varray;
         public String vpool;
+	public String tag;
         public Set<String> protocols;
         public boolean srdfTarget;
         public String wwn = "";
@@ -86,6 +88,7 @@ public class BlockVolumesDataTable extends DataTable {
             id = volume.getId();
             name = volume.getName();
             wwn = volume.getWwn();
+	    tag = volume.getTag();
             srdfTarget = volume.getProtection() != null && volume.getProtection().getSrdfRep() != null
                     && volume.getProtection().getSrdfRep().getAssociatedSourceVolume() != null;
             capacity = volume.getProvisionedCapacity();

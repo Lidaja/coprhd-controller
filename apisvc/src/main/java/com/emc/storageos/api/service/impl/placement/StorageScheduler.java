@@ -1390,7 +1390,7 @@ public class StorageScheduler implements Scheduler {
             Project project, VirtualArray neighborhood, VirtualPool vPool, Integer volumeCount,
             List<Recommendation> recommendations, BlockConsistencyGroup consistencyGroup, int volumeCounter,
             String volumeLabel, List<Volume> preparedVolumes, VirtualPoolCapabilityValuesWrapper cosCapabilities,
-            Boolean createInactive) {
+            Boolean createInactive, String tag) {
         Iterator<Recommendation> recommendationsIter = recommendations.iterator();
         while (recommendationsIter.hasNext()) {
             VolumeRecommendation recommendation = (VolumeRecommendation) recommendationsIter.next();
@@ -1416,7 +1416,7 @@ public class StorageScheduler implements Scheduler {
                 }
 
                 volume = prepareVolume(_dbClient, volume, size, thinVolumePreAllocationSize, project,
-                        neighborhood, vPool, recommendation, newVolumeLabel, consistencyGroup, cosCapabilities, createInactive);
+                        neighborhood, vPool, recommendation, newVolumeLabel, consistencyGroup, cosCapabilities, createInactive, tag);
                 // set volume id in recommendation
                 recommendation.setId(volume.getId());
                 // add volume to reserved capacity map of storage pool
@@ -1530,7 +1530,7 @@ public class StorageScheduler implements Scheduler {
 
         String label = name + (volumeCounter > 0 ? ("-" + volumeCounter) : "");
         Volume volume = prepareVolume(dbClient, null, size, preAllocateSize,
-                project, vArray, vPool, recommendation, label, null, capabilities, createInactive);
+                project, vArray, vPool, recommendation, label, null, capabilities, createInactive, "TAG-C");
 
         // Since this is a full copy, update it with URI of the source volume
         volume.setAssociatedSourceVolume(sourceVolume.getId());
@@ -1572,7 +1572,7 @@ public class StorageScheduler implements Scheduler {
 
         String label = name + (volumeCounter > 0 ? ("-" + volumeCounter) : "");
         Volume volume = prepareVolume(dbClient, null, size, preAllocateSize,
-                project, vArray, vPool, recommendation, label, null, capabilities, createInactive);
+                project, vArray, vPool, recommendation, label, null, capabilities, createInactive, "TAG-D");
 
         // Since this is a full copy, update it with URI of the source snapshot
         volume.setAssociatedSourceVolume(sourceSnapshot.getId());
@@ -1590,7 +1590,7 @@ public class StorageScheduler implements Scheduler {
             VolumeRecommendation placement, String label,
             BlockConsistencyGroup consistencyGroup, VirtualPoolCapabilityValuesWrapper capabilities) {
         return prepareVolume(dbClient, volume, size, thinVolumePreAllocationSize, project, neighborhood, vpool,
-                placement, label, consistencyGroup, capabilities, false);
+                placement, label, consistencyGroup, capabilities, false, "TAG-A");
     }
 
     /**
@@ -1628,6 +1628,7 @@ public class StorageScheduler implements Scheduler {
         volume.setProject(new NamedURI(project.getId(), volume.getLabel()));
         volume.setTenant(new NamedURI(project.getTenantOrg().getURI(), volume.getLabel()));
         volume.setVirtualArray(varray.getId());
+	volume.setVolumeTag("Lol omg xD!!1!");
         volume.setOpStatus(new OpStatusMap());
         if (vpool.getDedupCapable() != null) {
         	volume.setIsDeduplicated(vpool.getDedupCapable());
@@ -1656,7 +1657,7 @@ public class StorageScheduler implements Scheduler {
     public static Volume prepareVolume(DbClient dbClient, Volume volume, long size, long thinVolumePreAllocationSize,
             Project project, VirtualArray neighborhood, VirtualPool vpool,
             VolumeRecommendation placement, String label,
-            BlockConsistencyGroup consistencyGroup, VirtualPoolCapabilityValuesWrapper cosCapabilities, Boolean createInactive) {
+            BlockConsistencyGroup consistencyGroup, VirtualPoolCapabilityValuesWrapper cosCapabilities, Boolean createInactive, String tag) {
 
         // In the case of a new volume that wasn't pre-created, make sure that volume doesn't already exist
         if (volume == null) {
@@ -1687,6 +1688,7 @@ public class StorageScheduler implements Scheduler {
             volume.setThinVolumePreAllocationSize(thinVolumePreAllocationSize);
         }
         volume.setThinlyProvisioned(VirtualPool.ProvisioningType.Thin.toString().equalsIgnoreCase(vpool.getSupportedProvisioningType()));
+	volume.setVolumeTag(tag);
         volume.setVirtualPool(vpool.getId());
         volume.setProject(new NamedURI(project.getId(), volume.getLabel()));
         volume.setTenant(new NamedURI(project.getTenantOrg().getURI(), volume.getLabel()));

@@ -2,7 +2,11 @@
 rm /opt/storageos/logs/*.*
 NAME=$(rpm -qa | grep storageos)
 rpm -e $NAME
-rm -r /data
+if [ $# -eq 1 ]
+  then
+    echo "DELETING DATA"
+    rm -r /data
+fi
 make clobber BUILD_TYPE=oss rpm
 rpm -Uvh /tmp/coprhd-controller/build/RPMS/x86_64/*.rpm
 cd /tmp/coprhd-controller/exportLibraries/storagedrivers/denali/src/main/java
