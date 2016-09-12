@@ -33,6 +33,13 @@
                 min:0
               }
             },
+            tag:{
+              type:"text",
+              validation:{
+                min:2,
+                max:128
+              }
+            },
             numberOfVolumes:{
               type:"number",
               initialValue: "1",
