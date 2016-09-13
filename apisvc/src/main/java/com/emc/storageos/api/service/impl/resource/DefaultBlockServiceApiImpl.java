@@ -91,8 +91,8 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
     @Override
     public TaskList createVolumes(VolumeCreate param, Project project, VirtualArray neighborhood,
             VirtualPool cos, Map<VpoolUse, List<Recommendation>> recommendationMap, TaskList taskList,
-            String task, VirtualPoolCapabilityValuesWrapper cosCapabilities, String tag) throws InternalException {
-        
+            String task, VirtualPoolCapabilityValuesWrapper cosCapabilities) throws InternalException {
+        String tag = param.getTag();
         Long size = SizeUtil.translateSize(param.getSize());
         List<VolumeDescriptor> existingDescriptors = new ArrayList<VolumeDescriptor>();
         List<VolumeDescriptor> volumeDescriptors = createVolumesAndDescriptors(

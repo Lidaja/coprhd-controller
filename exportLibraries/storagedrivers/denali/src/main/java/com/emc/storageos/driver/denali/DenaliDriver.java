@@ -15,6 +15,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.slf4j.Logger;
@@ -398,7 +405,13 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
     @Override
     public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities) {
-
+        Charset utf8 = StandardCharsets.UTF_8;
+        List<String> lines = Arrays.asList("The first line", "The second line");
+        try{
+                Files.write(Paths.get("/tmp/coprhd-controller/volume.txt"), lines, Charset.forName("UTF-8"));
+        } catch (IOException e){
+                System.out.println("Error");
+        }
         //String newVolumes = "";
         Set<String> newVolumes = new HashSet<>();
 

@@ -11,7 +11,9 @@ public class StorageVolume extends StorageBlockObject {
     private String storageSystemId;
 
     // storage pool native id of this volume. Type: Input.
-    private String  storagePoolId;
+    private String storagePoolId;
+
+    private String tag; 
 
     // Requested capacity of storage volume in bytes. Type: Input.
     private Long requestedCapacity;
@@ -42,6 +44,14 @@ public class StorageVolume extends StorageBlockObject {
 
     public void setStoragePoolId(String storagePoolId) {
         this.storagePoolId = storagePoolId;
+    }
+    
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     public Long getRequestedCapacity() {
