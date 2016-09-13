@@ -19,6 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,9 +99,10 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
     @Override
     public TaskList createVolumes(VolumeCreate param, Project project, VirtualArray neighborhood,
             VirtualPool cos, Map<VpoolUse, List<Recommendation>> recommendationMap, TaskList taskList,
-            String task, VirtualPoolCapabilityValuesWrapper cosCapabilities, String tag) throws InternalException {
+            String task, VirtualPoolCapabilityValuesWrapper cosCapabilities) throws InternalException {
         
         Long size = SizeUtil.translateSize(param.getSize());
+	String tag = param.getTag();
         List<VolumeDescriptor> existingDescriptors = new ArrayList<VolumeDescriptor>();
         List<VolumeDescriptor> volumeDescriptors = createVolumesAndDescriptors(
                 existingDescriptors, param.getName(), size, 
@@ -121,7 +130,7 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
 
         return taskList;
     }
-    
+   
     /**
      * Method to validate volume names.
      * @param volume Volume Name
@@ -143,6 +152,34 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
 	}
 
     @Override
+    public List<VolumeDescriptor> createVolumesAndDescriptors(List<VolumeDescriptor> descriptors, String volumeLabel, Long size,
+            Project project,
+            VirtualArray varray, VirtualPool vpool, List<Recommendation> recommendations, TaskList taskList, String task,
+            VirtualPoolCapabilityValuesWrapper vpoolCapabilities) {
+        // Prepare the Bourne Volumes to be created and associated
+        // with the actual storage system volumes created. Also create
+        // a BlockTaskList containing the list of task resources to be
+        // returned for the purpose of monitoring the volume creation
+        // operation for each volume to be created.
+        int volumeCounter = 0;
+        List<Volume> preparedVolumes = new ArrayList<Volume>();
+        final BlockConsistencyGroup consistencyGroup = vpoolCapabilities.getBlockConsistencyGroup() == null ? null : _dbClient
+                .queryObject(BlockConsistencyGroup.class, vpoolCapabilities.getBlockConsistencyGroup());
+
+        // Prepare the volumes
+        _scheduler.prepareRecommendedVolumes(size, task, taskList, project,
+                varray, vpool, vpoolCapabilities.getResourceCount(), recommendations,
+                consistencyGroup, volumeCounter, volumeLabel, preparedVolumes, vpoolCapabilities, false, "TAggyLeWaggy");
+
+        // Prepare the volume descriptors based on the recommendations
+        final List<VolumeDescriptor> volumeDescriptors = prepareVolumeDescriptors(preparedVolumes, vpoolCapabilities);
+
+        // Log volume descriptor information
+        logVolumeDescriptorPrecreateInfo(volumeDescriptors, task);
+        
+        return volumeDescriptors;
+    }
+ 
     public List<VolumeDescriptor> createVolumesAndDescriptors(List<VolumeDescriptor> descriptors, String volumeLabel, Long size,
             Project project,
             VirtualArray varray, VirtualPool vpool, List<Recommendation> recommendations, TaskList taskList, String task,
@@ -170,7 +207,6 @@ public class DefaultBlockServiceApiImpl extends AbstractBlockServiceApiImpl<Stor
         
         return volumeDescriptors;
     }
-    
     /**
      * Retrieves the preparedVolumes from the volume descriptors.
      * 
