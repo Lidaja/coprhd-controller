@@ -15,6 +15,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import java.net.URL;
+import java.net.HttpURLConnection;
+
+import java.io.PrintWriter;
+import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.OutputStreamWriter;
+import java.io.InputStreamReader;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -219,7 +228,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
     }
 
-@Override
+    @Override
     public DriverTask discoverStoragePools(StorageSystem storageSystem, List<StoragePool> storagePools) {
 
         _log.info("Discovery of storage pools for storage system {} .", storageSystem.getNativeId());
@@ -403,16 +412,62 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         return task;
     }
 
+    public void createVolume(String pool_name, String size, String tag, String name){
+        try{
+                PrintWriter writer = new PrintWriter("/tmp/vol.txt", "UTF-8");
+                writer.println("The first line");
+                writer.close();
+                URL url = new URL("http://localhost:5000/volume");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String message = "{\"pool\":\""+pool_name+"\",\"name\":\""+name+"\",\"tag\":\""+tag+"\",\"size\":\""+size+"\"}";
+                System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+                System.out.println(conn.getResponseCode());
+                StringBuilder sb = getStringBuilder(conn);
+                System.out.println(sb.toString());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
+        }
+    }
+
+    public static StringBuilder getStringBuilder(HttpURLConnection con){
+            StringBuilder sb = new StringBuilder();
+            try{
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), "UTF-8"));
+                    String line = null;
+                    while ((line = br.readLine()) != null){
+                            sb.append(line+"\n");
+                    }
+                    br.close();
+            } catch(IOException e){
+                    e.printStackTrace();
+            }
+            return sb;
+    }
     @Override
     public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities) {
-        Charset utf8 = StandardCharsets.UTF_8;
-        List<String> lines = Arrays.asList("The first line", "The second line");
         try{
-                Files.write(Paths.get("/tmp/coprhd-controller/volume.txt"), lines, Charset.forName("UTF-8"));
-        } catch (IOException e){
-                System.out.println("Error");
-        }
-        //String newVolumes = "";
+		PrintWriter writer = new PrintWriter("/tmp/the-file-name.txt", "UTF-8");
+		StorageVolume v = volumes.get(0);
+		writer.println("The first line");
+		writer.println("The second line");
+		writer.println(v.getTag());
+		writer.println(v.getStoragePoolId());
+		writer.println(v.getVpool());
+		writer.println(v.getSize());
+		writer.close();
+	} catch (IOException e){
+		System.out.println("Error");
+	}
         Set<String> newVolumes = new HashSet<>();
 
         for (StorageVolume volume : volumes) {
@@ -422,8 +477,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             volume.setAllocatedCapacity(volume.getRequestedCapacity());
             volume.setDeviceLabel(volume.getNativeId());
             volume.setWwn(String.format("%s%s", volume.getStorageSystemId(), volume.getNativeId()));
-
-            // newVolumes = newVolumes + volume.getNativeId() + " ";
+	    createVolume(volume.getVpool(),volume.getSize(),volume.getTag(), volume.getDisplayName());
             newVolumes.add(volume.getNativeId());
         }
         String taskType = "create-storage-volumes";

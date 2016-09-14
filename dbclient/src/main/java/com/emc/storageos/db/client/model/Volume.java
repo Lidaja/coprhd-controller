@@ -34,6 +34,10 @@ public class Volume extends BlockObject implements ProjectResource {
 
     private String _volumeTag;
 
+    private String _vpool;
+
+    private String _size;
+
     // thinVolumePreAllocate size in bytes
     private Long _thinVolumePreAllocationSize;
     // thin or thick volume type
@@ -302,6 +306,24 @@ public class Volume extends BlockObject implements ProjectResource {
         setChanged("thinlyProvisioned");
     }
 
+    @Name("vpool")
+    public String getVpool() {
+        return _vpool;
+    }
+
+    public void setVpool(String vpool) {
+        _vpool = vpool;
+        setChanged("vpool");
+    }
+    @Name("size")
+    public String getSize() {
+        return _size;
+    }
+
+    public void setSize(String size) {
+        _size = size;
+        setChanged("size");
+    }
     @Name("tag")
     public String getVolumeTag() {
         return _volumeTag;

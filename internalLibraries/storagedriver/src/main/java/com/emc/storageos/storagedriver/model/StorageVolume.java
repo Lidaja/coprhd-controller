@@ -15,6 +15,10 @@ public class StorageVolume extends StorageBlockObject {
 
     private String tag; 
 
+    private String vpool;
+
+    private String size;
+
     // Requested capacity of storage volume in bytes. Type: Input.
     private Long requestedCapacity;
 
@@ -30,7 +34,7 @@ public class StorageVolume extends StorageBlockObject {
     // thin or thick volume type. Type: Input.
     Boolean thinlyProvisioned = false;
 
-	public String getStorageSystemId() {
+    public String getStorageSystemId() {
         return storageSystemId;
     }
 
@@ -45,13 +49,28 @@ public class StorageVolume extends StorageBlockObject {
     public void setStoragePoolId(String storagePoolId) {
         this.storagePoolId = storagePoolId;
     }
-    
+ 
+    public String getVpool() {
+        return vpool;
+    }
+
+    public void setVpool(String vpool) {
+        this.vpool = vpool;
+    }   
     public String getTag() {
         return tag;
     }
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
     }
 
     public Long getRequestedCapacity() {

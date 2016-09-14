@@ -169,6 +169,8 @@ public class ExternalBlockStorageDevice extends DefaultBlockStorageDevice {
                 driverVolume.setThinlyProvisioned(volume.getThinlyProvisioned());
                 driverVolume.setDisplayName(volume.getLabel());
 		driverVolume.setTag(volume.getVolumeTag());
+		driverVolume.setVpool(volume.getVpool());
+		driverVolume.setSize(volume.getSize());
                 if (!NullColumnValueGetter.isNullURI(volume.getConsistencyGroup())) {
                     BlockConsistencyGroup cg = dbClient.queryObject(BlockConsistencyGroup.class, volume.getConsistencyGroup());
                     driverVolume.setConsistencyGroup(cg.getNativeId());

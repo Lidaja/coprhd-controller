@@ -1690,6 +1690,9 @@ public class StorageScheduler implements Scheduler {
         volume.setThinlyProvisioned(VirtualPool.ProvisioningType.Thin.toString().equalsIgnoreCase(vpool.getSupportedProvisioningType()));
 	volume.setVolumeTag(tag);
         volume.setVirtualPool(vpool.getId());
+	volume.setVpool(vpool.getLabel());
+	Long num = 1073741824L;
+	volume.setSize(Long.toString(size/num));
         volume.setProject(new NamedURI(project.getId(), volume.getLabel()));
         volume.setTenant(new NamedURI(project.getTenantOrg().getURI(), volume.getLabel()));
         volume.setVirtualArray(neighborhood.getId());
