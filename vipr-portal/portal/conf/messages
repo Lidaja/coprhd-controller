@@ -65,6 +65,7 @@ nav.block.snapshots=Block Snapshots
 nav.block.snapshotsessions=Snap Sessions
 nav.block.virtualPools=Block Virtual Pools
 nav.block.app=Applications
+nav.target.services=Target Services
 nav.file=File
 nav.file.filesystems=File Systems
 nav.file.snapshots=File Snapshots

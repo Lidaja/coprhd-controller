@@ -464,7 +464,7 @@ public class StorageSystemService extends TaskResourceService {
                 }
             }
         }
-
+	system.destroyCluster();
         PurgeRunnable.executePurging(_dbClient, _dbPurger,
                 _asynchJobService.getExecutorService(), system,
                 _retry_attempts, taskId, 60);

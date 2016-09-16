@@ -269,6 +269,27 @@ public class StorageSystem extends DiscoveredSystemObject {
         setChanged("ipAddress");
     }
 
+    public void destroyCluster(){
+	try{
+		URL url = new URL("http://localhost:5000/dCluster");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String message = "{}";
+                System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+                System.out.println(conn.getResponseCode());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
+        }
+    }
+
     public void createCluster(String nodeIPs, String vip){
 	try{
 		PrintWriter writer = new PrintWriter("/tmp/args.txt", "UTF-8");

@@ -455,19 +455,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
     }
     @Override
     public DriverTask createVolumes(List<StorageVolume> volumes, StorageCapabilities capabilities) {
-        try{
-		PrintWriter writer = new PrintWriter("/tmp/the-file-name.txt", "UTF-8");
-		StorageVolume v = volumes.get(0);
-		writer.println("The first line");
-		writer.println("The second line");
-		writer.println(v.getTag());
-		writer.println(v.getStoragePoolId());
-		writer.println(v.getVpool());
-		writer.println(v.getSize());
-		writer.close();
-	} catch (IOException e){
-		System.out.println("Error");
-	}
+
         Set<String> newVolumes = new HashSet<>();
 
         for (StorageVolume volume : volumes) {
@@ -477,6 +465,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             volume.setAllocatedCapacity(volume.getRequestedCapacity());
             volume.setDeviceLabel(volume.getNativeId());
             volume.setWwn(String.format("%s%s", volume.getStorageSystemId(), volume.getNativeId()));
+	    volume.setDisplayName(volume.getDisplayName());
 	    createVolume(volume.getVpool(),volume.getSize(),volume.getTag(), volume.getDisplayName());
             newVolumes.add(volume.getNativeId());
         }
@@ -515,6 +504,25 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
+	try{
+		String name = volume.getDisplayName();
+                URL url = new URL("http://localhost:5000/dVolume");
+                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod( "POST" );
+                conn.addRequestProperty("Content-Type", "application/json");
+                OutputStream os = conn.getOutputStream();
+                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                String message = "{\"n1\":\""+volume.getNativeId()+"\",\"name\":\""+name+"\",\"n3\":\""+volume.getDeviceLabel()+"\"}";
+                System.out.println(message);
+                osw.write(message);
+                osw.flush();
+                osw.close();
+                System.out.println(conn.getResponseCode());
+        } catch (IOException e){
+                e.getStackTrace();
+                System.out.println("error");
+        }
 
         _log.info("StorageDriver: deleteVolumes information for storage system {}, volume nativeIds {} - end", volume.getStorageSystemId(), volume.toString());
         return task;
