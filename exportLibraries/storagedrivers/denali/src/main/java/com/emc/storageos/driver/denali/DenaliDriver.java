@@ -239,8 +239,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
         try {
             // Get connection information.
-            Map<String, List<String>> connectionInfo =
-                    driverRegistry.getDriverAttributesForKey("DenaliStorageDriver", storageSystem.getNativeId());
+            Map<String, List<String>> connectionInfo = driverRegistry.getDriverAttributesForKey("DenaliStorageDriver", storageSystem.getNativeId());
             _log.info("Storage system connection info: {} : {}", storageSystem.getNativeId(), connectionInfo);
             for (int i =0; i <= 0; i++ ) {
                 StoragePool pool = new StoragePool();
@@ -282,13 +281,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
                     Map<String, List<String>> props = new HashMap<>();
                     props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.POLICY_ID.name(), Arrays.asList(policyId));
                     String provisioningType;
-		    /*
-                    if (i%2 == 0) {
-                        provisioningType = StoragePool.AutoTieringPolicyProvisioningType.ThinlyProvisioned.name();
-                    } else {
-                        provisioningType = StoragePool.AutoTieringPolicyProvisioningType.ThicklyProvisioned.name();
-                    }*/
-                    provisioningType = StoragePool.AutoTieringPolicyProvisioningType.All.name();
+		    provisioningType = StoragePool.AutoTieringPolicyProvisioningType.All.name();
                     props.put(AutoTieringPolicyCapabilityDefinition.PROPERTY_NAME.PROVISIONING_TYPE.name(), Arrays.asList(provisioningType));
                     CapabilityInstance capabilityInstance = new CapabilityInstance(capabilityDefinition.getId(), policyId, props);
                     capabilities.add(capabilityInstance);
@@ -337,10 +330,8 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
                 index ++;
             }
             // set this index for the system in registry
-            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", storageSystem.getNativeId(),
-                    Collections.singletonList(String.valueOf(index)));
-            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex",
-                    Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", storageSystem.getNativeId(), Collections.singletonList(String.valueOf(index)));
+            driverRegistry.addDriverAttributeForKey("denalidriver", "portIndexes", "lastIndex", Collections.singletonList(String.valueOf(index)));
             _log.info("Storage ports index for storage system {} is {} .", storageSystem.getNativeId(), index);
         }
 
@@ -390,8 +381,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
-        _log.info("StorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end",
-                storageSystem.getIpAddress(), storageSystem.getNativeId());
+        _log.info("StorageDriver: discoverStoragePorts information for storage system {}, nativeId {} - end", storageSystem.getIpAddress(), storageSystem.getNativeId());
         return task;
 
     }
@@ -482,6 +472,18 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
 
     @Override
     public DriverTask expandVolume(StorageVolume volume, long newCapacity) {
+	volume.setRequestedCapacity(newCapacity);
+        volume.setProvisionedCapacity(newCapacity);
+        volume.setAllocatedCapacity(newCapacity);
+	String successMsg = String.format("StorageDriver: expandVolume information for storage system %s, volume nativeIds %s, new capacity %s - end", volume.getStorageSystemId(), volume.toString(), volume.getRequestedCapacity());
+	String taskId = String.format("%s+%s+%s", DenaliDriver.DRIVER_NAME, "expand-storage-volumes", UUID.randomUUID().toString());
+        DriverTask task = new DenaliTask(taskId);
+	task.setStatus(DriverTask.TaskStatus.READY);
+        _log.info(successMsg);
+        task.setMessage(successMsg);
+        return task;
+	
+	/*
         ExpandVolumeSimulatorOperation expandVolumeSimulatorOperation = new ExpandVolumeSimulatorOperation(volume, newCapacity);
         if (denaliConfig.getSimulateAsynchronousResponses()) {
             DriverTask driverTask = expandVolumeSimulatorOperation.getDriverTask();
@@ -494,7 +496,7 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             expandVolumeSimulatorOperation.updateVolumeInfo(volume, newCapacity);
             String successMsg = expandVolumeSimulatorOperation.getSuccessMessage(volume);
             return expandVolumeSimulatorOperation.doSuccess(successMsg);
-        }
+        }*/
     }
 
     @Override
@@ -775,7 +777,6 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
         String taskId = String.format("%s+%s+%s", DRIVER_NAME, taskType, UUID.randomUUID().toString());
         DriverTask task = new DenaliTask(taskId);
         task.setStatus(DriverTask.TaskStatus.READY);
-
         String msg = String.format("StorageDriver: createConsistencyGroup information for storage system %s, consistencyGroup nativeId %s - end", consistencyGroup.getStorageSystemId(), consistencyGroup.getNativeId());
         _log.info(msg);
         task.setMessage(msg);
@@ -858,9 +859,9 @@ public class DenaliDriver extends DefaultStorageDriver implements BlockStorageDr
             StorageVolume driverVolume = new StorageVolume();
             driverVolume.setStorageSystemId(storageSystem.getNativeId());
             driverVolume.setStoragePoolId("pool-1234577-" + token.intValue() + storageSystem.getNativeId());
-            driverVolume.setNativeId("driverSimulatorVolume-1234567-" + token.intValue() + "-" + vol);
+            driverVolume.setNativeId("denaliVolume-1234567-" + token.intValue() + "-" + vol);
             if (VOLUMES_IN_CG) {
-                driverVolume.setConsistencyGroup("driverSimulatorCG-" + token.intValue());
+                driverVolume.setConsistencyGroup("denaliCG-" + token.intValue());
             }
             driverVolume.setAccessStatus(StorageVolume.AccessStatus.READ_WRITE);
             driverVolume.setThinlyProvisioned(true);
